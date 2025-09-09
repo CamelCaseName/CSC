@@ -1,6 +1,6 @@
-﻿using static Translator.Explorer.JSONItems.StoryEnums;
+﻿using static CSC.StoryItems.StoryEnums;
 
-namespace Translator.Explorer.JSONItems
+namespace CSC.StoryItems
 {
     public sealed class Criterion
     {

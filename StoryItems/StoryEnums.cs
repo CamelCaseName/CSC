@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Converters;// Token: 0x(\w|d|\s|:)*\n
 using System.Text.Json.Serialization;
 
-namespace Translator.Explorer.JSONItems
+namespace CSC.StoryItems
 {
     // // Token: 0x(\w|d|\s|:)*\n
     //search term to remove all token comments

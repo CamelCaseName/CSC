@@ -1,26 +1,31 @@
-using Microsoft.VisualBasic.Devices;
+using CSC.StoryItems;
 using System.Drawing.Drawing2D;
-using Translator.Explorer.JSONItems;
 
 namespace CSC
 {
     public partial class Main : Form
     {
         public bool MovingChild = false;
-        Size OffsetFromDragClick = Size.Empty;
-        private Control? movedChild;
-        Point start;
-        Point end;
-        Pen linePen;
+        private Size OffsetFromDragClick = Size.Empty;
+        private Control? movedNode;
+        private int counter = 0;
+        private Point start;
+        private Point end;
+        private readonly Pen linePen;
+
+        private readonly NodeStore nodes = new();
+
+        private Node lastNode = Node.NullNode;
 
         public Main()
         {
             InitializeComponent();
-            button1.MouseMove += Main_MouseMove;
-            button2.MouseMove += Main_MouseMove;
-            linePen = new Pen(Brushes.Black, 2);
-            linePen.EndCap = LineCap.Triangle;
-            linePen.StartCap = LineCap.Round;
+            linePen = new Pen(Brushes.Black, 2)
+            {
+                EndCap = LineCap.Triangle,
+                StartCap = LineCap.Round
+            };
+
         }
 
         private void Start_Click(object sender, EventArgs e)
@@ -30,19 +35,90 @@ namespace CSC
 
         private void Add_Click(object sender, EventArgs e)
         {
+            Node node = CreateNode(typeof(Criterion));
 
+            nodes.Add(node);
+
+            lastNode = node;
+        }
+
+        private Node CreateNode(Type type)
+        {
+            object item;
+            if (type == typeof(Dialogue))
+            {
+                item = new Dialogue
+                {
+                    ID = counter
+                };
+            }
+            else if (type == typeof(Response))
+            {
+                item = new Response
+                {
+                    Order = counter
+                };
+            }
+            else
+            {
+                item = new Criterion
+                {
+                    Order = counter
+                };
+            }
+
+            var control = new Button
+            {
+                Parent = this,
+                Location = new Point(434, 147),
+                Name = "button" + counter.ToString(),
+                Size = new Size(75, 23),
+                TabIndex = 1,
+                Text = "button" + counter.ToString(),
+                UseVisualStyleBackColor = true,
+                Enabled = true
+            };
+
+            var node = new Node(control, counter.ToString(), NodeType.Criterion, "blabla", item);
+            control.Click += (_, e) => { 
+                Details.SelectedObject = item; 
+                lastNode = node;
+            };
+            control.MouseMove += Main_MouseMove;
+
+
+            counter++;
+            return node;
+        }
+
+        private void AddChild_Click(object sender, EventArgs e)
+        {
+            Node node = CreateNode(typeof(Response));
+
+            nodes.AddChild(lastNode, node);
+
+            lastNode = node;
+        }
+
+        private void AddParent_Click(object sender, EventArgs e)
+        {
+            Node node = CreateNode(typeof(Dialogue));
+
+            nodes.AddParent(lastNode, node);
+
+            lastNode = node;
         }
 
         private void Main_Click(object sender, EventArgs e)
         {
             var pos = PointToClient(Cursor.Position);
-            movedChild = GetChildAtPoint(pos + new Size(4, 4));
-            movedChild ??= GetChildAtPoint(pos + new Size(4, -4));
-            movedChild ??= GetChildAtPoint(pos + new Size(-4, 4));
-            movedChild ??= GetChildAtPoint(pos + new Size(-4, -4));
-            if (movedChild is not null)
+            movedNode = GetChildAtPoint(pos + new Size(4, 4));
+            movedNode ??= GetChildAtPoint(pos + new Size(4, -4));
+            movedNode ??= GetChildAtPoint(pos + new Size(-4, 4));
+            movedNode ??= GetChildAtPoint(pos + new Size(-4, -4));
+            if (movedNode is not null)
             {
-                if (movedChild.GetType() == typeof(ToolStrip))
+                if (movedNode.GetType() == typeof(ToolStrip))
                 {
                     return;
                 }
@@ -50,7 +126,7 @@ namespace CSC
                 MovingChild = !MovingChild;
                 if (MovingChild)
                 {
-                    OffsetFromDragClick = new Size(movedChild.Location.X - pos.X, movedChild.Location.Y - pos.Y);
+                    OffsetFromDragClick = new Size(movedNode.Location.X - pos.X, movedNode.Location.Y - pos.Y);
                 }
             }
         }
@@ -62,44 +138,44 @@ namespace CSC
 
         private void Main_MouseMove(object? sender, MouseEventArgs e)
         {
-            if (MovingChild && movedChild is not null)
+            if (MovingChild && movedNode is not null)
             {
-                movedChild.Location = e.Location + OffsetFromDragClick;
+                movedNode.Location = e.Location + OffsetFromDragClick;
                 Invalidate();
-
             }
-        }
-
-        //draw bezier curves from one button to other
-
-        //to smoothly enter and exit we must set the y axis to the same value as the button, and the x value to some value in between both buttons
-
-        private void Button1Click(object sender, MouseEventArgs e)
-        {
-            Details.SelectedObject = new Criterion();
-        }
-
-        private void Button2Click(object sender, EventArgs e)
-        {
-            Details.SelectedObject = new BackgroundChatterResponse();
         }
 
         private void Main_Paint(object sender, PaintEventArgs e)
         {
             //todo filter, duh
-            DrawEdge(e, button1, button2);
-            DrawEdge(e, button1, button3);
-            DrawEdge(e, button2, button4);
-            DrawEdge(e, button3, button5);
-            DrawEdge(e, button5, button1);
-
+            //if (movedNode is not null)
+            //{
+            //    if (Childs.TryGetValue(movedNode, out var child))
+            //    {
+            //        DrawEdge(e, movedNode, child);
+            //    }
+            //    else
+            //    {
+            //        DrawEdge(e, movedNode, Parents[movedNode]);
+            //    }
+            //}
+            foreach (var node in nodes.Keys())
+            {
+                var list = nodes.Childs(node);
+                if (list.Count > 0)
+                {
+                    foreach (var item in list)
+                    {
+                        DrawEdge(e, node.control, item.control);
+                    }
+                }
+            }
         }
 
         private void DrawEdge(PaintEventArgs e, Control parent, Control child)
         {
             start = parent.Location + new Size(parent.Size.Width, parent.Size.Height / 2);
             end = child.Location + new Size(0, child.Size.Height / 2);
-
 
             Point controlStart;
             Point controlEnd;
@@ -129,9 +205,8 @@ namespace CSC
             }
 
             e.Graphics.DrawBezier(linePen, start, controlStart, controlEnd, end);
-            e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
-            e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
-            
+            //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
+            //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
         }
     }
 }

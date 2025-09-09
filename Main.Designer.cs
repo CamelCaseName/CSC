@@ -32,18 +32,15 @@
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             Add = new ToolStripButton();
+            AddChild = new ToolStripButton();
+            AddParent = new ToolStripButton();
             Details = new PropertyGrid();
-            button1 = new Button();
-            button2 = new Button();
-            button3 = new Button();
-            button4 = new Button();
-            button5 = new Button();
             Menu.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
             // 
-            Menu.Items.AddRange(new ToolStripItem[] { StartButton, Add });
+            Menu.Items.AddRange(new ToolStripItem[] { StartButton, Add, AddChild, AddParent });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
             Menu.Size = new Size(1327, 25);
@@ -70,6 +67,26 @@
             Add.Text = "Add";
             Add.Click += Add_Click;
             // 
+            // AddChild
+            // 
+            AddChild.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            AddChild.Image = (Image)resources.GetObject("AddChild.Image");
+            AddChild.ImageTransparentColor = Color.Magenta;
+            AddChild.Name = "AddChild";
+            AddChild.Size = new Size(64, 22);
+            AddChild.Text = "Add Child";
+            AddChild.Click += AddChild_Click;
+            // 
+            // AddParent
+            // 
+            AddParent.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            AddParent.Image = (Image)resources.GetObject("AddParent.Image");
+            AddParent.ImageTransparentColor = Color.Magenta;
+            AddParent.Name = "AddParent";
+            AddParent.Size = new Size(70, 22);
+            AddParent.Text = "Add Parent";
+            AddParent.Click += AddParent_Click;
+            // 
             // Details
             // 
             Details.AllowDrop = true;
@@ -82,63 +99,11 @@
             Details.Size = new Size(414, 438);
             Details.TabIndex = 0;
             // 
-            // button1
-            // 
-            button1.Location = new Point(245, 169);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 1;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            button1.MouseClick += Button1Click;
-            // 
-            // button2
-            // 
-            button2.Location = new Point(395, 233);
-            button2.Name = "button2";
-            button2.Size = new Size(75, 23);
-            button2.TabIndex = 2;
-            button2.Text = "button2";
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += Button2Click;
-            // 
-            // button3
-            // 
-            button3.Location = new Point(486, 114);
-            button3.Name = "button3";
-            button3.Size = new Size(75, 23);
-            button3.TabIndex = 3;
-            button3.Text = "button3";
-            button3.UseVisualStyleBackColor = true;
-            // 
-            // button4
-            // 
-            button4.Location = new Point(449, 401);
-            button4.Name = "button4";
-            button4.Size = new Size(75, 23);
-            button4.TabIndex = 4;
-            button4.Text = "button4";
-            button4.UseVisualStyleBackColor = true;
-            // 
-            // button5
-            // 
-            button5.Location = new Point(613, 232);
-            button5.Name = "button5";
-            button5.Size = new Size(75, 23);
-            button5.TabIndex = 5;
-            button5.Text = "button5";
-            button5.UseVisualStyleBackColor = true;
-            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(1327, 623);
-            Controls.Add(button5);
-            Controls.Add(button4);
-            Controls.Add(button3);
-            Controls.Add(button2);
-            Controls.Add(button1);
             Controls.Add(Details);
             Controls.Add(Menu);
             MinimumSize = new Size(400, 200);
@@ -161,10 +126,7 @@
         private ToolStripButton StartButton;
         private ToolStripButton Add;
         private PropertyGrid Details;
-        private Button button1;
-        private Button button2;
-        private Button button3;
-        private Button button4;
-        private Button button5;
+        private ToolStripButton AddChild;
+        private ToolStripButton AddParent;
     }
 }
