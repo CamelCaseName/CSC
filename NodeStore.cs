@@ -1,14 +1,18 @@
-﻿namespace CSC
+﻿using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+
+namespace CSC
 {
     internal sealed class NodeStore
     {
         private readonly Dictionary<Node, List<Node>> childs = [];
         private readonly Dictionary<Node, List<Node>> parents = [];
+        private readonly Dictionary<Control, Node> controls = [];
 
         public void Add(Node node)
         {
             childs.TryAdd(node, []);
             parents.TryAdd(node, []);
+            controls.TryAdd(node.control, node);
         }
 
         public void Add(Node node, IEnumerable<Node> childs_)
@@ -20,8 +24,10 @@
                 foreach (var child in childs_)
                 {
                     parents[child].Add(node);
+                    controls.TryAdd(child.control, child);
                 }
             }
+            controls.TryAdd(node.control, node);
         }
 
         public void Add(Node node, IEnumerable<Node> parents_, object _)
@@ -33,8 +39,10 @@
                 foreach (var parent in parents_)
                 {
                     childs[parent].Add(node);
+                    controls.TryAdd(parent.control, parent);
                 }
             }
+            controls.TryAdd(node.control, node);
         }
 
         public void Add(Node node, IEnumerable<Node> childs_, IEnumerable<Node> parents_)
@@ -47,12 +55,14 @@
         {
             childs.Remove(node);
             parents.Remove(node);
+            controls.Remove(node.control);
         }
 
         public void Clear()
         {
             childs.Clear();
             parents.Clear();
+            controls.Clear();
         }
 
         public bool Contains(Node node)
@@ -107,6 +117,8 @@
             {
                 childs.Add(parent, [node]);
             }
+            controls.TryAdd(node.control, node);
+            controls.TryAdd(parent.control, parent);
         }
 
         public void RemoveParent(Node node, Node parent)
@@ -120,7 +132,7 @@
                 parents.Add(node, []);
             }
 
-            if (childs.Remove(node, out list))
+            if (childs.Remove(parent, out list))
             {
                 list.Remove(node);
             }
@@ -128,6 +140,8 @@
             {
                 childs.Add(parent, []);
             }
+            controls.Remove(node.control);
+            controls.Remove(parent.control);
         }
 
         public void ClearParents(Node node)
@@ -139,6 +153,7 @@
                     foreach (var parent in list)
                     {
                         RemoveChild(parent, node);
+                        controls.Remove(parent.control);
                     }
                 }
                 list.Clear();
@@ -160,7 +175,7 @@
                 childs.Add(node, [child]);
             }
 
-            if (parents.TryGetValue(node, out list))
+            if (parents.TryGetValue(child, out list))
             {
                 list.Add(node);
             }
@@ -168,6 +183,8 @@
             {
                 parents.Add(child, [node]);
             }
+            controls.TryAdd(node.control, node);
+            controls.TryAdd(child.control, child);
         }
 
         public void RemoveChild(Node node, Node child)
@@ -181,7 +198,7 @@
                 childs.Add(node, []);
             }
 
-            if (parents.Remove(node, out list))
+            if (parents.Remove(child, out list))
             {
                 list.Remove(node);
             }
@@ -189,6 +206,8 @@
             {
                 parents.Add(child, []);
             }
+            controls.Remove(node.control);
+            controls.Remove(child.control);
         }
 
         public void ClearChilds(Node node)
@@ -200,6 +219,7 @@
                     foreach (var child in list)
                     {
                         RemoveParent(child, node);
+                        controls.Remove(child.control);
                     }
                 }
                 list.Clear();
@@ -220,11 +240,13 @@
             {
                 parents.Add(node, [.. parents_]);
             }
+
             if (parents_.Any())
             {
                 foreach (var parent in parents_)
                 {
                     childs[parent].Add(node);
+                    controls.TryAdd(parent.control, parent);
                 }
             }
         }
@@ -239,11 +261,13 @@
             {
                 childs.Add(node, [.. childs_]);
             }
+
             if (childs_.Any())
             {
                 foreach (var child in childs_)
                 {
                     parents[child].Add(node);
+                    controls.TryAdd(child.control, child);
                 }
             }
         }
@@ -284,6 +308,13 @@
             get
             {
                 return new Family(Childs(node), Parents(node));
+            }
+        }
+        public Node this[Control control]
+        {
+            get
+            {
+                return controls[control];
             }
         }
     }

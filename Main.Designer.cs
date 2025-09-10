@@ -106,10 +106,11 @@
             ClientSize = new Size(1327, 623);
             Controls.Add(Details);
             Controls.Add(Menu);
+            DoubleBuffered = true;
             MinimumSize = new Size(400, 200);
             Name = "Main";
             ShowIcon = false;
-            Text = "Form1";
+            Text = "Custom Custom Story Creator";
             Click += Main_Click;
             Paint += Main_Paint;
             DoubleClick += Main_DoubleClick;

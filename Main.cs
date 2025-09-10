@@ -1,10 +1,13 @@
 using CSC.StoryItems;
 using System.Drawing.Drawing2D;
+using System.Net.Http.Headers;
 
 namespace CSC
 {
     public partial class Main : Form
     {
+        private const int NOdeCount = 1000;
+        int runningTotal = 0;
         public bool MovingChild = false;
         private Size OffsetFromDragClick = Size.Empty;
         private Control? movedNode;
@@ -30,7 +33,44 @@ namespace CSC
 
         private void Start_Click(object sender, EventArgs e)
         {
+            Node node = CreateNode(typeof(Criterion));
 
+            nodes.Add(node);
+
+            lastNode = node;
+            for (int i = 0; i < NOdeCount; i++)
+            {
+                switch (Random.Shared.Next(3))
+                {
+                    case 2:
+                    {
+                        node = CreateNode(typeof(Response));
+                        nodes.AddChild(lastNode, node);
+                        break;
+                    }
+                    case 1:
+                    {
+                        node = CreateNode(typeof(Criterion));
+                        nodes.Add(node);
+                        break;
+                    }
+                    case 0:
+                    {
+                        node = CreateNode(typeof(Dialogue));
+                        nodes.AddParent(lastNode, node);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+
+                if (Random.Shared.Next(3) == 1)
+                {
+                    lastNode = node;
+                }
+            }
+
+            Invalidate();
         }
 
         private void Add_Click(object sender, EventArgs e)
@@ -40,6 +80,8 @@ namespace CSC
             nodes.Add(node);
 
             lastNode = node;
+
+            Invalidate();
         }
 
         private Node CreateNode(Type type)
@@ -67,28 +109,54 @@ namespace CSC
                 };
             }
 
+            GetStartingPos(out int x, out int y);
+
+            Console.WriteLine($"spawned number {counter} at {x}|{y}");
             var control = new Button
             {
                 Parent = this,
-                Location = new Point(434, 147),
-                Name = "button" + counter.ToString(),
+                Location = new Point(x, y),
+                Name = type.Name + counter.ToString(),
                 Size = new Size(75, 23),
                 TabIndex = 1,
-                Text = "button" + counter.ToString(),
+                Text = type.Name + counter.ToString(),
                 UseVisualStyleBackColor = true,
-                Enabled = true
+                Enabled = true,
+                Font = new Font("Segoe UI", 6.75F, FontStyle.Regular, GraphicsUnit.Point, 0)
             };
 
             var node = new Node(control, counter.ToString(), NodeType.Criterion, "blabla", item);
-            control.Click += (_, e) => { 
-                Details.SelectedObject = item; 
+            control.Click += (_, e) =>
+            {
+                Details.SelectedObject = item;
                 lastNode = node;
             };
             control.MouseMove += Main_MouseMove;
 
-
             counter++;
             return node;
+        }
+
+        private void GetStartingPos(out int x, out int y)
+        {
+            int xstep = 100;
+            int ystep = 50;
+            //~sidelength of the most square layout we can achieve witrh the number of nodes we have
+            int sideLength = (int)(Math.Sqrt(NOdeCount) + 0.5);
+            //modulo of running total with sidelength gives x coords, repeating after sidelength
+            //offset by halfe sidelength to center x
+            x = runningTotal % sideLength - sideLength / 2;
+            x += 17;
+            x *= xstep;
+            //running total divided by sidelength gives y coords,
+            //increments after runningtotal increments sidelength times
+            //offset by halfe sidelength to center y
+            y = runningTotal / sideLength - sideLength / 2;
+            y += 17;
+            y *= ystep;
+            //set position
+            //increase running total
+            runningTotal++;
         }
 
         private void AddChild_Click(object sender, EventArgs e)
@@ -98,6 +166,8 @@ namespace CSC
             nodes.AddChild(lastNode, node);
 
             lastNode = node;
+
+            Invalidate();
         }
 
         private void AddParent_Click(object sender, EventArgs e)
@@ -107,6 +177,8 @@ namespace CSC
             nodes.AddParent(lastNode, node);
 
             lastNode = node;
+
+            Invalidate();
         }
 
         private void Main_Click(object sender, EventArgs e)
@@ -147,18 +219,39 @@ namespace CSC
 
         private void Main_Paint(object sender, PaintEventArgs e)
         {
-            //todo filter, duh
-            //if (movedNode is not null)
+            //if (!MovingChild)
             //{
-            //    if (Childs.TryGetValue(movedNode, out var child))
+            //    foreach (var node in nodes.Keys())
             //    {
-            //        DrawEdge(e, movedNode, child);
-            //    }
-            //    else
-            //    {
-            //        DrawEdge(e, movedNode, Parents[movedNode]);
+            //        var list = nodes.Childs(node);
+            //        if (list.Count > 0)
+            //        {
+            //            foreach (var item in list)
+            //            {
+            //                DrawEdge(e, node.control, item.control);
+            //            }
+            //        }
             //    }
             //}
+            //else if(movedNode is not null)
+            //{
+            //    var family = nodes[nodes[movedNode]];
+            //    if(family.Childs.Count > 0)
+            //    {
+            //        foreach(var item in family.Childs)
+            //        {
+            //            DrawEdge(e, movedNode, item.control);
+            //        }
+            //    }
+            //    if (family.Parents.Count > 0)
+            //    {
+            //        foreach (var item in family.Parents)
+            //        {
+            //            DrawEdge(e, item.control, movedNode);
+            //        }
+            //    }
+            //}
+
             foreach (var node in nodes.Keys())
             {
                 var list = nodes.Childs(node);
