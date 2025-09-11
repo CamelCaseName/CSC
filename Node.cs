@@ -1,8 +1,4 @@
-﻿using CSC.StoryItems;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using static CSC.StoryItems.StoryEnums;
+﻿using static CSC.StoryItems.StoryEnums;
 
 namespace CSC
 {
@@ -57,21 +53,19 @@ namespace CSC
         public NodeType Type;
         public object? Data = null;
         public PointF Position = PointF.Empty;
+        public SizeF Size = SizeF.Empty;
         public string ID;
         public string Text;
         public Type DataType = typeof(object);
-        public Control control;
 
-        public Node(Control control, string iD, NodeType type, string text)
+        public Node(string iD, NodeType type, string text)
         {
-            this.control = control;
             ID = iD;
             Text = text;
             Type = type;
         }
-        public Node(Control control, string iD, NodeType type, string text, object data)
+        public Node(string iD, NodeType type, string text, object data)
         {
-            this.control = control;
             ID = iD;
             Text = text;
             Type = type;
@@ -81,7 +75,6 @@ namespace CSC
 
         public Node()
         {
-            control = new();
             ID = string.Empty;
             Text = string.Empty;
             Type = NodeType.Null;

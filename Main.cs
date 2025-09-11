@@ -1,4 +1,5 @@
 using CSC.StoryItems;
+using System;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Net.Http.Headers;
@@ -13,21 +14,46 @@ namespace CSC
         int runningTotal = 0;
         public bool MovingChild = false;
         private Size OffsetFromDragClick = Size.Empty;
-        private Control? movedNode;
+        private Node? movedNode;
         private int counter = 0;
-        private Point start;
-        private Point end;
+        private PointF start;
+        private PointF end;
         private readonly Pen linePen;
         private readonly Pen highlightPen;
-        private readonly List<Control> visited = [];
+        private readonly List<Node> visited = [];
         private readonly int scaleX = 120;
         private readonly int scaleY = 40;
+        private float Scaling = 0.3f;
+        private float StartPanOffsetX = 0f;
+        private float StartPanOffsetY = 0f;
+        private float OldMouseMovingPosX;
+        private float OldMouseMovingPosY;
+        private float AfterZoomMouseX;
+        private float AfterZoomMouseY;
+        private float BeforeZoomMouseX;
+        private float BeforeZoomMouseY;
+        private static float Xmax = 0;
+        private static float Ymax = 0;
+        private static float Xmin = 0;
+        private static float Ymin = 0;
+        private float OffsetX;
+        private float OffsetY;
+        private readonly int NodeSize = 100;
+        private readonly int NodeSizeX = 70;
+        private readonly int NodeSizeY = 30;
+        private bool CurrentlyInPan = false;
         private readonly List<int> layerYperX = [0];
 
         private readonly NodeStore nodes = new();
 
         private Node lastNode = Node.NullNode;
-        private Node highlightNode = Node.NullNode;
+        private readonly Node highlightNode = Node.NullNode;
+        private bool IsShiftPressed;
+        private bool IsCtrlPressed;
+        private Cursor priorCursor;
+        private readonly Brush nodeBrush;
+        private readonly Brush HighlightNodeBrush;
+        private readonly Brush FontBrush;
 
         public Main()
         {
@@ -42,6 +68,9 @@ namespace CSC
                 EndCap = LineCap.Triangle,
                 StartCap = LineCap.Round
             };
+            nodeBrush = new SolidBrush(Color.FromArgb(255, 100, 100, 100));
+            HighlightNodeBrush = Brushes.LightCyan;
+            FontBrush = Brushes.White;
 
         }
 
@@ -110,8 +139,8 @@ namespace CSC
                 if (family.Parents.Count == 0)
                 {
                     //we have a root start node with no parents, start child search and layout from here
-                    key.control.Location = new Point(scaleX, layerYperX[0] * scaleY);
-                    visited.Add(key.control);
+                    key.Position = new PointF(scaleX, layerYperX[0] * scaleY);
+                    visited.Add(key);
 
                     if (family.Childs.Count == 0)
                     {
@@ -137,14 +166,14 @@ namespace CSC
         {
             foreach (var currentChild in childs)
             {
-                if (visited.Contains(currentChild.control))
+                if (visited.Contains(currentChild))
                 {
                     continue;
                 }
 
-                currentChild.control.Location = new Point((layerX + 1) * scaleX, layerYperX[layerX] * scaleY);
+                currentChild.Position = new PointF((layerX + 1) * scaleX, layerYperX[layerX] * scaleY);
                 //Debug.WriteLine("on node " + currentChild.control.Text + " we arrived at y level" + layerYperX[layerX]);
-                visited.Add(currentChild.control);
+                visited.Add(currentChild);
 
                 var newChilds = nodes.Childs(currentChild);
                 if (newChilds.Count == 0)
@@ -160,10 +189,11 @@ namespace CSC
                     }
                     else
                     {
-                        layerYperX[layerX + 1] = Math.Max(layerYperX[layerX], layerYperX[layerX+1]);
+                        layerYperX[layerX + 1] = Math.Max(layerYperX[layerX], layerYperX[layerX + 1]);
                     }
                     DoAllChilds(layerX + 1, newChilds);
                     layerYperX[layerX]++;
+                    layerYperX[0] = Math.Max(layerYperX[0], layerYperX[layerX]);
                 }
             }
         }
@@ -207,42 +237,17 @@ namespace CSC
             GetStartingPos(out int x, out int y);
 
             Debug.WriteLine($"spawned number {counter} at {x}|{y}");
-            var control = new Button
-            {
-                Parent = this,
-                Location = new Point(x, y),
-                Name = type.Name + counter.ToString(),
-                Size = new Size(75, 23),
-                TabIndex = 1,
-                Text = type.Name + counter.ToString(),
-                UseVisualStyleBackColor = true,
-                Enabled = true,
-                Font = new Font("Segoe UI", 6.75F, FontStyle.Regular, GraphicsUnit.Point, 0)
-            };
 
-            var node = new Node(control, counter.ToString(), NodeType.Null, "blabla", item);
-            control.Click += (_, e) =>
+            var node = new Node(counter.ToString(), NodeType.Null, "blabla", item)
             {
-                Details.SelectedObject = item;
-                lastNode = node;
-            };
-            control.MouseMove += Main_MouseMove;
-            control.MouseEnter += (_, e) =>
-            {
-                highlightNode = nodes[control];
-                Main.ActiveForm?.Invalidate();
-            };
-            control.MouseLeave += (_, e) =>
-            {
-                highlightNode = Node.NullNode;
-                Main.ActiveForm?.Invalidate();
+                Position = new PointF(x, y),
+                Size = new SizeF(NodeSizeX, NodeSizeY),
+                ID = item.GetType().Name + counter
             };
 
             counter++;
             return node;
         }
-
-        private void Control_MouseEnter(object? sender, EventArgs e) => throw new NotImplementedException();
 
         private void GetStartingPos(out int x, out int y)
         {
@@ -288,44 +293,19 @@ namespace CSC
             Invalidate();
         }
 
-        private void Main_Click(object sender, EventArgs e)
-        {
-            var pos = PointToClient(Cursor.Position);
-            movedNode = GetChildAtPoint(pos + new Size(4, 4));
-            movedNode ??= GetChildAtPoint(pos + new Size(4, -4));
-            movedNode ??= GetChildAtPoint(pos + new Size(-4, 4));
-            movedNode ??= GetChildAtPoint(pos + new Size(-4, -4));
-            if (movedNode is not null)
-            {
-                if (movedNode.GetType() == typeof(ToolStrip))
-                {
-                    return;
-                }
-
-                MovingChild = !MovingChild;
-                if (MovingChild)
-                {
-                    OffsetFromDragClick = new Size(movedNode.Location.X - pos.X, movedNode.Location.Y - pos.Y);
-                }
-            }
-        }
-
-        private void Main_DoubleClick(object sender, EventArgs e)
-        {
-            Details.Visible = !Details.Visible;
-        }
-
-        private void Main_MouseMove(object? sender, MouseEventArgs e)
-        {
-            if (MovingChild && movedNode is not null)
-            {
-                movedNode.Location = e.Location + OffsetFromDragClick;
-                Invalidate();
-            }
-        }
-
         private void Main_Paint(object sender, PaintEventArgs e)
         {
+            var g = e.Graphics;
+            g.ToLowQuality();
+
+            //update canvas transforms
+            g.TranslateTransform(-OffsetX * Scaling, -OffsetY * Scaling);
+            g.ScaleTransform(Scaling, Scaling);
+            Xmin = OffsetX - NodeSize;
+            Ymin = OffsetY - NodeSize;
+            Xmax = g.VisibleClipBounds.Right + NodeSize;
+            Ymax = g.VisibleClipBounds.Bottom + NodeSize;
+
             foreach (var node in nodes.KeyNodes())
             {
                 var list = nodes.Childs(node);
@@ -333,9 +313,10 @@ namespace CSC
                 {
                     foreach (var item in list)
                     {
-                        DrawEdge(e, node.control, item.control, linePen);
+                        DrawEdge(e, node, item, linePen);
                     }
                 }
+                DrawNode(e, node, nodeBrush);
             }
 
             if (highlightNode != Node.NullNode)
@@ -345,37 +326,44 @@ namespace CSC
                 {
                     foreach (var item in family.Childs)
                     {
-                        DrawEdge(e, highlightNode.control, item.control, highlightPen);
+                        DrawEdge(e, highlightNode, item, highlightPen);
                     }
                 }
                 if (family.Parents.Count > 0)
                 {
                     foreach (var item in family.Parents)
                     {
-                        DrawEdge(e, item.control, highlightNode.control, highlightPen);
+                        DrawEdge(e, item, highlightNode, highlightPen);
                     }
                 }
+                DrawNode(e, highlightNode, HighlightNodeBrush);
             }
         }
 
-        private void DrawEdge(PaintEventArgs e, Control parent, Control child, Pen pen)
+        private void DrawNode(PaintEventArgs e, Node node, Brush brush)
         {
-            start = parent.Location + new Size(parent.Size.Width, parent.Size.Height / 2);
-            end = child.Location + new Size(0, child.Size.Height / 2);
+            e.Graphics.FillEllipse(brush, new RectangleF(node.Position, node.Size));
+            e.Graphics.DrawString(node.ID[..9], DefaultFont, FontBrush, new PointF(node.Position.X + 5, node.Position.Y + 7));
+        }
 
-            Point controlStart;
-            Point controlEnd;
-            int controlEndY, controlStartY;
+        private void DrawEdge(PaintEventArgs e, Node parent, Node child, Pen pen)
+        {
+            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 2);
+            end = child.Position + new SizeF(0, child.Size.Height / 2);
 
-            int distanceX = Math.Abs(end.X - start.X);
+            PointF controlStart;
+            PointF controlEnd;
+            float controlEndY, controlStartY;
+
+            float distanceX = MathF.Abs(end.X - start.X);
             if (start.X < end.X)
             {
-                controlStart = new Point((distanceX / 2) + start.X, start.Y);
-                controlEnd = new Point(((end.X - start.X) / 2) + start.X, end.Y);
+                controlStart = new PointF((distanceX / 2) + start.X, start.Y);
+                controlEnd = new PointF(((end.X - start.X) / 2) + start.X, end.Y);
             }
             else
             {
-                int distanceY = Math.Abs(end.Y - start.Y);
+                float distanceY = MathF.Abs(end.Y - start.Y);
                 if (start.Y > end.Y)
                 {
                     controlStartY = start.Y - distanceY / 2;
@@ -386,8 +374,8 @@ namespace CSC
                     controlStartY = start.Y + distanceY / 2;
                     controlEndY = end.Y - distanceY / 2;
                 }
-                controlStart = new Point((start.X + distanceX / 2), controlStartY);
-                controlEnd = new Point((end.X - distanceX / 2), controlEndY);
+                controlStart = new PointF((start.X + distanceX / 2), controlStartY);
+                controlEnd = new PointF((end.X - distanceX / 2), controlEndY);
             }
 
             e.Graphics.DrawBezier(pen, start, controlStart, controlEnd, end);
@@ -401,6 +389,188 @@ namespace CSC
             visited.Clear();
             Invalidate();
             counter = 0;
+        }
+
+        public void HandleKeyBoard(object? sender, KeyEventArgs e)
+        {
+            //get the shift key state so we can determine later if we want to redraw the tree on node selection or not
+            IsShiftPressed = e.KeyData == (Keys.ShiftKey | Keys.Shift);
+            IsCtrlPressed = e.KeyData == (Keys.Control | Keys.ControlKey);
+            if (!IsCtrlPressed)
+            {
+                movedNode = null;
+                MovingChild = false;
+            }
+        }
+
+        public void HandleMouseEvents(object? sender, MouseEventArgs e)
+        {
+            //set old position for next frame/call
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    Node? clickedNode;
+                    if (e.Clicks > 1)
+                    {
+                        Details.Visible = !Details.Visible;
+                    }
+                    else
+                    {
+                        var pos = Main.ActiveForm!.PointToClient(Cursor.Position);
+                        ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+                        var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
+                        clickedNode = GetNodeAtPoint(ScreenPos);
+
+                        if (clickedNode is null)
+                        {
+                            return;
+                        }
+
+                        if (IsCtrlPressed)
+                        {
+                            movedNode = clickedNode;
+                            MovingChild = !MovingChild;
+                            if (MovingChild)
+                            {
+                                OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPosX), (int)(movedNode.Position.Y - ScreenPosY));
+                            }
+                        }
+                        else
+                        {
+                            Details.SelectedObject = clickedNode.Data;
+                        }
+                    }
+                    break;
+                case MouseButtons.None:
+                    EndPan();
+                    break;
+                case MouseButtons.Right:
+                    break;
+                case MouseButtons.Middle:
+                    UpdatePan(e.Location);
+                    break;
+                case MouseButtons.XButton1:
+                    break;
+                case MouseButtons.XButton2:
+                    break;
+                default:
+                    EndPan();
+                    break;
+            }
+
+            if (MovingChild && movedNode is not null)
+            {
+                ScreenToGraph(e.Location.X, e.Location.Y, out float ScreenPosX, out float ScreenPosY);
+                var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
+                movedNode.Position = ScreenPos + OffsetFromDragClick;
+                Invalidate();
+            }
+
+            //everything else, scrolling for example
+            if (e.Delta != 0)
+            {
+                UpdateScaling(e);
+                //redraw
+                Invalidate();
+            }
+
+            //save mouse pos for next frame
+            ScreenToGraph(e.Location.X, e.Location.Y, out OldMouseMovingPosX, out OldMouseMovingPosY);
+        }
+
+        private Node? GetNodeAtPoint(Point mouseGraphLocation)
+        {
+            Node? node = null;
+            foreach (var key in nodes.KeyNodes())
+            {
+                if (new RectangleF(key.Position, key.Size).Contains(mouseGraphLocation))
+                {
+                    node = key;
+                    break;
+                }
+            }
+            return node;
+        }
+
+        private void EndPan()
+        {
+            //end of pan
+            if (CurrentlyInPan)
+            {
+                CurrentlyInPan = false;
+                Cursor = priorCursor;
+            }
+        }
+        
+        private void SetPanOffset(Point location)
+        {
+            StartPanOffsetX = location.X;
+            StartPanOffsetY = location.Y;
+        }
+        
+        private void UpdatePan(Point mouseLocation)
+        {
+            //start of pan
+            if (!CurrentlyInPan)
+            {
+                CurrentlyInPan = true;
+                //get current position in screen coordinates when we start to pan
+                SetPanOffset(mouseLocation);
+                priorCursor = Cursor;
+                Cursor = Cursors.Cross;
+            }
+            //in pan
+            else if (CurrentlyInPan)
+            {
+                UpdatePanOffset(mouseLocation);
+                //redraw
+                Invalidate();
+            }
+        }
+
+        private void UpdatePanOffset(Point location)
+        {
+            //better scaling thanks to the one lone coder
+            //https://www.youtube.com/watch?v=ZQ8qtAizis4
+            //update opffset by the difference in screen coordinates we travelled so far
+            OffsetX -= (location.X - StartPanOffsetX) / Scaling;
+            OffsetY -= (location.Y - StartPanOffsetY) / Scaling;
+
+            //replace old start by new start coordinates so we only look at one interval,
+            //and do not accumulate the change in position
+            StartPanOffsetX = location.X;
+            StartPanOffsetY = location.Y;
+        }
+
+        private void UpdateScaling(MouseEventArgs e)
+        {
+            //get last mouse position in world space before the zoom so we can
+            //offset back by the distance in world space we got shifted by zooming
+            ScreenToGraph(e.X, e.Y, out BeforeZoomMouseX, out BeforeZoomMouseY);
+
+            //WHEEL_DELTA = 120, as per windows documentation
+            //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.mouseeventargs.delta?view=windowsdesktop-6.0
+            if (e.Delta > 0)
+            {
+                Scaling *= 1.2f;
+            }
+            else if (e.Delta < 0)
+            {
+                Scaling *= 0.8f;
+            }
+
+            //capture mouse coordinates in world space again so we can calculate the offset cause by zooming and compensate
+            ScreenToGraph(e.X, e.Y, out AfterZoomMouseX, out AfterZoomMouseY);
+
+            //update pan offset by the distance caused by zooming
+            OffsetX += BeforeZoomMouseX - AfterZoomMouseX;
+            OffsetY += BeforeZoomMouseY - AfterZoomMouseY;
+        }
+        
+        public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
+        {
+            graphX = screenX / Scaling + OffsetX;
+            graphY = screenY / Scaling + OffsetY;
         }
     }
 }

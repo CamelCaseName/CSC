@@ -31,11 +31,11 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
+            ResetButton = new ToolStripButton();
             Add = new ToolStripButton();
             AddChild = new ToolStripButton();
             AddParent = new ToolStripButton();
             Details = new PropertyGrid();
-            ResetButton = new ToolStripButton();
             Menu.SuspendLayout();
             SuspendLayout();
             // 
@@ -57,6 +57,16 @@
             StartButton.Size = new Size(35, 22);
             StartButton.Text = "Start";
             StartButton.Click += Start_Click;
+            // 
+            // ResetButton
+            // 
+            ResetButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            ResetButton.Image = (Image)resources.GetObject("ResetButton.Image");
+            ResetButton.ImageTransparentColor = Color.Magenta;
+            ResetButton.Name = "ResetButton";
+            ResetButton.Size = new Size(39, 22);
+            ResetButton.Text = "Reset";
+            ResetButton.Click += ResetButton_Click;
             // 
             // Add
             // 
@@ -93,22 +103,12 @@
             Details.AllowDrop = true;
             Details.Anchor = AnchorStyles.None;
             Details.HelpVisible = false;
-            Details.Location = new Point(860, 53);
+            Details.Location = new Point(795, 52);
             Details.MaximumSize = new Size(600, 900);
             Details.MinimumSize = new Size(100, 50);
             Details.Name = "Details";
             Details.Size = new Size(414, 438);
             Details.TabIndex = 0;
-            // 
-            // ResetButton
-            // 
-            ResetButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            ResetButton.Image = (Image)resources.GetObject("ResetButton.Image");
-            ResetButton.ImageTransparentColor = Color.Magenta;
-            ResetButton.Name = "ResetButton";
-            ResetButton.Size = new Size(39, 22);
-            ResetButton.Text = "Reset";
-            ResetButton.Click += ResetButton_Click;
             // 
             // Main
             // 
@@ -118,14 +118,18 @@
             Controls.Add(Details);
             Controls.Add(Menu);
             DoubleBuffered = true;
+            KeyPreview = true;
             MinimumSize = new Size(400, 200);
             Name = "Main";
             ShowIcon = false;
             Text = "Custom Custom Story Creator";
-            Click += Main_Click;
             Paint += Main_Paint;
-            DoubleClick += Main_DoubleClick;
-            MouseMove += Main_MouseMove;
+            KeyDown += HandleKeyBoard;
+            KeyUp += HandleKeyBoard;
+            MouseClick += HandleMouseEvents;
+            MouseDoubleClick += HandleMouseEvents;
+            MouseMove += HandleMouseEvents;
+            MouseWheel += HandleMouseEvents;
             Menu.ResumeLayout(false);
             Menu.PerformLayout();
             ResumeLayout(false);
