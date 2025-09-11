@@ -35,12 +35,13 @@
             AddChild = new ToolStripButton();
             AddParent = new ToolStripButton();
             Details = new PropertyGrid();
+            ResetButton = new ToolStripButton();
             Menu.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
             // 
-            Menu.Items.AddRange(new ToolStripItem[] { StartButton, Add, AddChild, AddParent });
+            Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
             Menu.Size = new Size(1327, 25);
@@ -92,12 +93,22 @@
             Details.AllowDrop = true;
             Details.Anchor = AnchorStyles.None;
             Details.HelpVisible = false;
-            Details.Location = new Point(864, 54);
+            Details.Location = new Point(860, 53);
             Details.MaximumSize = new Size(600, 900);
             Details.MinimumSize = new Size(100, 50);
             Details.Name = "Details";
             Details.Size = new Size(414, 438);
             Details.TabIndex = 0;
+            // 
+            // ResetButton
+            // 
+            ResetButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            ResetButton.Image = (Image)resources.GetObject("ResetButton.Image");
+            ResetButton.ImageTransparentColor = Color.Magenta;
+            ResetButton.Name = "ResetButton";
+            ResetButton.Size = new Size(39, 22);
+            ResetButton.Text = "Reset";
+            ResetButton.Click += ResetButton_Click;
             // 
             // Main
             // 
@@ -129,5 +140,6 @@
         private PropertyGrid Details;
         private ToolStripButton AddChild;
         private ToolStripButton AddParent;
+        private ToolStripButton ResetButton;
     }
 }

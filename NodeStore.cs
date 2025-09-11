@@ -100,18 +100,25 @@ namespace CSC
 
         public void AddParent(Node node, Node parent)
         {
-            if (parents.TryGetValue(node, out var list))
+            Add(parent);
+            if (parents.TryGetValue(node, out _))
             {
-                list.Add(parent);
+                if (!parents[node].Contains(parent))
+                {
+                    parents[node].Add(parent);
+                }
             }
             else
             {
                 parents.Add(node, [parent]);
             }
 
-            if (childs.TryGetValue(parent, out list))
+            if (childs.TryGetValue(parent, out _))
             {
-                list.Add(node);
+                if (!childs[parent].Contains(node))
+                {
+                    childs[parent].Add(node);
+                }
             }
             else
             {
@@ -123,7 +130,7 @@ namespace CSC
 
         public void RemoveParent(Node node, Node parent)
         {
-            if (parents.Remove(node, out var list))
+            if (parents.TryGetValue(node, out var list))
             {
                 list.Remove(parent);
             }
@@ -132,7 +139,7 @@ namespace CSC
                 parents.Add(node, []);
             }
 
-            if (childs.Remove(parent, out list))
+            if (childs.TryGetValue(parent, out list))
             {
                 list.Remove(node);
             }
@@ -166,18 +173,25 @@ namespace CSC
 
         public void AddChild(Node node, Node child)
         {
-            if (childs.TryGetValue(node, out var list))
+            Add(child);
+            if (childs.TryGetValue(node, out _))
             {
-                list.Add(child);
+                if (!childs[node].Contains(child))
+                {
+                    childs[node].Add(child);
+                }
             }
             else
             {
                 childs.Add(node, [child]);
             }
 
-            if (parents.TryGetValue(child, out list))
+            if (parents.TryGetValue(child, out _))
             {
-                list.Add(node);
+                if (!parents[child].Contains(node))
+                {
+                    parents[child].Add(node);
+                }
             }
             else
             {
@@ -189,7 +203,7 @@ namespace CSC
 
         public void RemoveChild(Node node, Node child)
         {
-            if (childs.Remove(node, out var list))
+            if (childs.TryGetValue(node, out var list))
             {
                 list.Remove(child);
             }
@@ -198,7 +212,7 @@ namespace CSC
                 childs.Add(node, []);
             }
 
-            if (parents.Remove(child, out list))
+            if (parents.TryGetValue(child, out list))
             {
                 list.Remove(node);
             }
@@ -232,43 +246,17 @@ namespace CSC
 
         public void AddParents(Node node, IEnumerable<Node> parents_)
         {
-            if (parents.TryGetValue(node, out var list))
+            foreach (var item in parents_)
             {
-                list.AddRange(parents_);
-            }
-            else
-            {
-                parents.Add(node, [.. parents_]);
-            }
-
-            if (parents_.Any())
-            {
-                foreach (var parent in parents_)
-                {
-                    childs[parent].Add(node);
-                    controls.TryAdd(parent.control, parent);
-                }
+                AddParent(node, item);
             }
         }
 
         public void AddChilds(Node node, IEnumerable<Node> childs_)
         {
-            if (childs.TryGetValue(node, out var list))
+            foreach (var item in childs_)
             {
-                list.AddRange(childs_);
-            }
-            else
-            {
-                childs.Add(node, [.. childs_]);
-            }
-
-            if (childs_.Any())
-            {
-                foreach (var child in childs_)
-                {
-                    parents[child].Add(node);
-                    controls.TryAdd(child.control, child);
-                }
+                AddChild(node, item);
             }
         }
 
@@ -298,7 +286,7 @@ namespace CSC
             }
         }
 
-        public Dictionary<Node, List<Node>>.KeyCollection Keys()
+        public Dictionary<Node, List<Node>>.KeyCollection KeyNodes()
         {
             return childs.Keys;
         }
@@ -310,6 +298,7 @@ namespace CSC
                 return new Family(Childs(node), Parents(node));
             }
         }
+
         public Node this[Control control]
         {
             get

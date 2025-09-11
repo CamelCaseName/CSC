@@ -1,12 +1,14 @@
 using CSC.StoryItems;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Net.Http.Headers;
+using System.Windows.Forms;
 
 namespace CSC
 {
     public partial class Main : Form
     {
-        private const int NOdeCount = 1000;
+        private const int NodeCount = 10;
         int runningTotal = 0;
         public bool MovingChild = false;
         private Size OffsetFromDragClick = Size.Empty;
@@ -15,6 +17,10 @@ namespace CSC
         private Point start;
         private Point end;
         private readonly Pen linePen;
+        List<Control> visited = [];
+        int scaleX = 120;
+        int scaleY = 40;
+        List<int> layerYperX = [0];
 
         private readonly NodeStore nodes = new();
 
@@ -38,7 +44,7 @@ namespace CSC
             nodes.Add(node);
 
             lastNode = node;
-            for (int i = 0; i < NOdeCount; i++)
+            for (int i = 0; i < NodeCount; i++)
             {
                 switch (Random.Shared.Next(3))
                 {
@@ -70,7 +76,81 @@ namespace CSC
                 }
             }
 
+            //position according to the child system
+            SetupStartPositions();
+
             Invalidate();
+        }
+
+        private void SetupStartPositions()
+        {
+            for (int i = 0; i < layerYperX.Count; i++)
+            {
+                layerYperX[i] = 1;
+            }
+            visited.Clear();
+            foreach (var key in nodes.KeyNodes())
+            {
+                Family family = nodes[key];
+                if (family.Parents.Count == 0)
+                {
+                    //we have a root start node with no parents, start child search and layout from here
+                    key.control.Location = new Point(scaleX, layerYperX[0] * scaleY);
+                    visited.Add(key.control);
+
+                    if (family.Childs.Count == 0)
+                    {
+                        layerYperX[0]++;
+                        continue;
+                    }
+                    if (layerYperX.Count <= 1)
+                    {
+                        layerYperX.Add(layerYperX[0]);
+                    }
+                    else
+                    {
+                        layerYperX[1] = layerYperX[0];
+                    }
+                    //Debug.WriteLine("on node " + key.control.Text + " we went to its children at y level " + layerYperX[0]);
+                    DoAllChilds(1, family.Childs);
+                    layerYperX[0]++;
+                }
+            }
+        }
+
+        private void DoAllChilds(int layerX, List<Node> childs)
+        {
+            foreach (var currentChild in childs)
+            {
+                if (visited.Contains(currentChild.control))
+                {
+                    continue;
+                }
+
+                currentChild.control.Location = new Point((layerX + 1) * scaleX, layerYperX[layerX] * scaleY);
+                //Debug.WriteLine("on node " + currentChild.control.Text + " we arrived at y level" + layerYperX[layerX]);
+                visited.Add(currentChild.control);
+
+                var newChilds = nodes.Childs(currentChild);
+                if (newChilds.Count == 0)
+                {
+                    layerYperX[layerX]++;
+                    continue;
+                }
+                else
+                {
+                    if (layerYperX.Count <= layerX + 1)
+                    {
+                        layerYperX.Add(layerYperX[layerX]);
+                    }
+                    else
+                    {
+                        layerYperX[layerX + 1] = layerYperX[layerX];
+                    }
+                    DoAllChilds(layerX + 1, newChilds);
+                    layerYperX[layerX]++;
+                }
+            }
         }
 
         private void Add_Click(object sender, EventArgs e)
@@ -111,7 +191,7 @@ namespace CSC
 
             GetStartingPos(out int x, out int y);
 
-            Console.WriteLine($"spawned number {counter} at {x}|{y}");
+            Debug.WriteLine($"spawned number {counter} at {x}|{y}");
             var control = new Button
             {
                 Parent = this,
@@ -125,7 +205,7 @@ namespace CSC
                 Font = new Font("Segoe UI", 6.75F, FontStyle.Regular, GraphicsUnit.Point, 0)
             };
 
-            var node = new Node(control, counter.ToString(), NodeType.Criterion, "blabla", item);
+            var node = new Node(control, counter.ToString(), NodeType.Null, "blabla", item);
             control.Click += (_, e) =>
             {
                 Details.SelectedObject = item;
@@ -142,7 +222,7 @@ namespace CSC
             int xstep = 100;
             int ystep = 50;
             //~sidelength of the most square layout we can achieve witrh the number of nodes we have
-            int sideLength = (int)(Math.Sqrt(NOdeCount) + 0.5);
+            int sideLength = (int)(Math.Sqrt(NodeCount) + 0.5);
             //modulo of running total with sidelength gives x coords, repeating after sidelength
             //offset by halfe sidelength to center x
             x = runningTotal % sideLength - sideLength / 2;
@@ -252,7 +332,7 @@ namespace CSC
             //    }
             //}
 
-            foreach (var node in nodes.Keys())
+            foreach (var node in nodes.KeyNodes())
             {
                 var list = nodes.Childs(node);
                 if (list.Count > 0)
@@ -300,6 +380,12 @@ namespace CSC
             e.Graphics.DrawBezier(linePen, start, controlStart, controlEnd, end);
             //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
             //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
+        }
+
+        private void ResetButton_Click(object sender, EventArgs e)
+        {
+            nodes.Clear();
+            visited.Clear();
         }
     }
 }
