@@ -3,12 +3,13 @@ using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Net.Http.Headers;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace CSC
 {
     public partial class Main : Form
     {
-        private const int NodeCount = 10;
+        private const int NodeCount = 100;
         int runningTotal = 0;
         public bool MovingChild = false;
         private Size OffsetFromDragClick = Size.Empty;
@@ -17,19 +18,26 @@ namespace CSC
         private Point start;
         private Point end;
         private readonly Pen linePen;
-        List<Control> visited = [];
-        int scaleX = 120;
-        int scaleY = 40;
-        List<int> layerYperX = [0];
+        private readonly Pen highlightPen;
+        private readonly List<Control> visited = [];
+        private readonly int scaleX = 120;
+        private readonly int scaleY = 40;
+        private readonly List<int> layerYperX = [0];
 
         private readonly NodeStore nodes = new();
 
         private Node lastNode = Node.NullNode;
+        private Node highlightNode = Node.NullNode;
 
         public Main()
         {
             InitializeComponent();
             linePen = new Pen(Brushes.Black, 2)
+            {
+                EndCap = LineCap.Triangle,
+                StartCap = LineCap.Round
+            };
+            highlightPen = new Pen(Brushes.Green, 3)
             {
                 EndCap = LineCap.Triangle,
                 StartCap = LineCap.Round
@@ -46,20 +54,27 @@ namespace CSC
             lastNode = node;
             for (int i = 0; i < NodeCount; i++)
             {
-                switch (Random.Shared.Next(3))
+                switch (Random.Shared.Next(10))
                 {
-                    case 2:
+                    case 9:
+                    case 8:
+                    case 7:
+                    case 6:
+                    case 5:
+                    case 4:
                     {
                         node = CreateNode(typeof(Response));
                         nodes.AddChild(lastNode, node);
                         break;
                     }
-                    case 1:
+                    case 3:
                     {
                         node = CreateNode(typeof(Criterion));
                         nodes.Add(node);
                         break;
                     }
+                    case 2:
+                    case 1:
                     case 0:
                     {
                         node = CreateNode(typeof(Dialogue));
@@ -70,7 +85,7 @@ namespace CSC
                         break;
                 }
 
-                if (Random.Shared.Next(3) == 1)
+                if (Random.Shared.Next(2) == 1)
                 {
                     lastNode = node;
                 }
@@ -109,7 +124,7 @@ namespace CSC
                     }
                     else
                     {
-                        layerYperX[1] = layerYperX[0];
+                        layerYperX[1] = Math.Max(layerYperX[0], layerYperX[1]);
                     }
                     //Debug.WriteLine("on node " + key.control.Text + " we went to its children at y level " + layerYperX[0]);
                     DoAllChilds(1, family.Childs);
@@ -145,7 +160,7 @@ namespace CSC
                     }
                     else
                     {
-                        layerYperX[layerX + 1] = layerYperX[layerX];
+                        layerYperX[layerX + 1] = Math.Max(layerYperX[layerX], layerYperX[layerX+1]);
                     }
                     DoAllChilds(layerX + 1, newChilds);
                     layerYperX[layerX]++;
@@ -212,10 +227,22 @@ namespace CSC
                 lastNode = node;
             };
             control.MouseMove += Main_MouseMove;
+            control.MouseEnter += (_, e) =>
+            {
+                highlightNode = nodes[control];
+                Main.ActiveForm?.Invalidate();
+            };
+            control.MouseLeave += (_, e) =>
+            {
+                highlightNode = Node.NullNode;
+                Main.ActiveForm?.Invalidate();
+            };
 
             counter++;
             return node;
         }
+
+        private void Control_MouseEnter(object? sender, EventArgs e) => throw new NotImplementedException();
 
         private void GetStartingPos(out int x, out int y)
         {
@@ -299,39 +326,6 @@ namespace CSC
 
         private void Main_Paint(object sender, PaintEventArgs e)
         {
-            //if (!MovingChild)
-            //{
-            //    foreach (var node in nodes.Keys())
-            //    {
-            //        var list = nodes.Childs(node);
-            //        if (list.Count > 0)
-            //        {
-            //            foreach (var item in list)
-            //            {
-            //                DrawEdge(e, node.control, item.control);
-            //            }
-            //        }
-            //    }
-            //}
-            //else if(movedNode is not null)
-            //{
-            //    var family = nodes[nodes[movedNode]];
-            //    if(family.Childs.Count > 0)
-            //    {
-            //        foreach(var item in family.Childs)
-            //        {
-            //            DrawEdge(e, movedNode, item.control);
-            //        }
-            //    }
-            //    if (family.Parents.Count > 0)
-            //    {
-            //        foreach (var item in family.Parents)
-            //        {
-            //            DrawEdge(e, item.control, movedNode);
-            //        }
-            //    }
-            //}
-
             foreach (var node in nodes.KeyNodes())
             {
                 var list = nodes.Childs(node);
@@ -339,13 +333,32 @@ namespace CSC
                 {
                     foreach (var item in list)
                     {
-                        DrawEdge(e, node.control, item.control);
+                        DrawEdge(e, node.control, item.control, linePen);
+                    }
+                }
+            }
+
+            if (highlightNode != Node.NullNode)
+            {
+                var family = nodes[highlightNode];
+                if (family.Childs.Count > 0)
+                {
+                    foreach (var item in family.Childs)
+                    {
+                        DrawEdge(e, highlightNode.control, item.control, highlightPen);
+                    }
+                }
+                if (family.Parents.Count > 0)
+                {
+                    foreach (var item in family.Parents)
+                    {
+                        DrawEdge(e, item.control, highlightNode.control, highlightPen);
                     }
                 }
             }
         }
 
-        private void DrawEdge(PaintEventArgs e, Control parent, Control child)
+        private void DrawEdge(PaintEventArgs e, Control parent, Control child, Pen pen)
         {
             start = parent.Location + new Size(parent.Size.Width, parent.Size.Height / 2);
             end = child.Location + new Size(0, child.Size.Height / 2);
@@ -377,7 +390,7 @@ namespace CSC
                 controlEnd = new Point((end.X - distanceX / 2), controlEndY);
             }
 
-            e.Graphics.DrawBezier(linePen, start, controlStart, controlEnd, end);
+            e.Graphics.DrawBezier(pen, start, controlStart, controlEnd, end);
             //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
             //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
         }
@@ -386,6 +399,8 @@ namespace CSC
         {
             nodes.Clear();
             visited.Clear();
+            Invalidate();
+            counter = 0;
         }
     }
 }

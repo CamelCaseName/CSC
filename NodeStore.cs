@@ -60,6 +60,10 @@ namespace CSC
 
         public void Clear()
         {
+            foreach (var item in controls)
+            {
+                item.Key.Dispose();
+            }
             childs.Clear();
             parents.Clear();
             controls.Clear();
