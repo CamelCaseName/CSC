@@ -1,4 +1,7 @@
-﻿using static CSC.StoryItems.StoryEnums;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using static CSC.StoryItems.StoryEnums;
 
 namespace CSC
 {
@@ -52,11 +55,26 @@ namespace CSC
         public int Mass = 1;
         public NodeType Type;
         public object? Data = null;
-        public PointF Position = PointF.Empty;
+        private PointF position = PointF.Empty;
         public SizeF Size = SizeF.Empty;
         public string ID;
         public string Text;
         public Type DataType = typeof(object);
+
+        public PointF Position
+        {
+            get
+            {
+                return position;
+            }
+
+            set
+            {
+                NodePositionSorting.ClearNode(this);
+                position = value;
+                NodePositionSorting.SetNode(this);
+            }
+        }
 
         public Node(string iD, NodeType type, string text)
         {

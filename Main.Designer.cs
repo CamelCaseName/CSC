@@ -128,7 +128,6 @@
             KeyUp += HandleKeyBoard;
             MouseClick += HandleMouseEvents;
             MouseDoubleClick += HandleMouseEvents;
-            MouseMove += HandleMouseEvents;
             MouseWheel += HandleMouseEvents;
             Menu.ResumeLayout(false);
             Menu.PerformLayout();

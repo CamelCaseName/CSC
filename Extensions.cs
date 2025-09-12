@@ -10,7 +10,7 @@ namespace CSC
             graphics.InterpolationMode = InterpolationMode.Low;
             graphics.CompositingQuality = CompositingQuality.HighSpeed;
             graphics.SmoothingMode = SmoothingMode.HighSpeed;
-            graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
+            graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixel;
             graphics.PixelOffsetMode = PixelOffsetMode.HighSpeed;
         }
     }

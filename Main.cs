@@ -10,11 +10,14 @@ namespace CSC
 {
     public partial class Main : Form
     {
+        private static readonly System.Buffers.SearchValues<char> numbers = System.Buffers.SearchValues.Create("0123456789");
         private const int NodeCount = 100;
+        //we have to do something to keep the texture size smaller than it is rn
+
         int runningTotal = 0;
         public bool MovingChild = false;
         private Size OffsetFromDragClick = Size.Empty;
-        private Node? movedNode;
+        private Node movedNode;
         private int counter = 0;
         private PointF start;
         private PointF end;
@@ -32,25 +35,20 @@ namespace CSC
         private float AfterZoomMouseY;
         private float BeforeZoomMouseX;
         private float BeforeZoomMouseY;
-        private static float Xmax = 0;
-        private static float Ymax = 0;
-        private static float Xmin = 0;
-        private static float Ymin = 0;
         private float OffsetX;
         private float OffsetY;
-        private readonly int NodeSize = 100;
         private readonly int NodeSizeX = 70;
         private readonly int NodeSizeY = 30;
         private bool CurrentlyInPan = false;
-        private readonly List<int> layerYperX = [0];
+        private readonly List<int> layerYperX = [];
 
         private readonly NodeStore nodes = new();
 
         private Node lastNode = Node.NullNode;
-        private readonly Node highlightNode = Node.NullNode;
+        private Node highlightNode = Node.NullNode;
         private bool IsShiftPressed;
         private bool IsCtrlPressed;
-        private Cursor priorCursor;
+        private Cursor priorCursor = Cursors.Default;
         private readonly Brush nodeBrush;
         private readonly Brush HighlightNodeBrush;
         private readonly Brush FontBrush;
@@ -58,6 +56,8 @@ namespace CSC
         public Main()
         {
             InitializeComponent();
+            Application.AddMessageFilter(new MouseMessageFilter());
+            MouseMessageFilter.MouseMove += HandleMouseEvents;
             linePen = new Pen(Brushes.Black, 2)
             {
                 EndCap = LineCap.Triangle,
@@ -69,7 +69,7 @@ namespace CSC
                 StartCap = LineCap.Round
             };
             nodeBrush = new SolidBrush(Color.FromArgb(255, 100, 100, 100));
-            HighlightNodeBrush = Brushes.LightCyan;
+            HighlightNodeBrush = Brushes.DarkCyan;
             FontBrush = Brushes.White;
 
         }
@@ -83,7 +83,7 @@ namespace CSC
             lastNode = node;
             for (int i = 0; i < NodeCount; i++)
             {
-                switch (Random.Shared.Next(10))
+                switch (Random.Shared.Next(20))
                 {
                     case 9:
                     case 8:
@@ -91,6 +91,15 @@ namespace CSC
                     case 6:
                     case 5:
                     case 4:
+                    case 19:
+                    case 18:
+                    case 17:
+                    case 16:
+                    case 15:
+                    case 14:
+                    case 13:
+                    case 12:
+                    case 11:
                     {
                         node = CreateNode(typeof(Response));
                         nodes.AddChild(lastNode, node);
@@ -102,6 +111,7 @@ namespace CSC
                         nodes.Add(node);
                         break;
                     }
+                    case 10:
                     case 2:
                     case 1:
                     case 0:
@@ -114,7 +124,7 @@ namespace CSC
                         break;
                 }
 
-                if (Random.Shared.Next(2) == 1)
+                if (Random.Shared.Next(5) < 3)
                 {
                     lastNode = node;
                 }
@@ -128,41 +138,50 @@ namespace CSC
 
         private void SetupStartPositions()
         {
-            for (int i = 0; i < layerYperX.Count; i++)
-            {
-                layerYperX[i] = 1;
-            }
+            layerYperX.Clear();
+            layerYperX.Add(0);
             visited.Clear();
+
+            int sideLengthY = (int)(Math.Sqrt(nodes.KeyNodes().Count) + 0.5) * 4;
+            int zeroColoumn = 0;
+
             foreach (var key in nodes.KeyNodes())
             {
                 Family family = nodes[key];
                 if (family.Parents.Count == 0)
                 {
                     //we have a root start node with no parents, start child search and layout from here
-                    key.Position = new PointF(scaleX, layerYperX[0] * scaleY);
+                    key.Position = new PointF((zeroColoumn + 1) * scaleX, layerYperX[zeroColoumn] * scaleY);
                     visited.Add(key);
 
                     if (family.Childs.Count == 0)
                     {
-                        layerYperX[0]++;
+                        layerYperX[zeroColoumn]++;
+                        if (layerYperX[zeroColoumn] > sideLengthY)
+                        {
+                            zeroColoumn = layerYperX.Count;
+                            layerYperX.Add(0);
+                            layerYperX.Add(0);
+                        }
                         continue;
                     }
                     if (layerYperX.Count <= 1)
                     {
-                        layerYperX.Add(layerYperX[0]);
+                        layerYperX.Add(layerYperX[zeroColoumn]);
                     }
                     else
                     {
-                        layerYperX[1] = Math.Max(layerYperX[0], layerYperX[1]);
+                        layerYperX[zeroColoumn + 1] = Math.Max(layerYperX[zeroColoumn], layerYperX[zeroColoumn + 1]);
                     }
                     //Debug.WriteLine("on node " + key.control.Text + " we went to its children at y level " + layerYperX[0]);
-                    DoAllChilds(1, family.Childs);
-                    layerYperX[0]++;
+                    DoAllChilds(zeroColoumn, zeroColoumn + 1, family.Childs);
+                    layerYperX[zeroColoumn]++;
+
                 }
             }
         }
 
-        private void DoAllChilds(int layerX, List<Node> childs)
+        private void DoAllChilds(int zeroRow, int layerX, List<Node> childs)
         {
             foreach (var currentChild in childs)
             {
@@ -191,9 +210,9 @@ namespace CSC
                     {
                         layerYperX[layerX + 1] = Math.Max(layerYperX[layerX], layerYperX[layerX + 1]);
                     }
-                    DoAllChilds(layerX + 1, newChilds);
+                    DoAllChilds(zeroRow, layerX + 1, newChilds);
                     layerYperX[layerX]++;
-                    layerYperX[0] = Math.Max(layerYperX[0], layerYperX[layerX]);
+                    layerYperX[zeroRow] = Math.Max(layerYperX[zeroRow], layerYperX[layerX]);
                 }
             }
         }
@@ -236,7 +255,7 @@ namespace CSC
 
             GetStartingPos(out int x, out int y);
 
-            Debug.WriteLine($"spawned number {counter} at {x}|{y}");
+            //Debug.WriteLine($"spawned number {counter} at {x}|{y}");
 
             var node = new Node(counter.ToString(), NodeType.Null, "blabla", item)
             {
@@ -301,10 +320,14 @@ namespace CSC
             //update canvas transforms
             g.TranslateTransform(-OffsetX * Scaling, -OffsetY * Scaling);
             g.ScaleTransform(Scaling, Scaling);
-            Xmin = OffsetX - NodeSize;
-            Ymin = OffsetY - NodeSize;
-            Xmax = g.VisibleClipBounds.Right + NodeSize;
-            Ymax = g.VisibleClipBounds.Bottom + NodeSize;
+            RectangleF adjustedVisibleClipBounds = new(OffsetX - NodeSizeX, OffsetY - NodeSizeY, g.VisibleClipBounds.Width + NodeSizeX, g.VisibleClipBounds.Height + NodeSizeY);
+
+            //int c = 0;
+            foreach (var node in NodePositionSorting.Singleton[adjustedVisibleClipBounds])
+            {
+                //c++;
+                DrawNode(e, node, nodeBrush);
+            }
 
             foreach (var node in nodes.KeyNodes())
             {
@@ -316,7 +339,6 @@ namespace CSC
                         DrawEdge(e, node, item, linePen);
                     }
                 }
-                DrawNode(e, node, nodeBrush);
             }
 
             if (highlightNode != Node.NullNode)
@@ -343,7 +365,10 @@ namespace CSC
         private void DrawNode(PaintEventArgs e, Node node, Brush brush)
         {
             e.Graphics.FillEllipse(brush, new RectangleF(node.Position, node.Size));
-            e.Graphics.DrawString(node.ID[..9], DefaultFont, FontBrush, new PointF(node.Position.X + 5, node.Position.Y + 7));
+            if (Scaling > 0.2f)
+            {
+                e.Graphics.DrawString(node.ID[..3] + ".." + node.ID[node.ID.AsSpan().IndexOfAny(numbers)..], DefaultFont, FontBrush, new PointF(node.Position.X + 5, node.Position.Y + 7));
+            }
         }
 
         private void DrawEdge(PaintEventArgs e, Node parent, Node child, Pen pen)
@@ -398,30 +423,29 @@ namespace CSC
             IsCtrlPressed = e.KeyData == (Keys.Control | Keys.ControlKey);
             if (!IsCtrlPressed)
             {
-                movedNode = null;
+                movedNode = Node.NullNode;
                 MovingChild = false;
             }
         }
 
         public void HandleMouseEvents(object? sender, MouseEventArgs e)
         {
+            var pos = Main.ActiveForm!.PointToClient(Cursor.Position);
+            ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+            var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
             //set old position for next frame/call
             switch (e.Button)
             {
                 case MouseButtons.Left:
-                    Node? clickedNode;
                     if (e.Clicks > 1)
                     {
                         Details.Visible = !Details.Visible;
                     }
                     else
                     {
-                        var pos = Main.ActiveForm!.PointToClient(Cursor.Position);
-                        ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
-                        var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
-                        clickedNode = GetNodeAtPoint(ScreenPos);
+                        Node clickedNode = GetNodeAtPoint(ScreenPos);
 
-                        if (clickedNode is null)
+                        if (clickedNode == Node.NullNode)
                         {
                             return;
                         }
@@ -442,29 +466,44 @@ namespace CSC
                     }
                     break;
                 case MouseButtons.None:
+                {
                     EndPan();
-                    break;
+                    var oldHighlight = highlightNode;
+                    highlightNode = GetNodeAtPoint(ScreenPos);
+                    if (highlightNode != oldHighlight)
+                    {
+                        Invalidate();
+                    }
+                }
+                break;
                 case MouseButtons.Right:
                     break;
                 case MouseButtons.Middle:
-                    UpdatePan(e.Location);
+                    UpdatePan(pos);
                     break;
                 case MouseButtons.XButton1:
                     break;
                 case MouseButtons.XButton2:
                     break;
                 default:
+                {
                     EndPan();
-                    break;
+                    var oldHighlight = highlightNode;
+                    highlightNode = GetNodeAtPoint(ScreenPos);
+                    if (highlightNode != oldHighlight)
+                    {
+                        Invalidate();
+                    }
+                }
+                break;
             }
 
-            if (MovingChild && movedNode is not null)
+            if (MovingChild && movedNode != Node.NullNode)
             {
-                ScreenToGraph(e.Location.X, e.Location.Y, out float ScreenPosX, out float ScreenPosY);
-                var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
                 movedNode.Position = ScreenPos + OffsetFromDragClick;
                 Invalidate();
             }
+
 
             //everything else, scrolling for example
             if (e.Delta != 0)
@@ -475,21 +514,19 @@ namespace CSC
             }
 
             //save mouse pos for next frame
-            ScreenToGraph(e.Location.X, e.Location.Y, out OldMouseMovingPosX, out OldMouseMovingPosY);
+            ScreenToGraph(pos.X, pos.Y, out OldMouseMovingPosX, out OldMouseMovingPosY);
         }
 
-        private Node? GetNodeAtPoint(Point mouseGraphLocation)
+        private static Node GetNodeAtPoint(Point mouseGraphLocation)
         {
-            Node? node = null;
-            foreach (var key in nodes.KeyNodes())
+            foreach (var key in NodePositionSorting.Singleton[mouseGraphLocation])
             {
                 if (new RectangleF(key.Position, key.Size).Contains(mouseGraphLocation))
                 {
-                    node = key;
-                    break;
+                    return key;
                 }
             }
-            return node;
+            return Node.NullNode;
         }
 
         private void EndPan()
@@ -501,13 +538,13 @@ namespace CSC
                 Cursor = priorCursor;
             }
         }
-        
+
         private void SetPanOffset(Point location)
         {
             StartPanOffsetX = location.X;
             StartPanOffsetY = location.Y;
         }
-        
+
         private void UpdatePan(Point mouseLocation)
         {
             //start of pan
@@ -566,7 +603,7 @@ namespace CSC
             OffsetX += BeforeZoomMouseX - AfterZoomMouseX;
             OffsetY += BeforeZoomMouseY - AfterZoomMouseY;
         }
-        
+
         public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
         {
             graphX = screenX / Scaling + OffsetX;
