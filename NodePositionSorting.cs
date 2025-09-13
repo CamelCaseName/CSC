@@ -2,7 +2,7 @@
 {
     public class NodePositionSorting
     {
-        private const int GridSize = 100;
+        private const int GridSize = 1000;
         //4 lists for each quadrant so we can deal with negative coordinates
         private static readonly List<List<List<Node>>>[] Sorting = [[], [], [], []];
 

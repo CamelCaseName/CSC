@@ -1,10 +1,15 @@
 using CSC.StoryItems;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using static CSC.StoryItems.StoryEnums;
 
 namespace CSC
 {
@@ -24,25 +29,23 @@ namespace CSC
         private readonly Pen linePen;
         private readonly Pen highlightPen;
         private readonly List<Node> visited = [];
-        private readonly int scaleX = 120;
-        private readonly int scaleY = 40;
+        private readonly int scaleX = NodeSizeX + 40;
+        private readonly int scaleY = NodeSizeY + 20;
         private float Scaling = 0.3f;
         private float StartPanOffsetX = 0f;
         private float StartPanOffsetY = 0f;
-        private float OldMouseMovingPosX;
-        private float OldMouseMovingPosY;
         private float AfterZoomMouseX;
         private float AfterZoomMouseY;
         private float BeforeZoomMouseX;
         private float BeforeZoomMouseY;
         private float OffsetX;
         private float OffsetY;
-        private readonly int NodeSizeX = 70;
-        private readonly int NodeSizeY = 30;
+        public const int NodeSizeX = 200;
+        public const int NodeSizeY = 50;
         private bool CurrentlyInPan = false;
         private readonly List<int> layerYperX = [];
 
-        private readonly NodeStore nodes = new();
+        public static readonly NodeStore nodes = new();
 
         private Node lastNode = Node.NullNode;
         private Node highlightNode = Node.NullNode;
@@ -51,7 +54,11 @@ namespace CSC
         private Cursor priorCursor = Cursors.Default;
         private readonly Brush nodeBrush;
         private readonly Brush HighlightNodeBrush;
+        List<Node> Values = [];
+        List<Node> Doors = [];
         private readonly Brush FontBrush;
+
+        public string? FileName { get; private set; }
 
         public Main()
         {
@@ -78,7 +85,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Criterion));
 
-            nodes.Add(node);
+            Main.nodes.Add(node);
 
             lastNode = node;
             for (int i = 0; i < NodeCount; i++)
@@ -102,13 +109,13 @@ namespace CSC
                     case 11:
                     {
                         node = CreateNode(typeof(Response));
-                        nodes.AddChild(lastNode, node);
+                        Main.nodes.AddChild(lastNode, node);
                         break;
                     }
                     case 3:
                     {
                         node = CreateNode(typeof(Criterion));
-                        nodes.Add(node);
+                        Main.nodes.Add(node);
                         break;
                     }
                     case 10:
@@ -117,7 +124,7 @@ namespace CSC
                     case 0:
                     {
                         node = CreateNode(typeof(Dialogue));
-                        nodes.AddParent(lastNode, node);
+                        Main.nodes.AddParent(lastNode, node);
                         break;
                     }
                     default:
@@ -142,12 +149,12 @@ namespace CSC
             layerYperX.Add(0);
             visited.Clear();
 
-            int sideLengthY = (int)(Math.Sqrt(nodes.KeyNodes().Count) + 0.5) * 4;
+            int sideLengthY = (int)(Math.Sqrt(Main.nodes.KeyNodes().Count) + 0.5) ;
             int zeroColoumn = 0;
 
-            foreach (var key in nodes.KeyNodes())
+            foreach (var key in Main.nodes.KeyNodes())
             {
-                Family family = nodes[key];
+                Family family = Main.nodes[key];
                 if (family.Parents.Count == 0)
                 {
                     //we have a root start node with no parents, start child search and layout from here
@@ -194,7 +201,7 @@ namespace CSC
                 //Debug.WriteLine("on node " + currentChild.control.Text + " we arrived at y level" + layerYperX[layerX]);
                 visited.Add(currentChild);
 
-                var newChilds = nodes.Childs(currentChild);
+                var newChilds = Main.nodes.Childs(currentChild);
                 if (newChilds.Count == 0)
                 {
                     layerYperX[layerX]++;
@@ -221,7 +228,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Criterion));
 
-            nodes.Add(node);
+            Main.nodes.Add(node);
 
             lastNode = node;
 
@@ -272,7 +279,7 @@ namespace CSC
         {
             int xstep = 100;
             int ystep = 50;
-            //~sidelength of the most square layout we can achieve witrh the number of nodes we have
+            //~sidelength of the most square layout we can achieve witrh the number of Main.nodes we have
             int sideLength = (int)(Math.Sqrt(NodeCount) + 0.5);
             //modulo of running total with sidelength gives x coords, repeating after sidelength
             //offset by halfe sidelength to center x
@@ -294,7 +301,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Response));
 
-            nodes.AddChild(lastNode, node);
+            Main.nodes.AddChild(lastNode, node);
 
             lastNode = node;
 
@@ -305,7 +312,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Dialogue));
 
-            nodes.AddParent(lastNode, node);
+            Main.nodes.AddParent(lastNode, node);
 
             lastNode = node;
 
@@ -328,10 +335,10 @@ namespace CSC
                 //c++;
                 DrawNode(e, node, nodeBrush);
             }
-
-            foreach (var node in nodes.KeyNodes())
+            //todo we need to cull here as well somehow
+            foreach (var node in Main.nodes.KeyNodes())
             {
-                var list = nodes.Childs(node);
+                var list = Main.nodes.Childs(node);
                 if (list.Count > 0)
                 {
                     foreach (var item in list)
@@ -343,7 +350,7 @@ namespace CSC
 
             if (highlightNode != Node.NullNode)
             {
-                var family = nodes[highlightNode];
+                var family = Main.nodes[highlightNode];
                 if (family.Childs.Count > 0)
                 {
                     foreach (var item in family.Childs)
@@ -367,7 +374,7 @@ namespace CSC
             e.Graphics.FillEllipse(brush, new RectangleF(node.Position, node.Size));
             if (Scaling > 0.2f)
             {
-                e.Graphics.DrawString(node.ID[..3] + ".." + node.ID[node.ID.AsSpan().IndexOfAny(numbers)..], DefaultFont, FontBrush, new PointF(node.Position.X + 5, node.Position.Y + 7));
+                e.Graphics.DrawString(node.ID[..Math.Min(node.ID.Length, 25)], DefaultFont, FontBrush, new PointF(node.Position.X + 10, node.Position.Y + 12));
             }
         }
 
@@ -410,7 +417,7 @@ namespace CSC
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
-            nodes.Clear();
+            Main.nodes.Clear();
             visited.Clear();
             Invalidate();
             counter = 0;
@@ -430,6 +437,10 @@ namespace CSC
 
         public void HandleMouseEvents(object? sender, MouseEventArgs e)
         {
+            if (Main.ActiveForm is null)
+            {
+                return;
+            }
             var pos = Main.ActiveForm!.PointToClient(Cursor.Position);
             ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
             var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
@@ -443,37 +454,13 @@ namespace CSC
                     }
                     else
                     {
-                        Node clickedNode = GetNodeAtPoint(ScreenPos);
-
-                        if (clickedNode == Node.NullNode)
-                        {
-                            return;
-                        }
-
-                        if (IsCtrlPressed)
-                        {
-                            movedNode = clickedNode;
-                            MovingChild = !MovingChild;
-                            if (MovingChild)
-                            {
-                                OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPosX), (int)(movedNode.Position.Y - ScreenPosY));
-                            }
-                        }
-                        else
-                        {
-                            Details.SelectedObject = clickedNode.Data;
-                        }
+                        UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
                     }
                     break;
                 case MouseButtons.None:
                 {
                     EndPan();
-                    var oldHighlight = highlightNode;
-                    highlightNode = GetNodeAtPoint(ScreenPos);
-                    if (highlightNode != oldHighlight)
-                    {
-                        Invalidate();
-                    }
+                    UpdateHighlightNode(ScreenPos);
                 }
                 break;
                 case MouseButtons.Right:
@@ -488,12 +475,7 @@ namespace CSC
                 default:
                 {
                     EndPan();
-                    var oldHighlight = highlightNode;
-                    highlightNode = GetNodeAtPoint(ScreenPos);
-                    if (highlightNode != oldHighlight)
-                    {
-                        Invalidate();
-                    }
+                    UpdateHighlightNode(ScreenPos);
                 }
                 break;
             }
@@ -508,13 +490,46 @@ namespace CSC
             //everything else, scrolling for example
             if (e.Delta != 0)
             {
+                //todo we need a limit here so we dont scroll out too far and make the texture hugeeee
                 UpdateScaling(e);
                 //redraw
                 Invalidate();
             }
+        }
 
-            //save mouse pos for next frame
-            ScreenToGraph(pos.X, pos.Y, out OldMouseMovingPosX, out OldMouseMovingPosY);
+        private void UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
+        {
+            Node clickedNode = GetNodeAtPoint(ScreenPos);
+
+            if (clickedNode == Node.NullNode)
+            {
+                return;
+            }
+
+            if (IsCtrlPressed)
+            {
+                movedNode = clickedNode;
+                MovingChild = !MovingChild;
+                if (MovingChild)
+                {
+                    OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPosX), (int)(movedNode.Position.Y - ScreenPosY));
+                }
+            }
+            else
+            {
+                Details.SelectedObject = clickedNode.Data;
+                lastNode = clickedNode;
+            }
+        }
+
+        private void UpdateHighlightNode(Point ScreenPos)
+        {
+            var oldHighlight = highlightNode;
+            highlightNode = GetNodeAtPoint(ScreenPos);
+            if (highlightNode != oldHighlight)
+            {
+                Invalidate();
+            }
         }
 
         private static Node GetNodeAtPoint(Point mouseGraphLocation)
@@ -608,6 +623,961 @@ namespace CSC
         {
             graphX = screenX / Scaling + OffsetX;
             graphY = screenY / Scaling + OffsetY;
+        }
+
+        private void OpenButton_Click(object sender, EventArgs e)
+        {
+            var dialog = new OpenFileDialog();
+            var result = dialog.ShowDialog();
+
+            if (result != DialogResult.OK)
+            {
+                return;
+            }
+
+            string FilePath = dialog.FileName;
+
+            if (File.Exists(FilePath))
+            {
+                //read in Main.nodes and set positions later, is faster than the old system
+                string fileString = File.ReadAllText(FilePath);
+                fileString = fileString.Replace('', ' ');
+                //else create new
+                try
+                {
+                    if (Path.GetExtension(FilePath) == ".story")
+                    {
+                        DissectStory(JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory());
+                    }
+                    else
+                    {
+                        DissectCharacter(JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory());
+                    }
+                }
+                catch (JsonReaderException ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    return;
+                }
+                catch (AggregateException ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    return;
+                }
+
+                //even link for single file, should be able to link most suff so it stays readable
+                InterlinkNodes();
+
+                SetupStartPositions();
+
+                Invalidate();
+            }
+        }
+
+        private void DissectCharacter(CharacterStory story)
+        {
+            if (story is not null)
+            {
+                //get all relevant items from the json
+                StoryNodeExtractor.GetItems(story);
+                StoryNodeExtractor.GetValues(story);
+                StoryNodeExtractor.GetPersonality(story);
+                StoryNodeExtractor.GetDialogues(story);
+                StoryNodeExtractor.GetGlobalGoodByeResponses(story);
+                StoryNodeExtractor.GetGlobalResponses(story);
+                StoryNodeExtractor.GetBackGroundChatter(story);
+                StoryNodeExtractor.GetQuests(story);
+                StoryNodeExtractor.GetReactions(story);
+
+                //clear criteria to free memory, we dont need them anyways
+                //cant be called recusrively so we cant add it, it would break the combination
+
+                var newList = Main.nodes.KeyNodes().ToList();
+                FileName = story.CharacterName;
+                for (int i = 0; i < newList.Count; i++)
+                {
+                    newList[i].FileName = story.CharacterName ?? string.Empty;
+                }
+            }
+        }
+
+        private void InterlinkNodes()
+        {
+            DateTime start = DateTime.UtcNow;
+            //lists to save new stuff in
+            List<Node> Socials = [];
+            List<Node> States = [];
+            List<Node> Clothing = [];
+            List<Node> Poses = [];
+            List<Node> InventoryItems = [];
+            List<Node> Properties = [];
+            List<Node> CompareValuesToCheckAgain = [];
+
+            Node? result;
+            Criterion criterion;
+            GameEvent gameEvent;
+            EventTrigger trigger;
+            Values.Clear();
+            try
+            {
+                int count = Main.nodes.Count;
+                var newList = Main.nodes.KeyNodes().ToList();
+                //link up different stories and dialogues
+                //doesnt matter that we add some in here, we only care about the ones added so far
+                for (int i = 0; i < count; i++)
+                {
+                    //link all useful criteria and add influencing values as parents
+                    if (newList[i].Type == NodeType.Criterion && newList[i].Data is not null)
+                    {
+                        //node is dialogue so data should contain the criteria itself!
+                        criterion = (Criterion)newList[i].Data!;
+                        switch (criterion.CompareType)
+                        {
+                            case CompareTypes.Clothing:
+                            {
+                                result = Clothing.Find((n) => n.Type == NodeType.Clothing && n.FileName == criterion.Character && n.ID == criterion.Option + criterion.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString())) { FileName = criterion.Character! };
+                                    Clothing.Add(clothing);
+                                    Main.nodes.AddParent(newList[i], clothing);
+                                }
+                                break;
+                            }
+                            case CompareTypes.CompareValues:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                }
+                                else
+                                {
+                                    CompareValuesToCheckAgain.Add(newList[i]);
+                                }
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                }
+                                else
+                                {
+                                    CompareValuesToCheckAgain.Add(newList[i]);
+                                }
+                                break;
+                            }
+                            case CompareTypes.CriteriaGroup:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.CriteriaGroup && n.ID == criterion.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                break;
+                            }
+                            case CompareTypes.CutScene:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Cutscene && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                }
+                                else
+                                {
+                                    //add cutscene
+                                    var item = new Node(criterion.Key!, NodeType.Cutscene, criterion.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Dialogue:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Dialogue && n.FileName == criterion.Character && n.ID == criterion.Value);
+                                if (result is not null)
+                                {
+                                    //dialogue influences this criteria
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add new personality, should be from someone else
+                                    var item = new Node(criterion.Value!, NodeType.Dialogue, criterion.Character + " dialoge " + criterion.Value) { FileName = criterion.Character! };
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Door:
+                            {
+                                result = Doors.Find((n) => n.Type == NodeType.Door && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!);
+                                    Doors.Add(door);
+                                    Main.nodes.AddParent(newList[i], door);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Item:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.IsCurrentlyBeingUsed:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.IsCurrentlyUsing:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.ItemFromItemGroup:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.ItemGroup && n.Text == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Personality:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Personality && n.FileName == criterion.Character && n.ID == ((PersonalityTraits)int.Parse(criterion.Key!)).ToString());
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add new personality, should be from someone else
+                                    var item = new Node(((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), NodeType.Personality, criterion.Character + "'s Personality " + ((PersonalityTraits)int.Parse(criterion.Key!)).ToString()) { FileName = criterion.Character! };
+                                    newList.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                break;
+                            }
+                            case CompareTypes.PlayerInventory:
+                            {
+                                //find/add inventory item
+                                result = InventoryItems.Find((n) => n.Type == NodeType.Inventory && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key);
+                                    InventoryItems.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                //find normal item if it exists
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                }
+
+                                break;
+                            }
+                            case CompareTypes.Posing:
+                            {
+                                if (criterion.PoseOption != PoseOptions.CurrentPose)
+                                {
+                                    break;
+                                }
+
+                                result = Poses.Find((n) => n.Type == NodeType.Pose && n.ID == criterion.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add pose node, hasnt been referenced yet
+                                    var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value);
+                                    Poses.Add(pose);
+                                    Main.nodes.AddParent(newList[i], pose);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Property:
+                            {
+                                result = Properties.Find((n) => n.Type == NodeType.Property && n.ID == criterion.Character + "Property" + criterion.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add property node, hasnt been referenced yet
+                                    var property = new Node(criterion.Character + "Property" + criterion.Value, NodeType.Property, criterion.Character + ((InteractiveProperties)int.Parse(criterion.Value!)).ToString()) { FileName = criterion.Character! };
+                                    Properties.Add(property);
+                                    Main.nodes.AddParent(newList[i], property);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Quest:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == criterion.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                break;
+                            }
+                            case CompareTypes.Social:
+                            {
+                                result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == criterion.Character + criterion.SocialStatus + criterion.Character2);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add property node, hasnt been referenced yet
+                                    var social = new Node(criterion.Character + criterion.SocialStatus + criterion.Character2, NodeType.Social, criterion.Character + " " + criterion.SocialStatus + " " + criterion.Character2) { FileName = criterion.Character! };
+                                    Socials.Add(social);
+                                    Main.nodes.AddParent(newList[i], social);
+                                }
+                                break;
+                            }
+                            case CompareTypes.State:
+                            {
+                                result = States.Find((n) => n.Type == NodeType.State && n.FileName == criterion.Character && n.Text.AsSpan()[..2].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add state node, hasnt been referenced yet
+                                    var state = new Node(criterion.Character + "State" + criterion.Value, NodeType.State, criterion.Value + "|" + ((InteractiveStates)int.Parse(criterion.Value!)).ToString()) { FileName = criterion.Character! };
+                                    States.Add(state);
+                                    Main.nodes.AddParent(newList[i], state);
+                                }
+                                break;
+                            }
+                            case CompareTypes.Value:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key && FileName == criterion.Character);
+                                if (result is not null)
+                                {
+                                    if (!result.Text.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value))
+                                    {
+                                        result.Text += GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ";
+                                    }
+
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddParent(newList[i], value);
+                                }
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
+                    else if (newList[i].Type == NodeType.Event && newList[i].Data is not null)
+                    {
+                        gameEvent = (GameEvent)newList[i].Data!;
+                        switch (gameEvent.EventType)
+                        {
+                            case GameEvents.Clothing:
+                            {
+                                result = Clothing.Find((n) => n.Type == NodeType.Clothing && n.FileName == gameEvent.Character && n.ID == gameEvent.Option + gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
+                                    Clothing.Add(clothing);
+                                    Main.nodes.AddChild(newList[i], clothing);
+                                }
+                                newList[i].Text = gameEvent.Character + " " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString()) + " " + (gameEvent.Option2 == 0 ? "Change" : "Assign default set") + " " + (gameEvent.Option3 == 0 ? "On" : "Off");
+                                break;
+                            }
+                            case GameEvents.CombineValue:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddChild(newList[i], value);
+                                }
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddParent(newList[i], value);
+                                }
+                                newList[i].Text = "Add " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.CutScene:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Cutscene && n.ID == gameEvent.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //add cutscene
+                                    var item = new Node(gameEvent.Key!, NodeType.Cutscene, gameEvent.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddChild(newList[i], item);
+                                }
+                                newList[i].Text = ((CutsceneAction)gameEvent.Option).ToString() + " " + gameEvent.Key + " with " + gameEvent.Character + ", " + gameEvent.Value + ", " + gameEvent.Value2 + ", " + gameEvent.Character2 + " (location: " + gameEvent.Option2 + ")";
+                                break;
+                            }
+                            case GameEvents.Dialogue:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Dialogue && n.FileName == gameEvent.Character && n.ID == gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    //dialogue influences this criteria
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add new personality, should be from someone else
+                                    var item = new Node(gameEvent.Value!, NodeType.Dialogue, gameEvent.Character + " dialoge " + gameEvent.Value) { FileName = gameEvent.Character! };
+                                    newList.Add(item);
+                                    Main.nodes.AddChild(newList[i], item);
+                                }
+                                newList[i].Text = ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.Door:
+                            {
+                                result = Doors.Find((n) => n.Type == NodeType.Door && n.ID == gameEvent.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!);
+                                    Doors.Add(door);
+                                    Main.nodes.AddChild(newList[i], door);
+                                }
+                                newList[i].Text = ((DoorAction)gameEvent.Option).ToString() + " " + gameEvent.Key!.ToString();
+                                break;
+                            }
+                            case GameEvents.EventTriggers:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Event && n.Text == gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    //stop 0 step cyclic self reference as it is not allowed
+                                    if (newList[i] != result)
+                                    {
+                                        Main.nodes.AddChild(newList[i], result);
+                                    }
+                                }
+                                else
+                                {
+                                    //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                                    var _event = new Node("NA-" + gameEvent.Value, NodeType.Event, gameEvent.Value!);
+                                    newList.Add(_event);
+                                    Main.nodes.AddChild(newList[i], _event);
+                                }
+                                newList[i].Text = gameEvent.Character + (gameEvent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gameEvent.Option2 == 0 ? "(False) " : "(True) ") + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.Item:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == gameEvent.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(gameEvent.Key!, NodeType.Item, gameEvent.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddChild(newList[i], item);
+                                }
+                                newList[i].Text = gameEvent.Key!.ToString() + " " + ((ItemEventAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
+                                break;
+                            }
+                            case GameEvents.ItemFromItemGroup:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == gameEvent.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(gameEvent.Key!, NodeType.Item, gameEvent.Key!);
+                                    newList.Add(item);
+                                    Main.nodes.AddChild(newList[i], item);
+                                }
+                                newList[i].Text = gameEvent.Key!.ToString() + " " + ((ItemGroupAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
+                                break;
+                            }
+                            case GameEvents.Personality:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Personality && n.FileName == gameEvent.Character && n.ID == ((PersonalityTraits)gameEvent.Option).ToString());
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add new personality, should be from someone else
+                                    var item = new Node(((PersonalityTraits)gameEvent.Option).ToString(), NodeType.Personality, gameEvent.Character + "'s Personality " + ((PersonalityTraits)gameEvent.Option).ToString()) { FileName = gameEvent.Character! };
+                                    newList.Add(item);
+                                    Main.nodes.AddChild(newList[i], item);
+                                }
+                                newList[i].Text = gameEvent.Character + " " + ((PersonalityTraits)gameEvent.Option).ToString() + " " + ((PersonalityAction)gameEvent.Option2).ToString() + " " + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.Property:
+                            {
+                                result = Properties.Find((n) => n.Type == NodeType.Property && n.ID == gameEvent.Character + "Property" + gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add property node, hasnt been referenced yet
+                                    var property = new Node(gameEvent.Character + "Property" + gameEvent.Value, NodeType.Property, gameEvent.Character + Enum.Parse<InteractiveProperties>(gameEvent.Value!).ToString()) { FileName = gameEvent.Character! };
+                                    Properties.Add(property);
+                                    Main.nodes.AddChild(newList[i], property);
+                                }
+                                newList[i].Text = gameEvent.Character + " " + Enum.Parse<InteractiveProperties>(gameEvent.Value!).ToString() + " " + (gameEvent.Option2 == 1 ? "True" : "False");
+                                break;
+                            }
+                            case GameEvents.MatchValue:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddChild(newList[i], value);
+                                }
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddParent(newList[i], value);
+                                }
+                                newList[i].Text = "set " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.ModifyValue:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddChild(newList[i], value);
+                                }
+                                newList[i].Text = (gameEvent.Option == 0 ? "Equals" : "Add") + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.Player:
+                            {                                //find/add inventory item
+                                result = InventoryItems.Find((n) => n.Type == NodeType.Inventory && n.ID == gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddParent(newList[i], result);
+                                    break;
+                                }
+                                else
+                                {
+                                    //create and add item node, hasnt been referenced yet
+                                    var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value);
+                                    InventoryItems.Add(item);
+                                    Main.nodes.AddParent(newList[i], item);
+                                }
+                                result = newList.Find((n) => n.Type == NodeType.Item && n.ID == gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+
+                                newList[i].Text = ((PlayerActions)gameEvent.Option).ToString() + (gameEvent.Option == 0 ? gameEvent.Option2 == 0 ? " Add " : " Remove " : " ") + gameEvent.Value + "/" + gameEvent.Character;
+                                break;
+                            }
+                            case GameEvents.Pose:
+                            {
+                                result = Poses.Find((n) => n.Type == NodeType.Pose && n.ID == gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add pose node, hasnt been referenced yet
+                                    var pose = new Node(gameEvent.Value!, NodeType.Pose, "Pose number " + gameEvent.Value);
+                                    Poses.Add(pose);
+                                    Main.nodes.AddChild(newList[i], pose);
+                                }
+                                newList[i].Text = "Set " + gameEvent.Character + " Pose no. " + gameEvent.Value + " " + (gameEvent.Option == 0 ? " False" : " True");
+                                break;
+                            }
+                            case GameEvents.Quest:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Key);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add property node, hasnt been referenced yet
+                                    var quest = new Node(gameEvent.Value!, NodeType.Social, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files") { FileName = gameEvent.Character! };
+                                    newList.Add(quest);
+                                    Main.nodes.AddChild(newList[i], quest);
+                                }
+                                newList[i].Text = ((QuestActions)gameEvent.Option).ToString() + " the quest " + gameEvent.Value + " from " + gameEvent.Character;
+                                break;
+                            }
+                            case GameEvents.RandomizeIntValue:
+                            {
+                                result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add value node, hasnt been referenced yet
+                                    var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
+                                    Values.Add(value);
+                                    Main.nodes.AddChild(newList[i], value);
+                                }
+                                newList[i].Text = "set " + gameEvent.Character + ":" + gameEvent.Key + " to a random value between " + gameEvent.Value + " and " + gameEvent.Value2;
+                                break;
+                            }
+                            case GameEvents.SendEvent:
+                            {
+                                newList[i].Text = gameEvent.Character + " " + ((SendEvents)gameEvent.Option).ToString();
+                                break;
+                            }
+                            case GameEvents.Social:
+                            {
+                                result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add property node, hasnt been referenced yet
+                                    var social = new Node(gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2, NodeType.Social, gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2) { FileName = gameEvent.Character! };
+                                    Socials.Add(social);
+                                    Main.nodes.AddChild(newList[i], social);
+                                }
+                                newList[i].Text = gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2 + (gameEvent.Option2 == 0 ? " Equals " : " Add ") + gameEvent.Value;
+                                break;
+                            }
+                            case GameEvents.State:
+                            {
+                                result = States.Find((n) => n.Type == NodeType.State && n.FileName == gameEvent.Character && n.Text.AsSpan()[..2].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add state node, hasnt been referenced yet
+                                    var state = new Node(gameEvent.Character + "State" + gameEvent.Value, NodeType.State, gameEvent.Value + "|" + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString()) { FileName = gameEvent.Character! };
+                                    States.Add(state);
+                                    Main.nodes.AddChild(newList[i], state);
+                                }
+                                newList[i].Text = (gameEvent.Option == 0 ? "Add " : "Remove ") + gameEvent.Character + " State " + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString();
+                                break;
+                            }
+                            case GameEvents.TriggerBGC:
+                            {
+                                result = newList.Find((n) => n.Type == NodeType.BGC && n.ID == "BGC" + gameEvent.Value);
+                                if (result is not null)
+                                {
+                                    Main.nodes.AddChild(newList[i], result);
+                                }
+                                else
+                                {
+                                    //create and add property node, hasnt been referenced yet
+                                    var bgc = new Node("BGC" + gameEvent.Value, NodeType.BGC, gameEvent.Character + "'s BGC " + gameEvent.Value + ", not found in loaded story files") { FileName = gameEvent.Character! };
+                                    newList.Add(bgc);
+                                    Main.nodes.AddChild(newList[i], bgc);
+                                }
+                                newList[i].Text = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((BGCOption)gameEvent.Option).ToString();
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
+                    else if (newList[i].Type == NodeType.EventTrigger && newList[i].Data is not null)
+                    {
+                        trigger = (EventTrigger)newList[i].Data!;
+                        //link against events
+                        foreach (GameEvent _event in trigger.Events!)
+                        {
+                            result = newList.Find((n) => n.Type == NodeType.Event && n.ID == _event.Id);
+                            if (result is not null)
+                            {
+                                Main.nodes.AddChild(newList[i], result);
+                            }
+                            else
+                            {
+                                //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                                var eventNode = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none");
+                                newList.Add(eventNode);
+                                Main.nodes.AddChild(newList[i], eventNode);
+                            }
+                        }
+                        //link against criteria
+                        foreach (Criterion _criterion in trigger.Critera!)
+                        {
+                            result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
+                            if (result is not null)
+                            {
+                                Main.nodes.AddParent(newList[i], result);
+                            }
+                            else
+                            {
+                                newList.Add(Node.CreateCriteriaNode(_criterion, newList[i]));
+                            }
+                        }
+                        newList[i].Text = trigger.Critera.Count == 0
+                            ? trigger.Name + " " + trigger.Type
+                            : trigger.CharacterToReactTo + " " + trigger.Type + " " + trigger.UpdateIteration + " " + trigger.Name;
+                    }
+                    else if (newList[i].Type == NodeType.Response && newList[i].Data is not null)
+                    {
+                        var response = (Response)newList[i].Data!;
+                        if (response.Next == 0)
+                        {
+                            continue;
+                        }
+
+                        result = newList.Find((n) => n.Type == NodeType.Dialogue && n.ID == response.Next.ToString());
+
+                        if (result is not null)
+                        {
+                            Main.nodes.AddChild(newList[i], result);
+                        }
+                        else
+                        {
+                            //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                            var dialogue = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {newList[i].FileName}");
+                            newList.Add(dialogue);
+                            Main.nodes.AddChild(newList[i], dialogue);
+                        }
+                    }
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            //check some comparevalue Main.nodes again because the referenced values havent been added yet
+            RecheckCompareValues(CompareValuesToCheckAgain);
+
+            //merge doors with items if applicable
+            MergeDoors();
+        }
+
+        private void RecheckCompareValues(List<Node> CompareValuesToCheckAgain)
+        {
+            Node? result;
+            foreach (Node node in CompareValuesToCheckAgain)
+            {
+                if (node.DataType == typeof(Criterion))
+                {
+                    var criterion = (Criterion)node.Data!;
+                    result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
+                    if (result is not null)
+                    {
+                        nodes.AddParent(node, result);
+                    }
+
+                    result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2);
+                    if (result is not null)
+                    {
+                        nodes.AddParent(node, result);
+                    }
+                }
+            }
+        }
+
+        private void MergeDoors()
+        {
+            Node? result;
+            var newlist = Main.nodes.KeyNodes().ToList();
+            foreach (Node door in Doors.ToArray())
+            {
+                result = newlist.Find((n) => n.ID == door.ID);
+                if (result is not null)
+                {
+                    foreach (Node parentNode in nodes.Parents(door).ToArray())
+                    {
+                        nodes.AddChild(parentNode, result);
+                        nodes.RemoveChild(parentNode, door);
+                    }
+                    foreach (Node childNode in nodes.Childs(door).ToArray())
+                    {
+                        nodes.AddParent(childNode, result);
+                        nodes.RemoveParent(childNode, door);
+                    }
+                    Doors.Remove(door);
+                }
+            }
+        }
+
+        private static string GetSymbolsFromValueFormula(ValueSpecificFormulas formula)
+        {
+            return formula switch
+            {
+                ValueSpecificFormulas.EqualsValue => "==",
+                ValueSpecificFormulas.DoesNotEqualValue => "!=",
+                ValueSpecificFormulas.GreaterThanValue => ">",
+                ValueSpecificFormulas.LessThanValue => "<",
+                _ => string.Empty,
+            };
+        }
+
+        private void DissectStory(MainStory story)
+        {
+            if (story is not null)
+            {
+                //add all items in the story
+                StoryNodeExtractor.GetItemOverrides(story);
+                //add all item groups with their actions
+                StoryNodeExtractor.GetItemGroups(story);
+                //add all items in the story
+                StoryNodeExtractor.GetAchievements(story);
+                //add all reactions the player will say
+                StoryNodeExtractor.GetPlayerReactions(story);
+                //add all criteriagroups
+                StoryNodeExtractor.GetCriteriaGroups(story);
+                //gets the playervalues
+                StoryNodeExtractor.GetValues(story);
+                //the events which fire at game start
+                StoryNodeExtractor.GetGameStartEvents(story);
+                //add all item groups actions
+                StoryNodeExtractor.GetItemGroupBehaviours(story);
+            }
         }
     }
 }

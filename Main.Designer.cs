@@ -36,12 +36,13 @@
             AddChild = new ToolStripButton();
             AddParent = new ToolStripButton();
             Details = new PropertyGrid();
+            openButton = new ToolStripButton();
             Menu.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
             // 
-            Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent });
+            Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, openButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
             Menu.Size = new Size(1327, 25);
@@ -101,14 +102,24 @@
             // Details
             // 
             Details.AllowDrop = true;
-            Details.Anchor = AnchorStyles.None;
+            Details.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
             Details.HelpVisible = false;
-            Details.Location = new Point(795, 52);
+            Details.Location = new Point(931, 28);
             Details.MaximumSize = new Size(600, 900);
             Details.MinimumSize = new Size(100, 50);
             Details.Name = "Details";
-            Details.Size = new Size(414, 438);
+            Details.Size = new Size(396, 595);
             Details.TabIndex = 0;
+            // 
+            // openButton
+            // 
+            openButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            openButton.Image = (Image)resources.GetObject("openButton.Image");
+            openButton.ImageTransparentColor = Color.Magenta;
+            openButton.Name = "openButton";
+            openButton.Size = new Size(40, 22);
+            openButton.Text = "Open";
+            openButton.Click += OpenButton_Click;
             // 
             // Main
             // 
@@ -144,5 +155,6 @@
         private ToolStripButton AddChild;
         private ToolStripButton AddParent;
         private ToolStripButton ResetButton;
+        private ToolStripButton openButton;
     }
 }

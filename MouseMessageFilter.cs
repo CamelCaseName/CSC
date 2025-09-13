@@ -10,6 +10,10 @@ namespace CSC
 
             if (m.Msg == WM_MOUSEMOVE)
             {
+                if(Main.ActiveForm is null)
+                {
+                    return false;
+                }
 
                 var mousePosition = Main.ActiveForm!.PointToClient(Cursor.Position);
                 MouseMove(null, new MouseEventArgs(Control.MouseButtons, 0, mousePosition.X, mousePosition.Y, 0));

@@ -9,9 +9,10 @@ namespace CSC
         {
             graphics.InterpolationMode = InterpolationMode.Low;
             graphics.CompositingQuality = CompositingQuality.HighSpeed;
+            graphics.CompositingMode = CompositingMode.SourceOver;
             graphics.SmoothingMode = SmoothingMode.HighSpeed;
             graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixel;
-            graphics.PixelOffsetMode = PixelOffsetMode.HighSpeed;
+            graphics.PixelOffsetMode = PixelOffsetMode.None;
         }
     }
 }

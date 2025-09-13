@@ -1,6 +1,6 @@
 ﻿namespace CSC
 {
-    internal sealed class NodeStore
+    public sealed class NodeStore
     {
         private readonly Dictionary<Node, List<Node>> childs = [];
         private readonly Dictionary<Node, List<Node>> parents = [];
@@ -10,6 +10,8 @@
             childs.TryAdd(node, []);
             parents.TryAdd(node, []);
         }
+
+        public int Count => childs.Count;
 
         public void Add(Node node, IEnumerable<Node> childs_)
         {
@@ -280,7 +282,7 @@
         }
     }
 
-    internal record struct Family(List<Node> Childs, List<Node> Parents)
+    public record struct Family(List<Node> Childs, List<Node> Parents)
     {
         public static implicit operator (List<Node> childs, List<Node> parents)(Family value) => (value.Childs, value.Parents);
         public static implicit operator Family((List<Node> childs, List<Node> parents) value) => new(value.childs, value.parents);
