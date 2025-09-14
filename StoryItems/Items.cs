@@ -1,13 +1,10 @@
-﻿using CSC.Editors;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing.Design;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.StoryItems
 {
-    [Editor(typeof(CriterionEditor), typeof(UITypeEditor))]
-    [BrowsableAttribute(true)]
     public sealed class Criterion
     {
         public BoolCritera? BoolValue { get; set; }

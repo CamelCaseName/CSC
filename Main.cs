@@ -65,7 +65,6 @@ namespace CSC
         private Size OffsetFromDragClick = Size.Empty;
         private float OffsetX;
         private float OffsetY;
-        private Cursor priorCursor = Cursors.Default;
         private int runningTotal = 0;
         private float Scaling = 0.3f;
         private PointF start;
@@ -129,11 +128,6 @@ namespace CSC
             //get the shift key state so we can determine later if we want to redraw the tree on node selection or not
             IsShiftPressed = e.KeyData == (Keys.ShiftKey | Keys.Shift);
             IsCtrlPressed = e.KeyData == (Keys.Control | Keys.ControlKey);
-            if (!IsCtrlPressed)
-            {
-                movedNode = Node.NullNode;
-                MovingChild = false;
-            }
         }
 
         public void HandleMouseEvents(object? sender, MouseEventArgs e)
@@ -142,7 +136,7 @@ namespace CSC
             {
                 return;
             }
-            var pos = PointToClient(Cursor.Position);
+            var pos = Graph.PointToClient(Cursor.Position);
             ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
             var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
             //set old position for next frame/call
@@ -151,7 +145,7 @@ namespace CSC
                 case MouseButtons.Left:
                     if (e.Clicks > 1)
                     {
-                        Details.Visible = !Details.Visible;
+                        //todo do whatever we do on double click
                     }
                     else
                     {
@@ -160,12 +154,16 @@ namespace CSC
                     break;
                 case MouseButtons.None:
                 {
+                    MovingChild = false;
                     EndPan();
                     UpdateHighlightNode(ScreenPos);
                 }
                 break;
                 case MouseButtons.Right:
-                    break;
+                {
+                    UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+                }
+                break;
                 case MouseButtons.Middle:
                     UpdatePan(pos);
                     break;
@@ -175,6 +173,7 @@ namespace CSC
                     break;
                 default:
                 {
+                    MovingChild = false;
                     EndPan();
                     UpdateHighlightNode(ScreenPos);
                 }
@@ -184,9 +183,21 @@ namespace CSC
             if (MovingChild && movedNode != Node.NullNode)
             {
                 movedNode.Position = ScreenPos + OffsetFromDragClick;
-                Invalidate();
+                Cursor = Cursors.SizeAll;
+                Graph.Invalidate();
             }
-
+            else if (highlightNode != Node.NullNode)
+            {
+                Cursor = Cursors.Hand;
+            }
+            else if (CurrentlyInPan)
+            {
+                Cursor = Cursors.Cross;
+            }
+            else
+            {
+                Cursor = Cursors.Arrow;
+            }
 
             //everything else, scrolling for example
             if (e.Delta != 0)
@@ -194,7 +205,7 @@ namespace CSC
                 //todo we need a limit here so we dont scroll out too far and make the texture hugeeee
                 UpdateScaling(e);
                 //redraw
-                Invalidate();
+                Graph.Invalidate();
             }
         }
 
@@ -227,7 +238,7 @@ namespace CSC
 
             lastNode = node;
 
-            Invalidate();
+            Graph.Invalidate();
         }
 
         private void AddChild_Click(object sender, EventArgs e)
@@ -238,7 +249,7 @@ namespace CSC
 
             lastNode = node;
 
-            Invalidate();
+            Graph.Invalidate();
         }
 
         private void AddParent_Click(object sender, EventArgs e)
@@ -249,7 +260,7 @@ namespace CSC
 
             lastNode = node;
 
-            Invalidate();
+            Graph.Invalidate();
         }
 
         private Node CreateNode(Type type)
@@ -431,7 +442,6 @@ namespace CSC
             if (CurrentlyInPan)
             {
                 CurrentlyInPan = false;
-                Cursor = priorCursor;
             }
         }
 
@@ -502,12 +512,12 @@ namespace CSC
             g.TranslateTransform(-OffsetX * Scaling, -OffsetY * Scaling);
             g.ScaleTransform(Scaling, Scaling);
             adjustedVisibleClipBounds = new(OffsetX - NodeSizeX,
-                                            OffsetY - NodeSizeY + (Menu.Height / Scaling),
-                                            g.VisibleClipBounds.Width + NodeSizeX - (Details.Width / Scaling),
+                                            OffsetY - NodeSizeY,
+                                            g.VisibleClipBounds.Width + NodeSizeX,
                                             g.VisibleClipBounds.Height + NodeSizeY);
             adjustedMouseClipBounds = new(OffsetX,
-                                            OffsetY + (Menu.Height / Scaling),
-                                            g.VisibleClipBounds.Width - (Details.Width / Scaling),
+                                            OffsetY,
+                                            g.VisibleClipBounds.Width,
                                             g.VisibleClipBounds.Height);
 
             if (Scaling < 0)
@@ -601,7 +611,7 @@ namespace CSC
 
                 SetupStartPositions();
 
-                Invalidate();
+                Graph.Invalidate();
             }
         }
 
@@ -609,7 +619,7 @@ namespace CSC
         {
             nodes.Clear();
             visited.Clear();
-            Invalidate();
+            Graph.Invalidate();
             counter = 0;
         }
 
@@ -725,7 +735,7 @@ namespace CSC
             //position according to the child system
             SetupStartPositions();
 
-            Invalidate();
+            Graph.Invalidate();
         }
 
         private void UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
@@ -737,17 +747,18 @@ namespace CSC
                 return;
             }
 
-            if (IsCtrlPressed)
+            if (MouseButtons == MouseButtons.Right)
             {
-                movedNode = clickedNode;
-                MovingChild = !MovingChild;
-                if (MovingChild)
+                if (!MovingChild)
                 {
+                    movedNode = clickedNode;
+                    MovingChild = true;
                     OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPosX), (int)(movedNode.Position.Y - ScreenPosY));
                 }
             }
             else
             {
+                MovingChild = false;
                 SetSelectedObject(clickedNode);
                 lastNode = clickedNode;
             }
@@ -755,7 +766,7 @@ namespace CSC
 
         private void SetSelectedObject(Node clickedNode)
         {
-            Details.SelectedObject = clickedNode.Data;
+            //todo fill the propertyinspector with the required fields and dropdowns we need depending on the item
         }
 
         private void UpdateHighlightNode(Point ScreenPos)
@@ -764,7 +775,7 @@ namespace CSC
             highlightNode = GetNodeAtPoint(ScreenPos);
             if (highlightNode != oldHighlight)
             {
-                Invalidate();
+                Graph.Invalidate();
             }
         }
 
@@ -776,15 +787,13 @@ namespace CSC
                 CurrentlyInPan = true;
                 //get current position in screen coordinates when we start to pan
                 SetPanOffset(mouseLocation);
-                priorCursor = Cursor;
-                Cursor = Cursors.Cross;
             }
             //in pan
             else if (CurrentlyInPan)
             {
                 UpdatePanOffset(mouseLocation);
                 //redraw
-                Invalidate();
+                Graph.Invalidate();
             }
         }
 

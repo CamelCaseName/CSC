@@ -1,4 +1,6 @@
-﻿namespace CSC
+﻿using CSC.Components;
+
+namespace CSC
 {
     partial class Main
     {
@@ -35,18 +37,30 @@
             Add = new ToolStripButton();
             AddChild = new ToolStripButton();
             AddParent = new ToolStripButton();
-            openButton = new ToolStripButton();
-            Details = new PropertyGrid();
+            OpenButton = new ToolStripButton();
+            StoryTree = new TreeView();
+            HierarchyAndRest = new SplitContainer();
+            GraphAndProperties = new SplitContainer();
+            Graph = new DoubleBufferedPanel();
+            PropertyInspector = new TableLayoutPanel();
             Menu.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
+            HierarchyAndRest.Panel1.SuspendLayout();
+            HierarchyAndRest.Panel2.SuspendLayout();
+            HierarchyAndRest.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)GraphAndProperties).BeginInit();
+            GraphAndProperties.Panel1.SuspendLayout();
+            GraphAndProperties.Panel2.SuspendLayout();
+            GraphAndProperties.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
             // 
             Menu.BackColor = Color.DimGray;
-            Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, openButton });
+            Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, OpenButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
-            Menu.Size = new Size(1327, 25);
+            Menu.Size = new Size(1141, 25);
             Menu.TabIndex = 0;
             Menu.Text = "toolStrip1";
             // 
@@ -100,44 +114,94 @@
             AddParent.Text = "Add Parent";
             AddParent.Click += AddParent_Click;
             // 
-            // openButton
+            // OpenButton
             // 
-            openButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            openButton.Image = (Image)resources.GetObject("openButton.Image");
-            openButton.ImageTransparentColor = Color.Magenta;
-            openButton.Name = "openButton";
-            openButton.Size = new Size(40, 22);
-            openButton.Text = "Open";
-            openButton.Click += OpenButton_Click;
+            OpenButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            OpenButton.Image = (Image)resources.GetObject("OpenButton.Image");
+            OpenButton.ImageTransparentColor = Color.Magenta;
+            OpenButton.Name = "OpenButton";
+            OpenButton.Size = new Size(40, 22);
+            OpenButton.Text = "Open";
+            OpenButton.Click += OpenButton_Click;
             // 
-            // Details
+            // StoryTree
             // 
-            Details.AllowDrop = true;
-            Details.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-            Details.BackColor = Color.FromArgb(34, 34, 34);
-            Details.CategoryForeColor = Color.White;
-            Details.CategorySplitterColor = Color.FromArgb(64, 64, 64);
-            Details.DisabledItemForeColor = Color.FromArgb(127, 255, 255, 255);
-            Details.HelpBackColor = Color.FromArgb(64, 64, 64);
-            Details.HelpVisible = false;
-            Details.LineColor = SystemColors.ControlDarkDark;
-            Details.Location = new Point(931, 28);
-            Details.MinimumSize = new Size(100, 50);
-            Details.Name = "Details";
-            Details.SelectedItemWithFocusBackColor = SystemColors.WindowFrame;
-            Details.Size = new Size(396, 595);
-            Details.TabIndex = 0;
-            Details.ViewBackColor = Color.FromArgb(34, 34, 34);
-            Details.ViewBorderColor = SystemColors.InfoText;
-            Details.ViewForeColor = Color.White;
+            StoryTree.BackColor = Color.FromArgb(64, 64, 64);
+            StoryTree.Dock = DockStyle.Fill;
+            StoryTree.ForeColor = Color.White;
+            StoryTree.Location = new Point(0, 0);
+            StoryTree.Name = "StoryTree";
+            StoryTree.Size = new Size(223, 464);
+            StoryTree.TabIndex = 1;
+            // 
+            // HierarchyAndRest
+            // 
+            HierarchyAndRest.Dock = DockStyle.Fill;
+            HierarchyAndRest.Location = new Point(0, 25);
+            HierarchyAndRest.Name = "HierarchyAndRest";
+            // 
+            // HierarchyAndRest.Panel1
+            // 
+            HierarchyAndRest.Panel1.Controls.Add(StoryTree);
+            // 
+            // HierarchyAndRest.Panel2
+            // 
+            HierarchyAndRest.Panel2.Controls.Add(GraphAndProperties);
+            HierarchyAndRest.Size = new Size(1141, 464);
+            HierarchyAndRest.SplitterDistance = 223;
+            HierarchyAndRest.TabIndex = 2;
+            // 
+            // GraphAndProperties
+            // 
+            GraphAndProperties.Dock = DockStyle.Fill;
+            GraphAndProperties.Location = new Point(0, 0);
+            GraphAndProperties.Name = "GraphAndProperties";
+            GraphAndProperties.Orientation = Orientation.Horizontal;
+            // 
+            // GraphAndProperties.Panel1
+            // 
+            GraphAndProperties.Panel1.Controls.Add(Graph);
+            // 
+            // GraphAndProperties.Panel2
+            // 
+            GraphAndProperties.Panel2.Controls.Add(PropertyInspector);
+            GraphAndProperties.Size = new Size(914, 464);
+            GraphAndProperties.SplitterDistance = 347;
+            GraphAndProperties.TabIndex = 0;
+            // 
+            // Graph
+            // 
+            Graph.Dock = DockStyle.Fill;
+            Graph.Location = new Point(0, 0);
+            Graph.Name = "Graph";
+            Graph.Size = new Size(914, 347);
+            Graph.TabIndex = 0;
+            Graph.Paint += Main_Paint;
+            Graph.MouseClick += HandleMouseEvents;
+            Graph.MouseDoubleClick += HandleMouseEvents;
+            Graph.MouseWheel += HandleMouseEvents;
+            // 
+            // PropertyInspector
+            // 
+            PropertyInspector.BackColor = Color.FromArgb(64, 64, 64);
+            PropertyInspector.ColumnCount = 2;
+            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 142F));
+            PropertyInspector.Dock = DockStyle.Fill;
+            PropertyInspector.Location = new Point(0, 0);
+            PropertyInspector.Name = "PropertyInspector";
+            PropertyInspector.RowCount = 1;
+            PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            PropertyInspector.Size = new Size(914, 113);
+            PropertyInspector.TabIndex = 0;
             // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1327, 623);
-            Controls.Add(Details);
+            ClientSize = new Size(1141, 489);
+            Controls.Add(HierarchyAndRest);
             Controls.Add(Menu);
             DoubleBuffered = true;
             KeyPreview = true;
@@ -145,14 +209,18 @@
             Name = "Main";
             ShowIcon = false;
             Text = "Custom Custom Story Creator";
-            Paint += Main_Paint;
-            KeyDown += HandleKeyBoard;
             KeyUp += HandleKeyBoard;
-            MouseClick += HandleMouseEvents;
-            MouseDoubleClick += HandleMouseEvents;
-            MouseWheel += HandleMouseEvents;
+            KeyDown += HandleKeyBoard;
             Menu.ResumeLayout(false);
             Menu.PerformLayout();
+            HierarchyAndRest.Panel1.ResumeLayout(false);
+            HierarchyAndRest.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).EndInit();
+            HierarchyAndRest.ResumeLayout(false);
+            GraphAndProperties.Panel1.ResumeLayout(false);
+            GraphAndProperties.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)GraphAndProperties).EndInit();
+            GraphAndProperties.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -162,10 +230,14 @@
         private ToolStrip Menu;
         private ToolStripButton StartButton;
         private ToolStripButton Add;
-        private PropertyGrid Details;
         private ToolStripButton AddChild;
         private ToolStripButton AddParent;
         private ToolStripButton ResetButton;
-        private ToolStripButton openButton;
+        private ToolStripButton OpenButton;
+        private TreeView StoryTree;
+        private SplitContainer HierarchyAndRest;
+        private SplitContainer GraphAndProperties;
+        private DoubleBufferedPanel Graph;
+        private TableLayoutPanel PropertyInspector;
     }
 }
