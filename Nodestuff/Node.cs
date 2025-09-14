@@ -1,10 +1,13 @@
 ﻿using CSC.StoryItems;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Diagnostics;
+using System.Drawing.Design;
 using System.Runtime.CompilerServices;
 using static CSC.StoryItems.StoryEnums;
 
-namespace CSC
+namespace CSC.Nodestuff
 {
     public enum ClickedNodeTypes
     {
@@ -47,6 +50,12 @@ namespace CSC
         Value
     }
 
+    public sealed class MissingreferenceInfo(string text)
+    {
+        [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
+        public string Text { get; set; } = text;
+    }
+
     public sealed class Node
     {
         public static readonly Node NullNode = new();
@@ -55,7 +64,7 @@ namespace CSC
         public Guid Guid = Guid.NewGuid();
         public int Mass = 1;
         public NodeType Type;
-        public object? Data = null;
+        private object? data = null;
         private PointF position = PointF.Empty;
         public SizeF Size = SizeF.Empty;
         public string ID;
@@ -83,6 +92,18 @@ namespace CSC
         public RectangleF Rectangle { get => new(position, Size); }
 
         public Rectangle RectangleNonF { get => new((int)position.X, (int)position.Y, (int)Size.Width, (int)Size.Height); }
+        public object? Data
+        {
+            get
+            {
+                return data ?? new MissingreferenceInfo(Text);
+            }
+            set
+            {
+                data = value;
+                DataType = value?.GetType() ?? typeof(object);
+            }
+        }
 
         public Node(string iD, NodeType type, string text)
         {
@@ -121,11 +142,21 @@ namespace CSC
         public static Node CreateCriteriaNode(Criterion criterion, Node node)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
-            return new Node(
-                $"{criterion.Character}{criterion.CompareType}{criterion.Value}",
-                NodeType.Criterion,
-                $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}")
-            { FileName = node.FileName };
+            var nodeList = Main.nodes.KeyNodes().ToList();
+            var result = nodeList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Value}");
+            if (result is not null)
+            {
+                return result;
+            }
+            else
+            {
+                return new Node(
+                    $"{criterion.Character}{criterion.CompareType}{criterion.Value}",
+                    NodeType.Criterion,
+                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}")
+                { FileName = node.FileName };
+            }
+
         }
 
         public void AddCriteria(List<Criterion> criteria)

@@ -1,4 +1,4 @@
-﻿namespace CSC
+﻿namespace CSC.Nodestuff
 {
     public sealed class NodeStore
     {

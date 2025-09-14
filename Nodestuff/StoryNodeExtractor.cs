@@ -1,6 +1,6 @@
 using CSC.StoryItems;
 
-namespace CSC
+namespace CSC.Nodestuff
 {
     public static class StoryNodeExtractor
     {

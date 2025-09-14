@@ -122,7 +122,6 @@
             Details.HelpVisible = false;
             Details.LineColor = SystemColors.ControlDarkDark;
             Details.Location = new Point(931, 28);
-            Details.MaximumSize = new Size(600, 900);
             Details.MinimumSize = new Size(100, 50);
             Details.Name = "Details";
             Details.SelectedItemWithFocusBackColor = SystemColors.WindowFrame;
