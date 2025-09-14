@@ -80,6 +80,10 @@ namespace CSC
 
         public bool Visited { get; internal set; }
 
+        public RectangleF Rectangle { get => new(position, Size); }
+
+        public Rectangle RectangleNonF { get => new((int)position.X, (int)position.Y, (int)Size.Width, (int)Size.Height); }
+
         public Node(string iD, NodeType type, string text)
         {
             ID = iD;

@@ -55,6 +55,24 @@
         {
             childs.Clear();
             parents.Clear();
+            NodePositionSorting.Clear();
+        }
+
+        public void Delete(Node node)
+        {
+            childs.Remove(node);
+            parents.Remove(node);
+            NodePositionSorting.ClearNode(node);
+
+            foreach (var childs in childs.Values)
+            {
+                childs.Remove(node);
+            }
+
+            foreach (var parents in parents.Values)
+            {
+                parents.Remove(node);
+            }
         }
 
         public bool Contains(Node node)
@@ -83,6 +101,13 @@
             foreach (var child in childs.Values)
             {
                 if (child.Contains(node))
+                {
+                    return true;
+                }
+            }
+            foreach (var parent in parents.Values)
+            {
+                if (parent.Contains(node))
                 {
                     return true;
                 }

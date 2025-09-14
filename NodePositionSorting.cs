@@ -139,5 +139,13 @@
                 }
             }
         }
+
+        internal static void Clear()
+        {
+            Sorting[0].Clear();
+            Sorting[1].Clear();
+            Sorting[2].Clear();
+            Sorting[3].Clear();
+        }
     }
 }

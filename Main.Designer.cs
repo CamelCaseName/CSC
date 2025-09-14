@@ -35,13 +35,14 @@
             Add = new ToolStripButton();
             AddChild = new ToolStripButton();
             AddParent = new ToolStripButton();
-            Details = new PropertyGrid();
             openButton = new ToolStripButton();
+            Details = new PropertyGrid();
             Menu.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
             // 
+            Menu.BackColor = Color.DimGray;
             Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, openButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
@@ -99,18 +100,6 @@
             AddParent.Text = "Add Parent";
             AddParent.Click += AddParent_Click;
             // 
-            // Details
-            // 
-            Details.AllowDrop = true;
-            Details.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-            Details.HelpVisible = false;
-            Details.Location = new Point(931, 28);
-            Details.MaximumSize = new Size(600, 900);
-            Details.MinimumSize = new Size(100, 50);
-            Details.Name = "Details";
-            Details.Size = new Size(396, 595);
-            Details.TabIndex = 0;
-            // 
             // openButton
             // 
             openButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
@@ -121,10 +110,33 @@
             openButton.Text = "Open";
             openButton.Click += OpenButton_Click;
             // 
+            // Details
+            // 
+            Details.AllowDrop = true;
+            Details.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
+            Details.BackColor = Color.FromArgb(34, 34, 34);
+            Details.CategoryForeColor = Color.White;
+            Details.CategorySplitterColor = Color.FromArgb(64, 64, 64);
+            Details.DisabledItemForeColor = Color.FromArgb(127, 255, 255, 255);
+            Details.HelpBackColor = Color.FromArgb(64, 64, 64);
+            Details.HelpVisible = false;
+            Details.LineColor = SystemColors.ControlDarkDark;
+            Details.Location = new Point(931, 28);
+            Details.MaximumSize = new Size(600, 900);
+            Details.MinimumSize = new Size(100, 50);
+            Details.Name = "Details";
+            Details.SelectedItemWithFocusBackColor = SystemColors.WindowFrame;
+            Details.Size = new Size(396, 595);
+            Details.TabIndex = 0;
+            Details.ViewBackColor = Color.FromArgb(34, 34, 34);
+            Details.ViewBorderColor = SystemColors.InfoText;
+            Details.ViewForeColor = Color.White;
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
+            BackColor = Color.FromArgb(40, 40, 40);
             ClientSize = new Size(1327, 623);
             Controls.Add(Details);
             Controls.Add(Menu);
