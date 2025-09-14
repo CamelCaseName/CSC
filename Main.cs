@@ -239,7 +239,7 @@ namespace CSC
         {
             foreach (var key in NodePositionSorting.Singleton[mouseGraphLocation])
             {
-                if (new RectangleF(key.Position, key.Size).Contains(mouseGraphLocation))
+                if (key.Rectangle.Contains(mouseGraphLocation))
                 {
                     return key;
                 }
@@ -434,7 +434,7 @@ namespace CSC
 
         private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush)
         {
-            e.Graphics.FillEllipse(brush, new RectangleF(node.Position, node.Size));
+            e.Graphics.FillPath(brush, RoundedRect(node.Rectangle, 10f));
             if (Scaling > 0.2f)
             {
                 int length = 32;
@@ -457,6 +457,39 @@ namespace CSC
                                       textColor,
                                       TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             }
+        }
+
+        //see https://stackoverflow.com/questions/33853434/how-to-draw-a-rounded-rectangle-in-c-sharp
+        private static GraphicsPath RoundedRect(RectangleF bounds, float radius)
+        {
+            float diameter = radius * 2;
+            SizeF size = new(diameter, diameter);
+            RectangleF arc = new(bounds.Location, size);
+            GraphicsPath path = new();
+
+            if (radius == 0)
+            {
+                path.AddRectangle(bounds);
+                return path;
+            }
+
+            // top left arc  
+            path.AddArc(arc, 180, 90);
+
+            // top right arc  
+            arc.X = bounds.Right - diameter;
+            path.AddArc(arc, 270, 90);
+
+            // bottom right arc  
+            arc.Y = bounds.Bottom - diameter;
+            path.AddArc(arc, 0, 90);
+
+            // bottom left arc 
+            arc.X = bounds.Left;
+            path.AddArc(arc, 90, 90);
+
+            path.CloseFigure();
+            return path;
         }
 
         private void EndPan()
@@ -1368,7 +1401,7 @@ namespace CSC
                 Debugger.Break();
             }
             scaledFont = GetScaledFont(g, DefaultFont, Scaling);
-            
+
 
             //int c = 0;
             foreach (var node in NodePositionSorting.Singleton[adjustedVisibleClipBounds])
@@ -1724,7 +1757,7 @@ namespace CSC
         //see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
         private static Font GetScaledFont(Graphics g, Font f, float scale)
         {
-            if(f.SizeInPoints * scale < 0)
+            if (f.SizeInPoints * scale < 0)
             {
                 Debugger.Break();
             }
