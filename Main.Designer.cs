@@ -31,6 +31,8 @@ namespace CSC
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
+            TreeNode treeNode1 = new TreeNode("Characters");
+            TreeNode treeNode2 = new TreeNode("xxx Story", new TreeNode[] { treeNode1 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -131,6 +133,15 @@ namespace CSC
             StoryTree.ForeColor = Color.White;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
+            treeNode1.Name = "Characters";
+            treeNode1.Text = "Characters";
+            treeNode1.ToolTipText = "You'll find all your Characters here";
+            treeNode2.Checked = true;
+            treeNode2.Name = "Story Name";
+            treeNode2.Text = "xxx Story";
+            treeNode2.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
+            StoryTree.ShowNodeToolTips = true;
             StoryTree.Size = new Size(223, 464);
             StoryTree.TabIndex = 1;
             // 
@@ -209,8 +220,8 @@ namespace CSC
             Name = "Main";
             ShowIcon = false;
             Text = "Custom Custom Story Creator";
-            KeyUp += HandleKeyBoard;
             KeyDown += HandleKeyBoard;
+            KeyUp += HandleKeyBoard;
             Menu.ResumeLayout(false);
             Menu.PerformLayout();
             HierarchyAndRest.Panel1.ResumeLayout(false);

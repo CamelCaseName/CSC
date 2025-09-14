@@ -4,9 +4,7 @@
     {
         private const int GridSize = 1000;
         //4 lists for each quadrant so we can deal with negative coordinates
-        private static readonly List<List<List<Node>>>[] Sorting = [[], [], [], []];
-
-        public static NodePositionSorting Singleton = new();
+        private readonly List<List<List<Node>>>[] Sorting = [[], [], [], []];
 
         public List<Node> this[PointF position]
         {
@@ -77,7 +75,7 @@
             }
         }
 
-        private static void TryFillListToSize(int scaledXRight, int scaledYBottom)
+        private void TryFillListToSize(int scaledXRight, int scaledYBottom)
         {
             int quadrant = GetQuadrant(scaledXRight, scaledYBottom);
 
@@ -104,7 +102,7 @@
             }
         }
 
-        public static void ClearNode(Node node)
+        public void ClearNode(Node node)
         {
             int scaledXLeft = (int)(node.Position.X / GridSize);
             int scaledYTop = (int)(node.Position.Y / GridSize);
@@ -122,7 +120,7 @@
             }
         }
 
-        public static void SetNode(Node node)
+        public void SetNode(Node node)
         {
             int scaledXLeft = (int)(node.Position.X / GridSize);
             int scaledYTop = (int)(node.Position.Y / GridSize);
@@ -140,7 +138,7 @@
             }
         }
 
-        internal static void Clear()
+        internal void Clear()
         {
             Sorting[0].Clear();
             Sorting[1].Clear();

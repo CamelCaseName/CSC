@@ -2,6 +2,7 @@
 {
     public sealed class NodeStore
     {
+        public readonly NodePositionSorting Positions = new();
         private readonly Dictionary<Node, List<Node>> childs = [];
         private readonly Dictionary<Node, List<Node>> parents = [];
 
@@ -12,6 +13,8 @@
         }
 
         public int Count => childs.Count;
+
+        public List<Node> Nodes => [.. childs.Keys];
 
         public void Add(Node node, IEnumerable<Node> childs_)
         {
@@ -55,14 +58,14 @@
         {
             childs.Clear();
             parents.Clear();
-            NodePositionSorting.Clear();
+            Positions.Clear();
         }
 
         public void Delete(Node node)
         {
             childs.Remove(node);
             parents.Remove(node);
-            NodePositionSorting.ClearNode(node);
+            Positions.ClearNode(node);
 
             foreach (var childs in childs.Values)
             {

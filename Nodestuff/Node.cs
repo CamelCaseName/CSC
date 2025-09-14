@@ -1,10 +1,7 @@
 ﻿using CSC.StoryItems;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Drawing.Design;
-using System.Runtime.CompilerServices;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
@@ -58,7 +55,7 @@ namespace CSC.Nodestuff
 
     public sealed class Node
     {
-        public static readonly Node NullNode = new();
+        public static readonly Node NullNode = new(new());
 
         public Gender Gender = Gender.None;
         public Guid Guid = Guid.NewGuid();
@@ -69,8 +66,9 @@ namespace CSC.Nodestuff
         public SizeF Size = SizeF.Empty;
         public string ID;
         public string Text;
-        public string FileName = string.Empty;
+        public string FileName = Main.NoCharacter;
         public Type DataType = typeof(object);
+        private readonly NodePositionSorting positionSorting;
 
         public PointF Position
         {
@@ -81,9 +79,9 @@ namespace CSC.Nodestuff
 
             set
             {
-                NodePositionSorting.ClearNode(this);
+                positionSorting.ClearNode(this);
                 position = value;
-                NodePositionSorting.SetNode(this);
+                positionSorting.SetNode(this);
             }
         }
 
@@ -92,6 +90,7 @@ namespace CSC.Nodestuff
         public RectangleF Rectangle { get => new(position, Size); }
 
         public Rectangle RectangleNonF { get => new((int)position.X, (int)position.Y, (int)Size.Width, (int)Size.Height); }
+       
         public object? Data
         {
             get
@@ -105,15 +104,18 @@ namespace CSC.Nodestuff
             }
         }
 
-        public Node(string iD, NodeType type, string text)
+        public Node(string iD, NodeType type, string text, NodePositionSorting sorting)
         {
+            positionSorting = sorting;
             ID = iD;
             Text = text;
             Type = type;
             Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
         }
-        public Node(string iD, NodeType type, string text, object data)
+
+        public Node(string iD, NodeType type, string text, object data, NodePositionSorting sorting)
         {
+            positionSorting = sorting;
             ID = iD;
             Text = text;
             Type = type;
@@ -122,8 +124,9 @@ namespace CSC.Nodestuff
             Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
         }
 
-        public Node()
+        public Node(NodePositionSorting sorting)
         {
+            positionSorting = sorting;
             ID = string.Empty;
             Text = string.Empty;
             Type = NodeType.Null;
@@ -139,11 +142,10 @@ namespace CSC.Nodestuff
             return $"{ID}|{Text}";
         }
 
-        public static Node CreateCriteriaNode(Criterion criterion, Node node)
+        public static Node CreateCriteriaNode(Criterion criterion, Node node, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
-            var nodeList = Main.nodes.KeyNodes().ToList();
-            var result = nodeList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Value}");
+            var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Value}");
             if (result is not null)
             {
                 return result;
@@ -153,34 +155,36 @@ namespace CSC.Nodestuff
                 return new Node(
                     $"{criterion.Character}{criterion.CompareType}{criterion.Value}",
                     NodeType.Criterion,
-                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}")
+                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}", node.positionSorting)
                 { FileName = node.FileName };
             }
-
         }
 
-        public void AddCriteria(List<Criterion> criteria)
+        public void AddCriteria(List<Criterion> criteria, NodeStore nodes)
         {
             foreach (Criterion criterion in criteria)
             {
-                Node tempNode = CreateCriteriaNode(criterion, this);
+                Node tempNode = CreateCriteriaNode(criterion, this, nodes);
                 tempNode.Data = criterion;
                 tempNode.DataType = typeof(Criterion);
                 if (criterion.CompareType == CompareTypes.PlayerGender)
+                {
                     tempNode.Gender = criterion.Value == "Female" ? Gender.Female : criterion.Value == "Male" ? Gender.Male : Gender.None;
-                Main.nodes.AddParent(this, tempNode);
+                }
+
+                nodes.AddParent(this, tempNode);
             }
         }
 
-        public void AddEvents(List<GameEvent> events)
+        public void AddEvents(List<GameEvent> events, NodeStore nodes)
         {
             foreach (GameEvent _event in events)
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this) { FileName = FileName, Data = _event, DataType = typeof(GameEvent) };
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this, positionSorting) { FileName = FileName, Data = _event, DataType = typeof(GameEvent) };
 
-                nodeEvent.AddCriteria(_event.Criteria ?? new List<Criterion>());
+                nodeEvent.AddCriteria(_event.Criteria ?? new List<Criterion>(), nodes);
 
-                Main.nodes.AddParent(this, nodeEvent);
+                nodes.AddParent(this, nodeEvent);
             }
         }
     }

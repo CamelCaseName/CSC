@@ -10,9 +10,10 @@ namespace CSC
     {
         public const int NodeSizeX = 200;
         public const int NodeSizeY = 50;
-        public static readonly NodeStore nodes = new();
+        private static readonly Dictionary<string, NodeStore> nodes = [];
         public bool MovingChild = false;
         private const int NodeCount = 100;
+        public const string NoCharacter = "None";
         private readonly SolidBrush achievementNodeBrush;
         private readonly SolidBrush alternateTextNodeBrush;
         private readonly SolidBrush bgcNodeBrush;
@@ -22,7 +23,6 @@ namespace CSC
         private readonly SolidBrush criteriaGroupNodeBrush;
         private readonly SolidBrush criterionNodeBrush;
         private readonly SolidBrush cutsceneNodeBrush;
-        private readonly Brush DarkFontBrush;
         private readonly SolidBrush defaultNodeBrush;
         private readonly SolidBrush dialogueNodeBrush;
         private readonly SolidBrush doorNodeBrush;
@@ -37,7 +37,6 @@ namespace CSC
         private readonly SolidBrush itemGroupNodeBrush;
         private readonly SolidBrush itemNodeBrush;
         private readonly List<int> layerYperX = [];
-        private readonly Brush LightFontBrush;
         private readonly Pen linePen;
         private readonly SolidBrush personalityNodeBrush;
         private readonly SolidBrush poseNodeBrush;
@@ -74,9 +73,18 @@ namespace CSC
         RectangleF adjustedVisibleClipBounds = new();
         private RectangleF adjustedMouseClipBounds;
 
+        public static string SelectedCharacter
+        {
+            get;
+
+
+            private set;
+        } = NoCharacter;
+
         public Main()
         {
             InitializeComponent();
+            StoryTree.ExpandAll();
             Application.AddMessageFilter(new MouseMessageFilter());
             MouseMessageFilter.MouseMove += HandleMouseEvents;
             linePen = new Pen(Brushes.LightGray, 2)
@@ -118,9 +126,8 @@ namespace CSC
             stateNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 190, 50));
             valueNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 0, 190));
             HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
-            LightFontBrush = Brushes.White;
-            DarkFontBrush = Brushes.Black;
 
+            nodes.Add(NoCharacter, new());
         }
 
         public void HandleKeyBoard(object? sender, KeyEventArgs e)
@@ -219,7 +226,7 @@ namespace CSC
         {
             if (adjustedMouseClipBounds.Contains(mouseGraphLocation))
             {
-                foreach (var key in NodePositionSorting.Singleton[mouseGraphLocation])
+                foreach (var key in nodes[SelectedCharacter].Positions[mouseGraphLocation])
                 {
                     if (key.Rectangle.Contains(mouseGraphLocation))
                     {
@@ -234,7 +241,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Criterion));
 
-            Main.nodes.Add(node);
+            nodes[NoCharacter].Add(node);
 
             lastNode = node;
 
@@ -245,7 +252,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Response));
 
-            Main.nodes.AddChild(lastNode, node);
+            nodes[NoCharacter].AddChild(lastNode, node);
 
             lastNode = node;
 
@@ -256,7 +263,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Dialogue));
 
-            Main.nodes.AddParent(lastNode, node);
+            nodes[NoCharacter].AddParent(lastNode, node);
 
             lastNode = node;
 
@@ -292,7 +299,7 @@ namespace CSC
 
             //Debug.WriteLine($"spawned number {counter} at {x}|{y}");
 
-            var node = new Node(counter.ToString(), NodeType.Null, "blabla", item)
+            var node = new Node(counter.ToString(), NodeType.Null, "blabla", item, nodes[NoCharacter].Positions)
             {
                 Position = new PointF(x, y),
                 Size = new SizeF(NodeSizeX, NodeSizeY),
@@ -316,7 +323,7 @@ namespace CSC
                 //Debug.WriteLine("on node " + currentChild.control.Text + " we arrived at y level" + layerYperX[layerX]);
                 visited.Add(currentChild);
 
-                var newChilds = Main.nodes.Childs(currentChild);
+                var newChilds = nodes[SelectedCharacter].Childs(currentChild);
                 if (newChilds.Count == 0)
                 {
                     layerYperX[layerX]++;
@@ -527,15 +534,15 @@ namespace CSC
             scaledFont = GetScaledFont(g, DefaultFont, Scaling);
 
             //int c = 0;
-            foreach (var node in NodePositionSorting.Singleton[adjustedVisibleClipBounds])
+            foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
             {
                 //c++;
                 DrawNode(e, node, GetNodeColor(node.Type));
             }
             //todo we need to cull here as well somehow
-            foreach (var node in Main.nodes.KeyNodes())
+            foreach (var node in nodes[SelectedCharacter].Nodes)
             {
-                var list = Main.nodes.Childs(node);
+                var list = nodes[SelectedCharacter].Childs(node);
                 if (list.Count > 0)
                 {
                     foreach (var item in list)
@@ -547,7 +554,7 @@ namespace CSC
 
             if (highlightNode != Node.NullNode)
             {
-                var family = Main.nodes[highlightNode];
+                var family = nodes[SelectedCharacter][highlightNode];
                 if (family.Childs.Count > 0)
                 {
                     foreach (var item in family.Childs)
@@ -580,19 +587,20 @@ namespace CSC
 
             if (File.Exists(FilePath))
             {
-                //read in Main.nodes and set positions later, is faster than the old system
                 string fileString = File.ReadAllText(FilePath);
                 fileString = fileString.Replace('', ' ');
+
+                NodeStore tempStore = new();
                 //else create new
                 try
                 {
                     if (Path.GetExtension(FilePath) == ".story")
                     {
-                        NodeLinker.DissectStory(JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory());
+                        NodeLinker.DissectStory(JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory(), tempStore);
                     }
                     else
                     {
-                        NodeLinker.DissectCharacter(JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory());
+                        NodeLinker.DissectCharacter(JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory(), tempStore);
                     }
                 }
                 catch (JsonReaderException ex)
@@ -605,13 +613,23 @@ namespace CSC
                     Debug.WriteLine(ex.Message);
                     return;
                 }
+                string FileName = Path.GetFileNameWithoutExtension(FilePath);
 
                 //even link for single file, should be able to link most suff so it stays readable
-                NodeLinker.Interlinknodes();
+                NodeLinker.Interlinknodes(tempStore);
+
+                if (!nodes.TryAdd(FileName, tempStore))
+                {
+                    nodes[FileName] = tempStore;
+                }
+                SelectedCharacter = FileName;
 
                 SetupStartPositions();
 
                 Graph.Invalidate();
+
+                StoryTree.Nodes[0].LastNode.Nodes.Add(new TreeNode(FileName));
+                StoryTree.ExpandAll();
             }
         }
 
@@ -621,6 +639,7 @@ namespace CSC
             visited.Clear();
             Graph.Invalidate();
             counter = 0;
+            SelectedCharacter = NoCharacter;
         }
 
         private void SetPanOffset(Point location)
@@ -637,12 +656,12 @@ namespace CSC
 
             //todo we need to investigate the tornadoization here
 
-            int sideLengthY = (int)(Math.Sqrt(Main.nodes.KeyNodes().Count) + 0.5);
+            int sideLengthY = (int)(Math.Sqrt(nodes[SelectedCharacter].Count) + 0.5);
             int zeroColoumn = 0;
 
-            foreach (var key in Main.nodes.KeyNodes())
+            foreach (var key in nodes[SelectedCharacter].Nodes)
             {
-                Family family = Main.nodes[key];
+                Family family = nodes[SelectedCharacter][key];
                 if (family.Parents.Count == 0)
                 {
                     //we have a root start node with no parents, start child search and layout from here
@@ -680,7 +699,7 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Criterion));
 
-            Main.nodes.Add(node);
+            nodes[SelectedCharacter].Add(node);
 
             lastNode = node;
             for (int i = 0; i < NodeCount; i++)
@@ -704,13 +723,13 @@ namespace CSC
                     case 11:
                     {
                         node = CreateNode(typeof(Response));
-                        Main.nodes.AddChild(lastNode, node);
+                        nodes[SelectedCharacter].AddChild(lastNode, node);
                         break;
                     }
                     case 3:
                     {
                         node = CreateNode(typeof(Criterion));
-                        Main.nodes.Add(node);
+                        nodes[SelectedCharacter].Add(node);
                         break;
                     }
                     case 10:
@@ -719,7 +738,7 @@ namespace CSC
                     case 0:
                     {
                         node = CreateNode(typeof(Dialogue));
-                        Main.nodes.AddParent(lastNode, node);
+                        nodes[SelectedCharacter].AddParent(lastNode, node);
                         break;
                     }
                     default:
