@@ -138,12 +138,13 @@ namespace CSC
             treeNode1.ToolTipText = "You'll find all your Characters here";
             treeNode2.Checked = true;
             treeNode2.Name = "Story Name";
-            treeNode2.Text = "xxx Story";
+            treeNode2.Text = "Story Root";
             treeNode2.ToolTipText = "The Story itself and the Characters are in here";
             StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
             StoryTree.ShowNodeToolTips = true;
             StoryTree.Size = new Size(223, 464);
             StoryTree.TabIndex = 1;
+            StoryTree.AfterSelect += StoryTree_AfterSelect;
             // 
             // HierarchyAndRest
             // 

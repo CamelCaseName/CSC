@@ -3,6 +3,7 @@ using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Net.Http.Headers;
 
 namespace CSC
 {
@@ -62,10 +63,10 @@ namespace CSC
         private Node lastNode = Node.NullNode;
         private Node movedNode;
         private Size OffsetFromDragClick = Size.Empty;
-        private float OffsetX;
-        private float OffsetY;
+        private readonly Dictionary<string, float> OffsetX = [];
+        private readonly Dictionary<string, float> OffsetY = [];
         private int runningTotal = 0;
-        private float Scaling = 0.3f;
+        private readonly Dictionary<string, float> Scaling = [];
         private PointF start;
         private float StartPanOffsetX = 0f;
         private float StartPanOffsetY = 0f;
@@ -128,6 +129,9 @@ namespace CSC
             HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
 
             nodes.Add(NoCharacter, new());
+            Scaling.Add(NoCharacter, 0.3f);
+            OffsetX.Add(NoCharacter, 0);
+            OffsetY.Add(NoCharacter, 0);
         }
 
         public void HandleKeyBoard(object? sender, KeyEventArgs e)
@@ -218,8 +222,8 @@ namespace CSC
 
         public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
         {
-            graphX = screenX / Scaling + OffsetX;
-            graphY = screenY / Scaling + OffsetY;
+            graphX = screenX / Scaling[SelectedCharacter] + OffsetX[SelectedCharacter];
+            graphY = screenY / Scaling[SelectedCharacter] + OffsetY[SelectedCharacter];
         }
 
         private Node GetNodeAtPoint(Point mouseGraphLocation)
@@ -386,10 +390,10 @@ namespace CSC
         private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush)
         {
             e.Graphics.FillPath(brush, RoundedRect(node.Rectangle, 10f));
-            if (Scaling > 0.2f)
+            if (Scaling[SelectedCharacter] > 0.2f)
             {
                 int length = 32;
-                var scaledRect = GetScaledRect(e.Graphics, node.RectangleNonF, Scaling);
+                var scaledRect = GetScaledRect(e.Graphics, node.RectangleNonF, Scaling[SelectedCharacter]);
                 while (TextRenderer.MeasureText(node.Text[..Math.Min(node.Text.Length, length)], scaledFont).Width > scaledRect.Size.Width)
                 {
                     length--;
@@ -516,22 +520,22 @@ namespace CSC
             g.ToLowQuality();
 
             //update canvas transforms
-            g.TranslateTransform(-OffsetX * Scaling, -OffsetY * Scaling);
-            g.ScaleTransform(Scaling, Scaling);
-            adjustedVisibleClipBounds = new(OffsetX - NodeSizeX,
-                                            OffsetY - NodeSizeY,
+            g.TranslateTransform(-OffsetX[SelectedCharacter] * Scaling[SelectedCharacter], -OffsetY[SelectedCharacter] * Scaling[SelectedCharacter]);
+            g.ScaleTransform(Scaling[SelectedCharacter], Scaling[SelectedCharacter]);
+            adjustedVisibleClipBounds = new(OffsetX[SelectedCharacter] - NodeSizeX,
+                                            OffsetY[SelectedCharacter] - NodeSizeY,
                                             g.VisibleClipBounds.Width + NodeSizeX,
                                             g.VisibleClipBounds.Height + NodeSizeY);
-            adjustedMouseClipBounds = new(OffsetX,
-                                            OffsetY,
+            adjustedMouseClipBounds = new(OffsetX[SelectedCharacter],
+                                            OffsetY[SelectedCharacter],
                                             g.VisibleClipBounds.Width,
                                             g.VisibleClipBounds.Height);
 
-            if (Scaling < 0)
+            if (Scaling[SelectedCharacter] < 0)
             {
                 Debugger.Break();
             }
-            scaledFont = GetScaledFont(g, DefaultFont, Scaling);
+            scaledFont = GetScaledFont(g, DefaultFont, Scaling[SelectedCharacter]);
 
             //int c = 0;
             foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
@@ -622,6 +626,18 @@ namespace CSC
                 {
                     nodes[FileName] = tempStore;
                 }
+                if (!Scaling.TryAdd(FileName, 0.3f))
+                {
+                    Scaling[FileName] = 0.3f;
+                }
+                if (!OffsetX.TryAdd(FileName, 0))
+                {
+                    OffsetX[FileName] = 0;
+                }
+                if (!OffsetY.TryAdd(FileName, 0))
+                {
+                    OffsetY[FileName] = 0;
+                }
                 SelectedCharacter = FileName;
 
                 SetupStartPositions();
@@ -629,6 +645,7 @@ namespace CSC
                 Graph.Invalidate();
 
                 StoryTree.Nodes[0].LastNode.Nodes.Add(new TreeNode(FileName));
+                StoryTree.SelectedNode = StoryTree.Nodes[0].LastNode.LastNode;
                 StoryTree.ExpandAll();
             }
         }
@@ -821,8 +838,8 @@ namespace CSC
             //better scaling thanks to the one lone coder
             //https://www.youtube.com/watch?v=ZQ8qtAizis4
             //update opffset by the difference in screen coordinates we travelled so far
-            OffsetX -= (location.X - StartPanOffsetX) / Scaling;
-            OffsetY -= (location.Y - StartPanOffsetY) / Scaling;
+            OffsetX[SelectedCharacter] -= (location.X - StartPanOffsetX) / Scaling[SelectedCharacter];
+            OffsetY[SelectedCharacter] -= (location.Y - StartPanOffsetY) / Scaling[SelectedCharacter];
 
             //replace old start by new start coordinates so we only look at one interval,
             //and do not accumulate the change in position
@@ -840,29 +857,25 @@ namespace CSC
             //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.mouseeventargs.delta?view=windowsdesktop-6.0
             if (e.Delta > 0)
             {
-                Scaling *= 1.2f;
+                Scaling[SelectedCharacter] *= 1.2f;
             }
             else if (e.Delta < 0)
             {
-                Scaling *= 0.8f;
+                Scaling[SelectedCharacter] *= 0.8f;
             }
 
             //capture mouse coordinates in world space again so we can calculate the offset cause by zooming and compensate
             ScreenToGraph(e.X, e.Y, out AfterZoomMouseX, out AfterZoomMouseY);
 
             //update pan offset by the distance caused by zooming
-            OffsetX += BeforeZoomMouseX - AfterZoomMouseX;
-            OffsetY += BeforeZoomMouseY - AfterZoomMouseY;
+            OffsetX[SelectedCharacter] += BeforeZoomMouseX - AfterZoomMouseX;
+            OffsetY[SelectedCharacter] += BeforeZoomMouseY - AfterZoomMouseY;
         }
 
         //see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
         private static Font GetScaledFont(Graphics g, Font f, float scale)
         {
             if (f.SizeInPoints * scale < 0)
-            {
-                Debugger.Break();
-            }
-            if (f.SizeInPoints * scale > 2000)
             {
                 Debugger.Break();
             }
@@ -881,6 +894,20 @@ namespace CSC
                                 (int)Math.Ceiling(r.Y * scale),
                                 (int)Math.Ceiling(r.Width * scale),
                                 (int)Math.Ceiling(r.Height * scale));
+        }
+
+        private void StoryTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (e.Node is null)
+            {
+                return;
+            }
+
+            if (e.Node.Text != "Characters" && e.Node.Text != "Story Root")
+            {
+                Main.SelectedCharacter = e.Node.Text;
+                Graph.Invalidate();
+            }
         }
     }
 }
