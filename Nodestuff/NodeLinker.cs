@@ -138,6 +138,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!, nodes.Positions);
+                                    door.FileName = FileName;
                                     Doors.Add(door);
                                     nodes.AddParent(newList[i], door);
                                 }
@@ -155,6 +156,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -172,6 +174,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -189,6 +192,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -206,6 +210,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -241,6 +246,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key, nodes.Positions);
+                                    item.FileName = FileName;
                                     InventoryItems.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -270,6 +276,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add pose node, hasnt been referenced yet
                                     var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value, nodes.Positions);
+                                    pose.FileName = FileName;
                                     Poses.Add(pose);
                                     nodes.AddParent(newList[i], pose);
                                 }
@@ -459,6 +466,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!, nodes.Positions);
+                                    door.FileName = FileName;
                                     Doors.Add(door);
                                     nodes.AddChild(newList[i], door);
                                 }
@@ -612,6 +620,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value, nodes.Positions);
+                                    item.FileName = FileName;
                                     InventoryItems.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -859,6 +868,7 @@ namespace CSC.Nodestuff
         {
             if (story is not null && nodes is not null)
             {
+                FileName = story.CharacterName;
                 //get all relevant items from the json
                 StoryNodeExtractor.GetItems(story, nodes);
                 StoryNodeExtractor.GetValues(story, nodes);
@@ -873,10 +883,9 @@ namespace CSC.Nodestuff
                 //clear criteria to free memory, we dont need them anyways
                 //cant be called recusrively so we cant add it, it would break the combination
 
-                FileName = story.CharacterName;
                 for (int i = 0; i < nodes.Nodes.Count; i++)
                 {
-                    if (nodes.Nodes[i].FileName == string.Empty)
+                    if (nodes.Nodes[i].FileName is ("" or Main.NoCharacter))
                     {
                         nodes.Nodes[i].FileName = story.CharacterName ?? string.Empty;
                     }
@@ -884,7 +893,7 @@ namespace CSC.Nodestuff
             }
         }
 
-        public static void DissectStory(MainStory story, NodeStore nodes)
+        public static void DissectStory(MainStory story, NodeStore nodes, string StoryName)
         {
             if (story is not null && nodes is not null)
             {
@@ -904,6 +913,14 @@ namespace CSC.Nodestuff
                 StoryNodeExtractor.GetGameStartEvents(story, nodes);
                 //add all item groups actions
                 StoryNodeExtractor.GetItemGroupBehaviours(story, nodes);
+
+                for (int i = 0; i < nodes.Nodes.Count; i++)
+                {
+                    if (nodes.Nodes[i].FileName is ("" or Main.NoCharacter))
+                    {
+                        nodes.Nodes[i].FileName = StoryName ?? string.Empty;
+                    }
+                }
             }
         }
 

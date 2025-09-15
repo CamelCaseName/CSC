@@ -32,7 +32,7 @@ namespace CSC.StoryItems
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string? Value { get; set; }
         public int Option { get; set; }
-        public int GroupSubCompareType { get; set; }
+        public CompareTypes GroupSubCompareType { get; set; }
     }
 
     public sealed class ItemAction
@@ -127,6 +127,7 @@ namespace CSC.StoryItems
 
     public sealed class GameEvent
     {
+        public EventSpecialHandling Handling { get; set; }
         public int SortOrder2 { get; set; }
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string? Version { get; set; }
@@ -144,6 +145,7 @@ namespace CSC.StoryItems
         public int Option { get; set; }
         public int Option2 { get; set; }
         public int Option3 { get; set; }
+        public int Option4 { get; set; }
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string? Value { get; set; }
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]

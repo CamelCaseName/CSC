@@ -1,4 +1,5 @@
 using CSC.StoryItems;
+using System.Xml.Schema;
 
 namespace CSC.Nodestuff
 {
@@ -50,13 +51,13 @@ namespace CSC.Nodestuff
 
             foreach (Dialogue dialogue in story.Dialogues ?? [])
             {
-                var nodeDialogue = new Node(dialogue.ID.ToString(), NodeType.Dialogue, dialogue.Text ?? string.Empty, nodes.Positions) { Data = dialogue, DataType = typeof(Dialogue) };
+                var nodeDialogue = new Node(dialogue.ID.ToString(), NodeType.Dialogue, dialogue.Text ?? string.Empty, nodes.Positions) { Data = dialogue, DataType = typeof(Dialogue), FileName = story.CharacterName! };
                 int alternateTextCounter = 1;
 
                 //add all alternate texts to teh dialogue
                 foreach (AlternateText alternateText in dialogue.AlternateTexts ?? [])
                 {
-                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.Dialogue, alternateText.Text ?? string.Empty, nodeDialogue, nodes.Positions) { Data = alternateText, DataType = typeof(AlternateText) };
+                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.Dialogue, alternateText.Text ?? string.Empty, nodeDialogue, nodes.Positions) { Data = alternateText, DataType = typeof(AlternateText), FileName = story.CharacterName! };
 
                     //increasse counter to ensure valid id
                     alternateTextCounter++;
@@ -73,7 +74,7 @@ namespace CSC.Nodestuff
                 //add all responses as childs to this dialogue
                 foreach (Response response in dialogue.Responses ?? [])
                 {
-                    var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty, nodeDialogue, nodes.Positions) { Data = response, DataType = typeof(Response) };
+                    var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty, nodeDialogue, nodes.Positions) { Data = response, DataType = typeof(Response), FileName = story.CharacterName! };
 
                     nodeResponse.AddCriteria(response.ResponseCriteria ?? [], nodes);
 
@@ -210,7 +211,7 @@ namespace CSC.Nodestuff
                 foreach (ItemAction itemAction in itemOverride.ItemActions ?? [])
                 {
                     //create action node to add criteria and events to
-                    var nodeAction = new Node(itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem, nodes.Positions) { Data = itemAction, DataType = typeof(ItemAction) };
+                    var nodeAction = new Node(itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem, nodes.Positions) { Data = itemAction, DataType = typeof(ItemAction)};
 
                     //add text that is shown when item is taken
                     nodeAction.AddEvents(itemAction.OnTakeActionEvents ?? [], nodes);
@@ -301,7 +302,7 @@ namespace CSC.Nodestuff
             foreach (EventTrigger playerReaction in story.Reactions ?? [])
             {
                 //add items to list
-                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty, nodes.Positions) { Data = playerReaction, DataType = typeof(EventTrigger) };
+                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty, nodes.Positions) { Data = playerReaction, DataType = typeof(EventTrigger) , FileName = story.CharacterName!};
                 //get actions for item
                 nodeReaction.AddEvents(playerReaction.Events ?? [], nodes);
 
@@ -343,6 +344,7 @@ namespace CSC.Nodestuff
             {
                 //add items to list
                 var nodeItem = new Node(item.ItemName!, NodeType.Item, item.ItemName!, nodes.Positions) { Data = item, DataType = typeof(StoryItem) };
+                nodeItem.FileName = story.CharacterName!;
                 nodeItem.AddCriteria(item.Critera ?? [], nodes);
                 nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);
                 nodeItem.AddEvents(item.OnAcceptEvents ?? [], nodes);

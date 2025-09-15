@@ -173,9 +173,9 @@
             {
                 if (list.Count > 0)
                 {
-                    foreach (var parent in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        RemoveChild(parent, node);
+                        RemoveChild(list[i], node);
                     }
                 }
                 list.Clear();
@@ -241,9 +241,9 @@
             {
                 if (list.Count > 0)
                 {
-                    foreach (var child in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        RemoveParent(child, node);
+                        RemoveParent(list[i], node);
                     }
                 }
                 list.Clear();
@@ -307,6 +307,18 @@
             {
                 return new Family(Childs(node), Parents(node));
             }
+        }
+
+        public void Replace(Node node, Node replacement)
+        {
+            List<Node> childs = [..Childs(node)];
+            List<Node> parents = [..Parents(node)];
+
+            ClearChilds(node);
+            ClearParents(node);
+
+            AddChilds(replacement, childs);
+            AddParents(replacement, parents);
         }
     }
 

@@ -1,7 +1,9 @@
 ﻿using CSC.StoryItems;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Drawing.Design;
+using System.Windows.Forms.VisualStyles;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
@@ -62,35 +64,64 @@ namespace CSC.Nodestuff
         public int Mass = 1;
         public NodeType Type;
         private object? data = null;
-        private PointF position = PointF.Empty;
         public SizeF Size = SizeF.Empty;
         public string ID;
         public string Text;
-        public string FileName = Main.NoCharacter;
+        private string fileName = Main.NoCharacter;
         public Type DataType = typeof(object);
-        private readonly NodePositionSorting positionSorting;
+        public NodePositionSorting CurrentPositionSorting
+        {
+            get
+            {
+                if (SortingList.TryGetValue(Main.SelectedCharacter, out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    return SortingList[FileName];
+                }
+            }
+        }
+
+        private readonly Dictionary<string, NodePositionSorting> SortingList;
+        private readonly Dictionary<string, PointF> Positions = new() { { Main.NoCharacter, new() } };
 
         public PointF Position
         {
             get
             {
-                return position;
+                if (Positions.TryGetValue(Main.SelectedCharacter, out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    return Positions[FileName];
+                }
             }
 
             set
             {
-                positionSorting.ClearNode(this);
-                position = value;
-                positionSorting.SetNode(this);
+                CurrentPositionSorting.ClearNode(this);
+                Positions[Main.SelectedCharacter] = value;
+                CurrentPositionSorting.SetNode(this);
             }
         }
 
+        public void DupeToOtherSorting(string filename, NodePositionSorting sorting)
+        {
+            SortingList.Add(filename, sorting);
+            sorting.SetNode(this);
+        }
+
         public bool Visited { get; internal set; }
+        private bool firstTimeSettingFilename = true;
 
-        public RectangleF Rectangle { get => new(position, Size); }
+        public RectangleF Rectangle { get => new(Position, Size); }
 
-        public Rectangle RectangleNonF { get => new((int)position.X, (int)position.Y, (int)Size.Width, (int)Size.Height); }
-       
+        public Rectangle RectangleNonF { get => new((int)Position.X, (int)Position.Y, (int)Size.Width, (int)Size.Height); }
+
         public object? Data
         {
             get
@@ -104,9 +135,36 @@ namespace CSC.Nodestuff
             }
         }
 
+        public string FileName
+        {
+            get
+            {
+                return fileName;
+            }
+
+            set
+            {
+                fileName = value;
+                if (firstTimeSettingFilename)
+                {
+                    if (value != Main.NoCharacter)
+                    {
+                        firstTimeSettingFilename = false;
+                        SortingList.Add(fileName, SortingList[Main.NoCharacter]);
+                        SortingList.Remove(Main.NoCharacter);
+                        Positions.Add(fileName, Positions[Main.NoCharacter]);
+                        Positions.Remove(Main.NoCharacter);
+                    }
+                }
+            }
+        }
+
         public Node(string iD, NodeType type, string text, NodePositionSorting sorting)
         {
-            positionSorting = sorting;
+            SortingList = new()
+            {
+                { Main.NoCharacter, sorting }
+            };
             ID = iD;
             Text = text;
             Type = type;
@@ -115,7 +173,10 @@ namespace CSC.Nodestuff
 
         public Node(string iD, NodeType type, string text, object data, NodePositionSorting sorting)
         {
-            positionSorting = sorting;
+            SortingList = new()
+            {
+                { Main.NoCharacter, sorting }
+            };
             ID = iD;
             Text = text;
             Type = type;
@@ -126,7 +187,10 @@ namespace CSC.Nodestuff
 
         public Node(NodePositionSorting sorting)
         {
-            positionSorting = sorting;
+            SortingList = new()
+            {
+                { Main.NoCharacter, sorting }
+            };
             ID = string.Empty;
             Text = string.Empty;
             Type = NodeType.Null;
@@ -155,7 +219,7 @@ namespace CSC.Nodestuff
                 return new Node(
                     $"{criterion.Character}{criterion.CompareType}{criterion.Value}",
                     NodeType.Criterion,
-                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}", node.positionSorting)
+                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}", node.CurrentPositionSorting)
                 { FileName = node.FileName };
             }
         }
@@ -180,7 +244,8 @@ namespace CSC.Nodestuff
         {
             foreach (GameEvent _event in events)
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this, positionSorting) { FileName = FileName, Data = _event, DataType = typeof(GameEvent) };
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this, CurrentPositionSorting) { Data = _event, DataType = typeof(GameEvent) };
+                nodeEvent.FileName = this.FileName;
 
                 nodeEvent.AddCriteria(_event.Criteria ?? new List<Criterion>(), nodes);
 

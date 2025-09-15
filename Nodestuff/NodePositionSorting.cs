@@ -3,6 +3,8 @@
     public class NodePositionSorting
     {
         private const int GridSize = 1000;
+        public int ID = counter++;
+        public static int counter = 0;
         //4 lists for each quadrant so we can deal with negative coordinates
         private readonly List<List<List<Node>>>[] Sorting = [[], [], [], []];
 

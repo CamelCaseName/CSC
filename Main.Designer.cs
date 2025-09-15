@@ -32,7 +32,7 @@ namespace CSC
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             TreeNode treeNode1 = new TreeNode("Characters");
-            TreeNode treeNode2 = new TreeNode("xxx Story", new TreeNode[] { treeNode1 });
+            TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -69,6 +69,7 @@ namespace CSC
             // StartButton
             // 
             StartButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            StartButton.ForeColor = Color.FromArgb(224, 224, 224);
             StartButton.Image = (Image)resources.GetObject("StartButton.Image");
             StartButton.ImageTransparentColor = Color.Magenta;
             StartButton.Name = "StartButton";
@@ -78,7 +79,10 @@ namespace CSC
             // 
             // ResetButton
             // 
+            ResetButton.BackColor = Color.DimGray;
             ResetButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            ResetButton.Enabled = false;
+            ResetButton.ForeColor = Color.FromArgb(224, 224, 224);
             ResetButton.Image = (Image)resources.GetObject("ResetButton.Image");
             ResetButton.ImageTransparentColor = Color.Magenta;
             ResetButton.Name = "ResetButton";
@@ -89,6 +93,8 @@ namespace CSC
             // Add
             // 
             Add.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            Add.Enabled = false;
+            Add.ForeColor = Color.FromArgb(224, 224, 224);
             Add.Image = (Image)resources.GetObject("Add.Image");
             Add.ImageTransparentColor = Color.Magenta;
             Add.Name = "Add";
@@ -99,6 +105,8 @@ namespace CSC
             // AddChild
             // 
             AddChild.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            AddChild.Enabled = false;
+            AddChild.ForeColor = Color.FromArgb(224, 224, 224);
             AddChild.Image = (Image)resources.GetObject("AddChild.Image");
             AddChild.ImageTransparentColor = Color.Magenta;
             AddChild.Name = "AddChild";
@@ -109,6 +117,8 @@ namespace CSC
             // AddParent
             // 
             AddParent.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            AddParent.Enabled = false;
+            AddParent.ForeColor = Color.FromArgb(224, 224, 224);
             AddParent.Image = (Image)resources.GetObject("AddParent.Image");
             AddParent.ImageTransparentColor = Color.Magenta;
             AddParent.Name = "AddParent";
@@ -119,6 +129,7 @@ namespace CSC
             // OpenButton
             // 
             OpenButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            OpenButton.ForeColor = Color.FromArgb(224, 224, 224);
             OpenButton.Image = (Image)resources.GetObject("OpenButton.Image");
             OpenButton.ImageTransparentColor = Color.Magenta;
             OpenButton.Name = "OpenButton";

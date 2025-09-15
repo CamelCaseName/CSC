@@ -338,15 +338,17 @@ namespace CSC.StoryItems
             Top,
             Bottom,
             Underwear,
-            Bra,
+            Undershirt,
             Shoes,
             Accessory,
-            StrapOn
+            StrapOn,
+            Hair
         }
         [JsonConverter(typeof(StringEnumConverter))]
         public enum GameEvents
         {
             AddForce = 250,
+            AllowPlayerSave = 305,
             ChangeBodyScale = 450,
             CharacterFromCharacterGroup = 192,
             CharacterFunction = 998,
@@ -360,7 +362,6 @@ namespace CSC.StoryItems
             Door = 170,
             Emote = 50,
             EnableNPC = 300,
-            EnableNPCAsync = 302,
             EventTriggers = 5,
             FadeIn = 220,
             FadeOut,
@@ -374,6 +375,7 @@ namespace CSC.StoryItems
             MatchValue = 1,
             ModifyValue = 0,
             Player = 160,
+            PlaySoundboardClip = 500,
             Pose = 150,
             Quest = 80,
             RandomizeIntValue = 3,
@@ -622,6 +624,16 @@ namespace CSC.StoryItems
             GrabFromInventory,
             DropCurrentlyHeldItem,
             FlashBreasts
+        }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public enum EventSpecialHandling
+        {
+            None,
+            DialogueResponse,
+            CloseDialogue,
+            StartDialogue,
+            ItemGroup,
+            CutSceneEvents
         }
     }
 }

@@ -73,6 +73,7 @@ namespace CSC
         private Font scaledFont = DefaultFont;
         RectangleF adjustedVisibleClipBounds = new();
         private RectangleF adjustedMouseClipBounds;
+        public string StoryName = NoCharacter;
 
         public static string SelectedCharacter
         {
@@ -591,63 +592,125 @@ namespace CSC
 
             if (File.Exists(FilePath))
             {
-                string fileString = File.ReadAllText(FilePath);
-                fileString = fileString.Replace('', ' ');
+                LoadAllFilesIntoStore(FilePath);
+            }
+        }
 
-                NodeStore tempStore = new();
-                //else create new
-                try
+        private void LoadAllFilesIntoStore(string FilePath)
+        {
+            foreach (var file in Directory.GetFiles(Path.GetDirectoryName(FilePath)!))
+            {
+                if (Path.GetExtension(file) == ".story")
                 {
-                    if (Path.GetExtension(FilePath) == ".story")
+                    StoryName = Path.GetFileNameWithoutExtension(file);
+                    LoadFileIntoStore(file);
+                }
+                else if (Path.GetExtension(file) == ".character")
+                {
+                    LoadFileIntoStore(file);
+                }
+            }
+
+            foreach (var store in nodes.Keys)
+            {
+                if (store == NoCharacter)
+                {
+                    continue;
+                }
+
+                var tempList = nodes[store].Nodes;
+                foreach (var node in tempList)
+                {
+                    if (node.FileName == NoCharacter)
                     {
-                        NodeLinker.DissectStory(JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory(), tempStore);
+                        //todo investigate why we have nodes here??
+                        continue;
                     }
-                    else
+                    if (node.FileName != store)
                     {
-                        NodeLinker.DissectCharacter(JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory(), tempStore);
+                        if (nodes.TryGetValue(node.FileName, out var nodeStore))
+                        {
+                            var templist2 = nodeStore.Nodes;
+                            var result = templist2.Find((Node newRefNode) => newRefNode.Type == node.Type && newRefNode.ID == node.ID && newRefNode.FileName == node.FileName);
+                            if (result is not null)
+                            {
+                                nodes[store].Replace(node, result);
+                                result.DupeToOtherSorting(store, node.CurrentPositionSorting);
+                                //Debugger.Break();
+                            }
+                        }
                     }
                 }
-                catch (JsonReaderException ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    return;
-                }
-                catch (AggregateException ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    return;
-                }
-                string FileName = Path.GetFileNameWithoutExtension(FilePath);
+            }
+        }
 
-                //even link for single file, should be able to link most suff so it stays readable
-                NodeLinker.Interlinknodes(tempStore);
+        private void LoadFileIntoStore(string FilePath)
+        {
+            string fileString = File.ReadAllText(FilePath);
+            fileString = fileString.Replace('', ' ');
 
-                if (!nodes.TryAdd(FileName, tempStore))
+            NodeStore tempStore = new();
+            //else create new
+            try
+            {
+                if (Path.GetExtension(FilePath) == ".story")
                 {
-                    nodes[FileName] = tempStore;
+                    NodeLinker.DissectStory(JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory(), tempStore, Path.GetFileNameWithoutExtension(FilePath));
                 }
-                if (!Scaling.TryAdd(FileName, 0.3f))
+                else
                 {
-                    Scaling[FileName] = 0.3f;
+                    NodeLinker.DissectCharacter(JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory(), tempStore);
                 }
-                if (!OffsetX.TryAdd(FileName, 0))
-                {
-                    OffsetX[FileName] = 0;
-                }
-                if (!OffsetY.TryAdd(FileName, 0))
-                {
-                    OffsetY[FileName] = 0;
-                }
-                SelectedCharacter = FileName;
+            }
+            catch (JsonReaderException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return;
+            }
+            catch (AggregateException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return;
+            }
+            string FileName = Path.GetFileNameWithoutExtension(FilePath);
 
-                SetupStartPositions();
+            //even link for single file, should be able to link most suff so it stays readable
+            NodeLinker.Interlinknodes(tempStore);
 
-                Graph.Invalidate();
+            if (!nodes.TryAdd(FileName, tempStore))
+            {
+                nodes[FileName] = tempStore;
+            }
+            if (!Scaling.TryAdd(FileName, 0.3f))
+            {
+                Scaling[FileName] = 0.3f;
+            }
+            if (!OffsetX.TryAdd(FileName, 0))
+            {
+                OffsetX[FileName] = 0;
+            }
+            if (!OffsetY.TryAdd(FileName, 0))
+            {
+                OffsetY[FileName] = 0;
+            }
+            SelectedCharacter = FileName;
 
+            SetupStartPositions();
+
+            Graph.Invalidate();
+
+            if (Path.GetExtension(FilePath) == ".story")
+            {
+                StoryTree.Nodes[0].Nodes.Insert(0, new TreeNode(FileName));
+                StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[0];
+            }
+            else
+            {
                 StoryTree.Nodes[0].LastNode.Nodes.Add(new TreeNode(FileName));
                 StoryTree.SelectedNode = StoryTree.Nodes[0].LastNode.LastNode;
-                StoryTree.ExpandAll();
             }
+            StoryTree.ExpandAll();
+            return;
         }
 
         private void ResetButton_Click(object sender, EventArgs e)
@@ -665,6 +728,8 @@ namespace CSC
             StartPanOffsetY = location.Y;
         }
 
+        //todo fix for stories, something is off. maybe also pull parents in in a second pass if they are too far away and have no other parent or sth. 
+        //like we start with a root parent, then do all its childs, all their parents, all the childs childs and so on
         private void SetupStartPositions()
         {
             layerYperX.Clear();
