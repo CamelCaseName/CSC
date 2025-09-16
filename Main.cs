@@ -50,17 +50,17 @@ namespace CSC
         private readonly SolidBrush stateNodeBrush;
         private readonly SolidBrush valueNodeBrush;
         private readonly List<Node> visited = [];
-        private float AfterZoomMouseX;
-        private float AfterZoomMouseY;
-        private float BeforeZoomMouseX;
-        private float BeforeZoomMouseY;
+        private float AfterZoomNodeX;
+        private float AfterZoomNodeY;
+        private float BeforeZoomNodeX;
+        private float BeforeZoomNodeY;
         private int counter = 0;
         private bool CurrentlyInPan = false;
         private PointF end;
         private Node highlightNode = Node.NullNode;
         private bool IsCtrlPressed;
         private bool IsShiftPressed;
-        private Node lastNode = Node.NullNode;
+        private Node clickedNode = Node.NullNode;
         private Node movedNode;
         private Size OffsetFromDragClick = Size.Empty;
         private readonly Dictionary<string, float> OffsetX = [];
@@ -157,11 +157,12 @@ namespace CSC
                 case MouseButtons.Left:
                     if (e.Clicks > 1)
                     {
-                        //todo do whatever we do on double click
+                        //double click
+                        UpdateDoubleClickTransition(ScreenPosX, ScreenPosY, ScreenPos);
                     }
                     else
                     {
-                        UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+                        _ = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
                     }
                     break;
                 case MouseButtons.None:
@@ -173,7 +174,7 @@ namespace CSC
                 break;
                 case MouseButtons.Right:
                 {
-                    UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+                    _ = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
                 }
                 break;
                 case MouseButtons.Middle:
@@ -214,17 +215,61 @@ namespace CSC
             //everything else, scrolling for example
             if (e.Delta != 0)
             {
-                //todo we need a limit here so we dont scroll out too far and make the texture hugeeee
                 UpdateScaling(e);
                 //redraw
                 Graph.Invalidate();
             }
         }
 
+        private void UpdateDoubleClickTransition(float ScreenPosX, float ScreenPosY, Point ScreenPos)
+        {
+            var node = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+            if (node != Node.NullNode)
+            {
+                if (node.FileName != SelectedCharacter)
+                {
+                    if (node.FileName == StoryName)
+                    {
+                        StoryTree.SelectedNode = StoryTree.Nodes[0].FirstNode;
+                    }
+                    else
+                    {
+                        foreach (TreeNode treeNode in StoryTree.Nodes[0].LastNode.Nodes)
+                        {
+                            if (treeNode.Text == node.FileName)
+                            {
+                                StoryTree.SelectedNode = treeNode;
+                                break;
+                            }
+                        }
+                    }
+                    SelectedCharacter = node.FileName;
+                    CenterOnNode(node);
+                }
+            }
+        }
+
+        private void CenterOnNode(Node node)
+        {
+            Scaling[SelectedCharacter] = 1.5f;
+            var clipWidth = Graph.Size.Width / Scaling[SelectedCharacter];
+            var clipHeight = Graph.Size.Height / Scaling[SelectedCharacter];
+            float x = node.Position.X - (clipWidth / 2) + (node.Size.Width / 2);
+            float y = node.Position.Y - (clipHeight / 2) + (node.Size.Height / 2);
+            OffsetX[SelectedCharacter] = x;
+            OffsetY[SelectedCharacter] = y;
+        }
+
         public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
         {
             graphX = screenX / Scaling[SelectedCharacter] + OffsetX[SelectedCharacter];
             graphY = screenY / Scaling[SelectedCharacter] + OffsetY[SelectedCharacter];
+        }
+
+        public void GraphToScreen(float graphX, float graphY, out float screenX, out float screenY)
+        {
+            screenX = (graphX - OffsetX[SelectedCharacter]) * Scaling[SelectedCharacter];
+            screenY = (graphY - OffsetY[SelectedCharacter]) * Scaling[SelectedCharacter];
         }
 
         private Node GetNodeAtPoint(Point mouseGraphLocation)
@@ -248,7 +293,7 @@ namespace CSC
 
             nodes[NoCharacter].Add(node);
 
-            lastNode = node;
+            clickedNode = node;
 
             Graph.Invalidate();
         }
@@ -257,9 +302,9 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Response));
 
-            nodes[NoCharacter].AddChild(lastNode, node);
+            nodes[NoCharacter].AddChild(clickedNode, node);
 
-            lastNode = node;
+            clickedNode = node;
 
             Graph.Invalidate();
         }
@@ -268,9 +313,9 @@ namespace CSC
         {
             Node node = CreateNode(typeof(Dialogue));
 
-            nodes[NoCharacter].AddParent(lastNode, node);
+            nodes[NoCharacter].AddParent(clickedNode, node);
 
-            lastNode = node;
+            clickedNode = node;
 
             Graph.Invalidate();
         }
@@ -636,7 +681,6 @@ namespace CSC
                             {
                                 nodes[store].Replace(node, result);
                                 result.DupeToOtherSorting(store, node.CurrentPositionSorting);
-                                //Debugger.Break();
                             }
                         }
                     }
@@ -783,7 +827,7 @@ namespace CSC
 
             nodes[SelectedCharacter].Add(node);
 
-            lastNode = node;
+            clickedNode = node;
             for (int i = 0; i < NodeCount; i++)
             {
                 switch (Random.Shared.Next(20))
@@ -805,7 +849,7 @@ namespace CSC
                     case 11:
                     {
                         node = CreateNode(typeof(Response));
-                        nodes[SelectedCharacter].AddChild(lastNode, node);
+                        nodes[SelectedCharacter].AddChild(clickedNode, node);
                         break;
                     }
                     case 3:
@@ -820,7 +864,7 @@ namespace CSC
                     case 0:
                     {
                         node = CreateNode(typeof(Dialogue));
-                        nodes[SelectedCharacter].AddParent(lastNode, node);
+                        nodes[SelectedCharacter].AddParent(clickedNode, node);
                         break;
                     }
                     default:
@@ -829,7 +873,7 @@ namespace CSC
 
                 if (Random.Shared.Next(5) < 3)
                 {
-                    lastNode = node;
+                    clickedNode = node;
                 }
             }
 
@@ -839,20 +883,20 @@ namespace CSC
             Graph.Invalidate();
         }
 
-        private void UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
+        private Node UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
         {
-            Node clickedNode = GetNodeAtPoint(ScreenPos);
+            Node node = GetNodeAtPoint(ScreenPos);
 
-            if (clickedNode == Node.NullNode)
+            if (node == Node.NullNode)
             {
-                return;
+                return node;
             }
 
             if (MouseButtons == MouseButtons.Right)
             {
                 if (!MovingChild)
                 {
-                    movedNode = clickedNode;
+                    movedNode = node;
                     MovingChild = true;
                     OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPosX), (int)(movedNode.Position.Y - ScreenPosY));
                 }
@@ -860,9 +904,10 @@ namespace CSC
             else
             {
                 MovingChild = false;
-                SetSelectedObject(clickedNode);
-                lastNode = clickedNode;
+                SetSelectedObject(node);
+                clickedNode = node;
             }
+            return node;
         }
 
         private void SetSelectedObject(Node clickedNode)
@@ -916,25 +961,31 @@ namespace CSC
         {
             //get last mouse position in world space before the zoom so we can
             //offset back by the distance in world space we got shifted by zooming
-            ScreenToGraph(e.X, e.Y, out BeforeZoomMouseX, out BeforeZoomMouseY);
+            ScreenToGraph(e.X, e.Y, out BeforeZoomNodeX, out BeforeZoomNodeY);
 
             //WHEEL_DELTA = 120, as per windows documentation
             //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.mouseeventargs.delta?view=windowsdesktop-6.0
             if (e.Delta > 0)
             {
-                Scaling[SelectedCharacter] *= 1.2f;
+                if (Scaling[SelectedCharacter] < 10)
+                {
+                    Scaling[SelectedCharacter] *= 1.2f;
+                }
             }
             else if (e.Delta < 0)
             {
-                Scaling[SelectedCharacter] *= 0.8f;
+                if (Scaling[SelectedCharacter] > 0.01f)
+                {
+                    Scaling[SelectedCharacter] *= 0.8f;
+                }
             }
 
             //capture mouse coordinates in world space again so we can calculate the offset cause by zooming and compensate
-            ScreenToGraph(e.X, e.Y, out AfterZoomMouseX, out AfterZoomMouseY);
+            ScreenToGraph(e.X, e.Y, out AfterZoomNodeX, out AfterZoomNodeY);
 
             //update pan offset by the distance caused by zooming
-            OffsetX[SelectedCharacter] += BeforeZoomMouseX - AfterZoomMouseX;
-            OffsetY[SelectedCharacter] += BeforeZoomMouseY - AfterZoomMouseY;
+            OffsetX[SelectedCharacter] += BeforeZoomNodeX - AfterZoomNodeX;
+            OffsetY[SelectedCharacter] += BeforeZoomNodeY - AfterZoomNodeY;
         }
 
         //see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
