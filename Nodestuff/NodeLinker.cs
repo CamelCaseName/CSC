@@ -742,7 +742,7 @@ namespace CSC.Nodestuff
                                     newList.Add(bgc);
                                     nodes.AddChild(newList[i], bgc);
                                 }
-                                newList[i].Text = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((BGCOption)gameEvent.Option).ToString();
+                                newList[i].Text = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((ImportanceSpecified)gameEvent.Option).ToString();
                                 break;
                             }
                             default:

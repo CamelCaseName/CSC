@@ -12,7 +12,7 @@ namespace CSC.StoryItems
         public string? Character { get; set; }
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string? Character2 { get; set; }
-        public CompareTypes? CompareType { get; set; }
+        public CompareTypes CompareType { get; set; }
         public DialogueStatuses? DialogueStatus { get; set; }
         public bool DisplayInEditor { get; set; }
         public DoorOptionValues? DoorOptions { get; set; }

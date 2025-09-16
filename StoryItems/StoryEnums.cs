@@ -561,8 +561,8 @@ namespace CSC.StoryItems
             Equals,
             Add
         }
-        [JsonConverter(typeof(StringEnumConverter))]
-        public enum BGCOption
+
+        public enum ImportanceSpecified
         {
             Unspecified,
             None,
@@ -651,6 +651,31 @@ namespace CSC.StoryItems
             Lety,
             Madison,
             Patrick,
+            Player,
+            Rachael,
+            Stephanie,
+            Vickie,
+            Amala,
+            DojaCat,
+            LizKatz
+        }
+
+        public enum BGCCharacters
+        {
+            Anybody,
+            Amy,
+            Arin,
+            Ashley,
+            Brittney,
+            Compubrah,
+            Dan,
+            Derek,
+            Frank,
+            Katherine,
+            Leah,
+            Lety,
+            Madison,
+            Patrick,
             PhoneCall,
             Player,
             Rachael,
@@ -659,6 +684,33 @@ namespace CSC.StoryItems
             Amala,
             DojaCat,
             LizKatz
+        }
+
+        public enum BGCEmotes
+        {
+            Happy,
+            Sad,
+            Angry,
+            Surprised,
+            Scared,
+            Flirty,
+            Ecstatic,
+            Laugh,
+            None = 10
+        }
+
+        public enum ClothingSet
+        {
+            AnySet,
+            Set0,
+            Set1
+        }
+
+        public enum CutscenePlaying
+        {
+            AnyCutScenePlaying = 1,
+            AnySexCutscenePlaying,
+            CensoredSexScenePlaying
         }
     }
 }

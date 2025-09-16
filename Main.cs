@@ -3,7 +3,7 @@ using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using System.Net.Http.Headers;
+using static CSC.StoryItems.StoryEnums;
 
 namespace CSC
 {
@@ -77,7 +77,10 @@ namespace CSC
         private RectangleF adjustedMouseClipBounds;
         public static string StoryName = NoCharacter;
         private static string selectedCharacter = NoCharacter;
+        private static MainStory Story;
+        private static Dictionary<string, CharacterStory> characterStories = new();
 
+        //todo treat player as the story file
         public static string SelectedCharacter
         {
             get { return selectedCharacter; }
@@ -624,11 +627,14 @@ namespace CSC
             {
                 if (Path.GetExtension(FilePath) == ".story")
                 {
-                    NodeLinker.DissectStory(JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory(), tempStore, Path.GetFileNameWithoutExtension(FilePath));
+                    Story = JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory();
+                    NodeLinker.DissectStory(Story, tempStore, Path.GetFileNameWithoutExtension(FilePath));
                 }
                 else
                 {
-                    NodeLinker.DissectCharacter(JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory(), tempStore);
+                    CharacterStory story = JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory();
+                    characterStories.Add(story.CharacterName!, story);
+                    NodeLinker.DissectCharacter(story, tempStore);
                 }
             }
             catch (JsonReaderException ex)
@@ -755,6 +761,8 @@ namespace CSC
         {
             Node node = GetNodeAtPoint(ScreenPos);
 
+            //todo only on drag move, right click alone spawns context menu with options to add criteria, event, alternate text depending on what you need
+            //todo long term also do on button press/combination add the respective node
             if (MouseButtons == MouseButtons.Right)
             {
                 if (node == Node.NullNode)
@@ -785,6 +793,7 @@ namespace CSC
         {
             //todo fill the propertyinspector with the required fields and dropdowns we need depending on the item
             PropertyInspector.Controls.Clear();
+            PropertyInspector.SuspendLayout();
             PropertyInspector.ColumnCount = 1;
             if (node == Node.NullNode)
             {
@@ -795,17 +804,488 @@ namespace CSC
             {
                 case NodeType.Criterion:
                 {
+                    PropertyInspector.RowCount = 1;
+                    PropertyInspector.ColumnCount = 2;
+                    Criterion criterion = (Criterion)node.Data!;
 
+                    Label label = new()
+                    {
+                        Text = "Order",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    NumericUpDown sortOrder = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Value = criterion.Order,
+                        Dock = DockStyle.Left,
+                        Width = 50
+                    };
+                    sortOrder.PerformLayout();
+                    sortOrder.ValueChanged += (sender, values) => criterion.Order = (int)sortOrder.Value;
+                    PropertyInspector.Controls.Add(sortOrder);
+
+                    switch (criterion.CompareType)
+                    {
+                        case CompareTypes.CharacterFromCharacterGroup:
+                            //todo
+                            break;
+                        case CompareTypes.Clothing:
+                        {
+                            PutCompareType(criterion);
+                            PutCharacter1(criterion);
+
+                            ComboBox clothing = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            clothing.Items.AddRange(Enum.GetNames(typeof(Clothes)));
+                            clothing.SelectedIndex = int.Parse(criterion.Value!);
+                            clothing.Select(clothing.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            clothing.PerformLayout();
+                            clothing.SelectedIndexChanged += (sender, values) => criterion.Value = clothing.SelectedIndex!.ToString();
+                            PropertyInspector.Controls.Add(clothing);
+
+                            ComboBox set = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            set.Items.AddRange(Enum.GetNames(typeof(ClothingSet)));
+                            set.SelectedIndex = criterion.Option!;
+                            set.Select(set.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            set.PerformLayout();
+                            set.SelectedIndexChanged += (sender, values) => criterion.Option = set.SelectedIndex!;
+                            PropertyInspector.Controls.Add(set);
+
+                            putBoolValue(criterion);
+
+                            break;
+                        }
+                        case CompareTypes.CompareValues:
+                        {
+                            PutCompareType(criterion);
+                            PutCharacter1(criterion);
+
+                            ComboBox valueChar1 = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            if (criterion.Key == "Player")
+                            {
+                                valueChar1.Items.AddRange([.. Story.PlayerValues!]);
+                            }
+                            else
+                            {
+                                valueChar1.Items.AddRange([.. characterStories[criterion.Character!].StoryValues!]);
+                            }
+                            valueChar1.SelectedItem = criterion.Key!;
+                            valueChar1.Select(valueChar1.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            valueChar1.PerformLayout();
+                            valueChar1.SelectedIndexChanged += (sender, values) => criterion.Key = valueChar1.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(valueChar1);
+
+                            ComboBox formula = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            formula.Items.AddRange(Enum.GetNames(typeof(ValueSpecificFormulas)));
+                            formula.SelectedIndex = (int)criterion.ValueFormula!;
+                            formula.Select(formula.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            formula.PerformLayout();
+                            formula.SelectedIndexChanged += (sender, values) => criterion.ValueFormula = (ValueSpecificFormulas)formula.SelectedIndex!;
+                            PropertyInspector.Controls.Add(formula);
+
+                            PutCharacter2(criterion);
+
+                            ComboBox valueChar2 = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            if (criterion.Key2 == "Player")
+                            {
+                                valueChar2.Items.AddRange([.. Story.PlayerValues!]);
+                            }
+                            else
+                            {
+                                valueChar2.Items.AddRange([.. characterStories[criterion.Character2!].StoryValues!]);
+                            }
+                            valueChar2.SelectedItem = criterion.Key2!;
+                            valueChar2.Select(valueChar2.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            valueChar2.PerformLayout();
+                            valueChar2.SelectedIndexChanged += (sender, values) => criterion.Key2 = valueChar2.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(valueChar2);
+
+                            break;
+                        }
+                        case CompareTypes.CriteriaGroup:
+                        {
+                            PutCompareType(criterion);
+
+                            ComboBox group = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            for (int i = 0; i < Story.CriteriaGroups!.Count; i++)
+                            {
+                                group.Items.Add(Story.CriteriaGroups[i].Name!);
+                            }
+                            group.SelectedItem = criterion.Value!;
+                            group.SelectedIndex = group.SelectedIndex;
+                            group.Select(group.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            group.PerformLayout();
+                            group.SelectedIndexChanged += (sender, values) => criterion.Value = group.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(group);
+
+                            putBoolValue(criterion);
+                            break;
+                        }
+                        case CompareTypes.CutScene:
+                        {
+                            PutCompareType(criterion);
+
+                            ComboBox cutscene = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            cutscene.Items.AddRange(Enum.GetNames(typeof(CutscenePlaying)));
+                            cutscene.SelectedIndex = int.Parse(criterion.Value!) - 1;
+                            cutscene.Select(cutscene.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            cutscene.PerformLayout();
+                            cutscene.SelectedIndexChanged += (sender, values) => criterion.Value = (cutscene.SelectedIndex! + 1).ToString();
+                            PropertyInspector.Controls.Add(cutscene);
+
+                            putBoolValue(criterion);
+                            break;
+                        }
+                        case CompareTypes.Dialogue:
+                        {
+                            PutCompareType(criterion);
+                            PutCharacter1(criterion);
+
+                            ComboBox dialogue = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            for (int i = 0; i < characterStories[criterion.Character!].Dialogues!.Count; i++)
+                            {
+                                dialogue.Items.Add(characterStories[criterion.Character!].Dialogues![i].ID.ToString());
+                            }
+                            dialogue.SelectedItem = criterion.Value!;
+                            dialogue.PerformLayout();
+                            dialogue.SelectedIndexChanged += (sender, values) => criterion.Value = dialogue.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(dialogue);
+
+                            ComboBox status = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            status.Items.AddRange(Enum.GetNames(typeof(DialogueStatuses)));
+                            status.SelectedItem = ((DialogueStatuses)criterion.Option!).ToString();
+                            status.PerformLayout();
+                            status.SelectedIndexChanged += (sender, values) => criterion.Option = (int)Enum.Parse<DialogueStatuses>(status.SelectedItem!.ToString()!);
+                            PropertyInspector.Controls.Add(status);
+                            break;
+                        }
+                        case CompareTypes.Distance:
+                        {
+                            PutCompareType(criterion);
+
+                            TextBox obj1 = new()
+                            {
+                                Dock = DockStyle.Fill,
+                                TextAlign = HorizontalAlignment.Center,
+                                Text = criterion.Key
+                            };
+                            obj1.TextChanged += (_, args) => criterion.Key = obj1.Text;
+                            PropertyInspector.Controls.Add(obj1);
+
+                            TextBox obj2 = new()
+                            {
+                                Dock = DockStyle.Fill,
+                                TextAlign = HorizontalAlignment.Center,
+                                Text = criterion.Key
+                            };
+                            obj2.TextChanged += (_, args) => criterion.Key = obj2.Text;
+                            PropertyInspector.Controls.Add(obj2);
+
+                            ComboBox equ = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            equ.Items.AddRange(Enum.GetNames(typeof(ComparisonEquations)));
+                            equ.SelectedIndex = int.Parse(criterion.Value!);
+                            equ.Select(equ.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            equ.PerformLayout();
+                            equ.SelectedIndexChanged += (sender, values) => criterion.Value = (equ.SelectedIndex).ToString();
+                            PropertyInspector.Controls.Add(equ);
+
+                            NumericUpDown option = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Value = criterion.Option,
+                                Dock = DockStyle.Left,
+                                Width = 50
+                            };
+                            option.PerformLayout();
+                            option.ValueChanged += (sender, values) => criterion.Option = (int)option.Value;
+                            PropertyInspector.Controls.Add(option);
+
+                            break;
+                        }
+                        case CompareTypes.Door:
+                            //todo do the rest here
+                            break;
+                        case CompareTypes.Gender:
+                            break;
+                        case CompareTypes.IntimacyPartner:
+                            break;
+                        case CompareTypes.IntimacyState:
+                            break;
+                        case CompareTypes.InZone:
+                            break;
+                        case CompareTypes.InVicinity:
+                            break;
+                        case CompareTypes.InVicinityAndVision:
+                            break;
+                        case CompareTypes.Item:
+                            break;
+                        case CompareTypes.IsBeingSpokenTo:
+                            break;
+                        case CompareTypes.IsAloneWithPlayer:
+                            break;
+                        case CompareTypes.IsDLCActive:
+                            break;
+                        case CompareTypes.IsOnlyInVicinityOf:
+                            break;
+                        case CompareTypes.IsOnlyInVisionOf:
+                            break;
+                        case CompareTypes.IsOnlyInVicinityAndVisionOf:
+                            break;
+                        case CompareTypes.IsCharacterEnabled:
+                            break;
+                        case CompareTypes.IsCurrentlyBeingUsed:
+                            break;
+                        case CompareTypes.IsCurrentlyUsing:
+                            break;
+                        case CompareTypes.IsExplicitGameVersion:
+                            break;
+                        case CompareTypes.IsGameUncensored:
+                            break;
+                        case CompareTypes.IsPackageInstalled:
+                            break;
+                        case CompareTypes.IsInFrontOf:
+                            break;
+                        case CompareTypes.IsInHouse:
+                            break;
+                        case CompareTypes.IsNewGame:
+                            break;
+                        case CompareTypes.IsZoneEmpty:
+                            break;
+                        case CompareTypes.ItemFromItemGroup:
+                            break;
+                        case CompareTypes.MetByPlayer:
+                            break;
+                        case CompareTypes.Personality:
+                            break;
+                        case CompareTypes.PlayerGender:
+                            break;
+                        case CompareTypes.PlayerInventory:
+                            break;
+                        case CompareTypes.PlayerPrefs:
+                            break;
+                        case CompareTypes.Posing:
+                            break;
+                        case CompareTypes.Property:
+                            break;
+                        case CompareTypes.Quest:
+                            break;
+                        case CompareTypes.SameZoneAs:
+                            break;
+                        case CompareTypes.ScreenFadeVisible:
+                            break;
+                        case CompareTypes.Social:
+                            break;
+                        case CompareTypes.State:
+                            break;
+                        case CompareTypes.Value:
+                            break;
+                        case CompareTypes.Vision:
+                            break;
+                        case CompareTypes.UseLegacyIntimacy:
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 }
                 case NodeType.BGC:
                 {
+                    PropertyInspector.RowCount = 2;
+                    PropertyInspector.ColumnCount = 9;
+                    Label label = new()
+                    {
+                        Text = node.FileName + "'s Background Chatter" + node.ID + " Speaking to:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label);
+                    BackgroundChatter dialogue = ((BackgroundChatter)node.Data!);
 
-                    break;
-                }
-                case NodeType.BGCResponse:
-                {
+                    ComboBox talkingTo = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Dock = DockStyle.Fill,
+                    };
+                    talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.BGCCharacters)));
+                    talkingTo.SelectedItem = dialogue.SpeakingTo;
+                    talkingTo.SelectedText = string.Empty;
+                    talkingTo.Select(talkingTo.SelectedItem?.ToString()?.Length ?? 0, 0);
+                    talkingTo.PerformLayout();
+                    talkingTo.SelectedIndexChanged += (sender, values) => dialogue.SpeakingTo = talkingTo.SelectedItem!.ToString();
+                    PropertyInspector.Controls.Add(talkingTo);
 
+                    label = new()
+                    {
+                        Text = "Importance:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    ComboBox importance = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Dock = DockStyle.Fill,
+                    };
+                    importance.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Importance)));
+                    importance.SelectedItem = dialogue.SpeakingTo;
+                    importance.SelectedText = string.Empty;
+                    importance.Select(importance.SelectedItem?.ToString()?.Length ?? 0, 0);
+                    importance.PerformLayout();
+                    importance.SelectedIndexChanged += (sender, values) => dialogue.SpeakingTo = importance.SelectedItem!.ToString();
+                    PropertyInspector.Controls.Add(importance);
+
+                    CheckBox checkBox = new()
+                    {
+                        Checked = dialogue.IsConversationStarter,
+                        Dock = DockStyle.Fill,
+                        Text = "Is conversation starter:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.IsConversationStarter = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    checkBox = new()
+                    {
+                        Checked = dialogue.OverrideCombatRestriction,
+                        Dock = DockStyle.Fill,
+                        Text = "Override combat in vicinity:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.OverrideCombatRestriction = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    checkBox = new()
+                    {
+                        Checked = dialogue.PlaySilently,
+                        Dock = DockStyle.Fill,
+                        Text = "Play voice acting at zero volume:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.PlaySilently = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    label = new()
+                    {
+                        Text = "Paired Emote:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    ComboBox pairedEmote = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Dock = DockStyle.Fill,
+                    };
+                    pairedEmote.Items.AddRange(Enum.GetNames(typeof(StoryEnums.BGCEmotes)));
+                    pairedEmote.SelectedItem = dialogue.PairedEmote;
+                    pairedEmote.SelectedText = string.Empty;
+                    pairedEmote.Select(pairedEmote.SelectedItem?.ToString()?.Length ?? 0, 0);
+                    pairedEmote.PerformLayout();
+                    pairedEmote.SelectedIndexChanged += (sender, values) => dialogue.PairedEmote = pairedEmote.SelectedItem!.ToString();
+                    PropertyInspector.Controls.Add(pairedEmote);
+
+                    TextBox text = new()
+                    {
+                        Text = dialogue.Text,
+                        Multiline = true,
+                        WordWrap = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                        BackColor = Color.FromArgb(255, 50, 50, 50),
+                    };
+                    text.TextChanged += (sender, values) => dialogue.Text = text.Text;
+                    text.Select();
+                    PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
+                    PropertyInspector.RowStyles[0].Height = 50;
+                    PropertyInspector.Controls.Add(text, 0, 1);
+                    PropertyInspector.SetColumnSpan(text, 9);
+                    PropertyInspector.AutoSize = false;
                     break;
                 }
                 case NodeType.Dialogue:
@@ -815,7 +1295,7 @@ namespace CSC
                     Label label = new()
                     {
                         Text = node.FileName + "'s Dialogue " + node.ID + "\n Talking to:",
-                        TextAlign = ContentAlignment.MiddleCenter,
+                        TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Top,
                         ForeColor = Color.LightGray,
                         AutoSize = true,
@@ -833,8 +1313,7 @@ namespace CSC
                     talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
                     talkingTo.SelectedItem = dialogue.SpeakingToCharacterName;
                     talkingTo.SelectedText = string.Empty;
-                    talkingTo.SelectionLength = 0;
-                    talkingTo.SelectionStart = 0;
+                    talkingTo.Select(talkingTo.SelectedItem?.ToString()?.Length ?? 0, 0);
                     talkingTo.PerformLayout();
                     talkingTo.SelectedIndexChanged += (sender, values) => dialogue.SpeakingToCharacterName = talkingTo.SelectedItem!.ToString();
                     PropertyInspector.Controls.Add(talkingTo);
@@ -891,7 +1370,6 @@ namespace CSC
                     PropertyInspector.RowStyles[0].Height = 35;
                     PropertyInspector.Controls.Add(text, 0, 1);
                     PropertyInspector.SetColumnSpan(text, 5);
-                    PropertyInspector.PerformLayout();
 
                     break;
                 }
@@ -902,7 +1380,7 @@ namespace CSC
                     Label label = new()
                     {
                         Text = "Alternate text for " + node.FileName + "'s Dialogue " + node.ID + "\n Sort order:",
-                        TextAlign = ContentAlignment.MiddleCenter,
+                        TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Top,
                         ForeColor = Color.LightGray,
                         AutoSize = true,
@@ -916,7 +1394,8 @@ namespace CSC
                         Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
                         Location = new(0, PropertyInspector.Size.Height / 2),
                         Value = alternate.Order,
-                        Dock = DockStyle.Top
+                        Dock = DockStyle.Left,
+                        Width = 50
                     };
                     sortOrder.PerformLayout();
                     sortOrder.ValueChanged += (sender, values) => alternate.Order = (int)sortOrder.Value;
@@ -965,7 +1444,12 @@ namespace CSC
 
                     break;
                 }
+                case NodeType.Value:
+                {
+                    break;
+                }
                 case NodeType.Achievement:
+                case NodeType.BGCResponse:
                 case NodeType.CharacterGroup:
                 case NodeType.Clothing:
                 case NodeType.CriteriaGroup:
@@ -982,7 +1466,6 @@ namespace CSC
                 case NodeType.Pose:
                 case NodeType.Quest:
                 case NodeType.State:
-                case NodeType.Value:
                 default:
                 {
                     PropertyInspector.RowCount = 1;
@@ -1012,7 +1495,99 @@ namespace CSC
             foreach (ColumnStyle coloumn in PropertyInspector.ColumnStyles)
             {
                 coloumn.SizeType = SizeType.Percent;
-                coloumn.Width = 100 / PropertyInspector.ColumnCount;
+                coloumn.Width = (100 / PropertyInspector.ColumnCount) - 2;
+            }
+
+            PropertyInspector.ResumeLayout();
+
+            for (int i = 0; i < PropertyInspector.Controls.Count; i++)
+            {
+                PropertyInspector.Controls[i].ForeColor = Color.LightGray;
+                PropertyInspector.Controls[i].BackColor = Color.FromArgb(255, 50, 50, 50);
+
+                if (PropertyInspector.Controls[i] is ComboBox box)
+                {
+                    if (box.SelectionLength > 0)
+                    {
+                        box.SelectionStart = box.SelectionLength;
+                        box.SelectionLength = 1;
+                    }
+                }
+            }
+
+            void PutCompareType(Criterion criterion)
+            {
+                ComboBox compareType = new()
+                {
+                    //Dock = DockStyle.Fill,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                    Location = new(0, PropertyInspector.Size.Height / 2),
+                    Dock = DockStyle.Fill,
+                };
+                compareType.Items.AddRange(Enum.GetNames(typeof(CompareTypes)));
+                compareType.SelectedItem = criterion.CompareType.ToString();
+                compareType.SelectedText = string.Empty;
+                compareType.SelectionLength = 0;
+                compareType.SelectionStart = 0;
+                compareType.PerformLayout();
+                compareType.SelectedIndexChanged += (sender, values) => criterion.CompareType = Enum.Parse<CompareTypes>((string)compareType.SelectedItem!);
+                compareType.SelectedIndexChanged += (sender, values) => SetSelectedObject(node);
+                PropertyInspector.Controls.Add(compareType);
+            }
+
+            void PutCharacter1(Criterion criterion)
+            {
+                ComboBox compareType = new()
+                {
+                    //Dock = DockStyle.Fill,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                    Location = new(0, PropertyInspector.Size.Height / 2),
+                    Dock = DockStyle.Fill,
+                };
+                compareType.Items.AddRange(Enum.GetNames(typeof(Characters)));
+                compareType.SelectedItem = criterion.Character;
+                compareType.SelectionLength = 0;
+                compareType.SelectionStart = 0;
+                compareType.PerformLayout();
+                compareType.SelectedIndexChanged += (sender, values) => criterion.Character = (string)compareType.SelectedItem!;
+                PropertyInspector.Controls.Add(compareType);
+            }
+
+            void PutCharacter2(Criterion criterion)
+            {
+                ComboBox compareType = new()
+                {
+                    //Dock = DockStyle.Fill,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                    Location = new(0, PropertyInspector.Size.Height / 2),
+                    Dock = DockStyle.Fill,
+                };
+                compareType.Items.AddRange(Enum.GetNames(typeof(Characters)));
+                compareType.SelectedItem = criterion.Character2;
+                compareType.SelectedText = string.Empty;
+                compareType.SelectionLength = 0;
+                compareType.SelectionStart = 0;
+                compareType.PerformLayout();
+                compareType.SelectedIndexChanged += (sender, values) => criterion.Character2 = (string)compareType.SelectedItem!;
+                PropertyInspector.Controls.Add(compareType);
+            }
+
+            void putBoolValue(Criterion criterion)
+            {
+                ComboBox boolValue = new()
+                {
+                    //Dock = DockStyle.Fill,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                    Location = new(0, PropertyInspector.Size.Height / 2),
+                    Dock = DockStyle.Fill,
+                };
+                boolValue.Items.AddRange(Enum.GetNames(typeof(BoolCritera)));
+                boolValue.SelectedItem = criterion.BoolValue!.ToString();
+                boolValue.SelectionLength = 0;
+                boolValue.SelectionStart = 0;
+                boolValue.PerformLayout();
+                boolValue.SelectedIndexChanged += (sender, values) => criterion.BoolValue = Enum.Parse<BoolCritera>(boolValue.SelectedItem!.ToString()!);
+                PropertyInspector.Controls.Add(boolValue);
             }
         }
 
