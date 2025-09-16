@@ -63,7 +63,7 @@ namespace CSC
         private bool IsCtrlPressed;
         private bool IsShiftPressed;
         private Node clickedNode = Node.NullNode;
-        private Node movedNode;
+        private Node movedNode = Node.NullNode;
         private Size OffsetFromDragClick = Size.Empty;
         private readonly Dictionary<string, float> OffsetX = [];
         private readonly Dictionary<string, float> OffsetY = [];
@@ -75,15 +75,26 @@ namespace CSC
         private Font scaledFont = DefaultFont;
         RectangleF adjustedVisibleClipBounds = new();
         private RectangleF adjustedMouseClipBounds;
-        public string StoryName = NoCharacter;
+        public static string StoryName = NoCharacter;
+        private static string selectedCharacter = NoCharacter;
 
         public static string SelectedCharacter
         {
-            get;
+            get { return selectedCharacter; }
 
+            private set
+            {
 
-            private set;
-        } = NoCharacter;
+                if (value == string.Empty || value is null)
+                {
+                    selectedCharacter = StoryName;
+                }
+                else
+                {
+                    selectedCharacter = value;
+                }
+            }
+        }
 
         public Main()
         {
@@ -91,7 +102,7 @@ namespace CSC
             StoryTree.ExpandAll();
             Application.AddMessageFilter(new MouseMessageFilter());
             MouseMessageFilter.MouseMove += HandleMouseEvents;
-            linePen = new Pen(Brushes.LightGray, 1.3f)
+            linePen = new Pen(Brushes.LightGray, 0.3f)
             {
                 EndCap = LineCap.Triangle,
                 StartCap = LineCap.Round
@@ -109,12 +120,12 @@ namespace CSC
             characterGroupNodeBrush = new SolidBrush(Color.FromArgb(255, 190, 180, 130));
             clothingNodeBrush = new SolidBrush(Color.FromArgb(255, 115, 235, 30));
             criteriaGroupNodeBrush = new SolidBrush(Color.FromArgb(255, 150, 50, 50));
-            criterionNodeBrush = new SolidBrush(Color.FromArgb(255, 220, 20, 20));
+            criterionNodeBrush = new SolidBrush(Color.FromArgb(255, 180, 20, 40));
             cutsceneNodeBrush = new SolidBrush(Color.FromArgb(255, 235, 30, 160));
             dialogueNodeBrush = new SolidBrush(Color.FromArgb(255, 45, 60, 185));
             doorNodeBrush = new SolidBrush(Color.FromArgb(255, 200, 225, 65));
             eventNodeBrush = new SolidBrush(Color.FromArgb(255, 50, 150, 50));
-            eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(255, 20, 220, 20));
+            eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 120, 70));
             inventoryNodeBrush = new SolidBrush(Color.FromArgb(255, 65, 225, 185));
             itemActionNodeBrush = new SolidBrush(Color.FromArgb(255, 85, 195, 195));
             itemGroupBehaviourNodeBrush = new SolidBrush(Color.FromArgb(255, 160, 200, 195));
@@ -128,7 +139,7 @@ namespace CSC
             responseNodeBrush = new SolidBrush(Color.FromArgb(255, 55, 155, 225));
             socialNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 160, 90));
             stateNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 190, 50));
-            valueNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 0, 190));
+            valueNodeBrush = new SolidBrush(Color.FromArgb(255, 120, 0, 150));
             HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
             InterlinkedNodeBrush = new HatchBrush(HatchStyle.LightUpwardDiagonal, Color.DeepPink, BackColor);
             ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
@@ -167,6 +178,7 @@ namespace CSC
                     else
                     {
                         _ = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+                        Graph.Invalidate();
                     }
                     break;
                 case MouseButtons.None:
@@ -230,7 +242,7 @@ namespace CSC
             var node = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
             if (node != Node.NullNode)
             {
-                if (node.FileName != SelectedCharacter)
+                if (node.FileName != SelectedCharacter && node.FileName != "Player")
                 {
                     if (node.FileName == StoryName)
                     {
@@ -406,7 +418,7 @@ namespace CSC
                 }
 
                 Color textColor = Color.White;
-                if ((brush.Color.R * 0.299 + brush.Color.G * 0.587 + brush.Color.B * 0.114) > 186)
+                if ((brush.Color.R * 0.299 + brush.Color.G * 0.587 + brush.Color.B * 0.114) > 150)
                 {
                     textColor = Color.Black;
                 }
@@ -498,28 +510,6 @@ namespace CSC
                 NodeType.Value => valueNodeBrush,
                 _ => defaultNodeBrush,
             };
-        }
-
-        private void GetStartingPos(out int x, out int y)
-        {
-            int xstep = 100;
-            int ystep = 50;
-            //~sidelength of the most square layout we can achieve witrh the number of Main.nodes we have
-            int sideLength = (int)(Math.Sqrt(NodeCount) + 0.5);
-            //modulo of running total with sidelength gives x coords, repeating after sidelength
-            //offset by halfe sidelength to center x
-            x = runningTotal % sideLength - sideLength / 2;
-            x += 17;
-            x *= xstep;
-            //running total divided by sidelength gives y coords,
-            //increments after runningtotal increments sidelength times
-            //offset by halfe sidelength to center y
-            y = runningTotal / sideLength - sideLength / 2;
-            y += 17;
-            y *= ystep;
-            //set position
-            //increase running total
-            runningTotal++;
         }
 
         private void Main_Paint(object sender, PaintEventArgs e)
@@ -618,36 +608,9 @@ namespace CSC
                 }
             }
 
-            foreach (var store in nodes.Keys)
-            {
-                if (store == NoCharacter)
-                {
-                    continue;
-                }
+            NodeLinker.InterlinkBetweenFiles(nodes);
 
-                var tempList = nodes[store].Nodes;
-                foreach (var node in tempList)
-                {
-                    if (node.FileName == NoCharacter)
-                    {
-                        //todo investigate why we have nodes here??
-                        continue;
-                    }
-                    if (node.FileName != store)
-                    {
-                        if (nodes.TryGetValue(node.FileName, out var nodeStore))
-                        {
-                            var templist2 = nodeStore.Nodes;
-                            var result = templist2.Find((Node newRefNode) => newRefNode.Type == node.Type && newRefNode.ID == node.ID && newRefNode.FileName == node.FileName);
-                            if (result is not null)
-                            {
-                                nodes[store].Replace(node, result);
-                                result.DupeToOtherSorting(store, node.CurrentPositionSorting);
-                            }
-                        }
-                    }
-                }
-            }
+            SetupStartPositions();
         }
 
         private void LoadFileIntoStore(string FilePath)
@@ -701,8 +664,6 @@ namespace CSC
             }
             SelectedCharacter = FileName;
 
-            SetupStartPositions();
-
             Graph.Invalidate();
 
             if (Path.GetExtension(FilePath) == ".story")
@@ -738,67 +699,68 @@ namespace CSC
         //like we start with a root parent, then do all its childs, all their parents, all the childs childs and so on
         private void SetupStartPositions()
         {
-            layerYperX.Clear();
-            layerYperX.Add(0);
-            visited.Clear();
-
-            //todo we need to investigate the tornadoization here
-
-            int sideLengthY = (int)(Math.Sqrt(nodes[SelectedCharacter].Count) + 0.5);
-            int zeroColoumn = 0;
-
-            foreach (var key in nodes[SelectedCharacter].Nodes)
+            foreach (var store in nodes.Keys)
             {
-                Family family = nodes[SelectedCharacter][key];
-                if (family.Parents.Count == 0)
+                SelectedCharacter = store;
+                layerYperX.Clear();
+                layerYperX.Add(0);
+                visited.Clear();
+
+                int sideLengthY = (int)(Math.Sqrt(nodes[store].Count) + 0.5);
+                int zeroColoumn = 0;
+
+                foreach (var key in nodes[store].Nodes)
                 {
-                    //we have a root start node with no parents, start child search and layout from here
-                    key.Position = new PointF((zeroColoumn + 1) * scaleX, layerYperX[zeroColoumn] * scaleY);
-                    visited.Add(key);
-
-                    if (family.Childs.Count == 0)
+                    Family family = nodes[store][key];
+                    if (family.Parents.Count == 0)
                     {
-                        layerYperX[zeroColoumn]++;
-                        if (layerYperX[zeroColoumn] > sideLengthY)
+                        //we have a root start node with no parents, start child search and layout from here
+                        key.Position = new PointF((zeroColoumn + 1) * scaleX, layerYperX[zeroColoumn] * scaleY);
+                        visited.Add(key);
+
+                        if (family.Childs.Count == 0)
                         {
-                            zeroColoumn = layerYperX.Count;
-                            layerYperX.Add(0);
-                            layerYperX.Add(0);
+                            layerYperX[zeroColoumn]++;
+                            if (layerYperX[zeroColoumn] > sideLengthY)
+                            {
+                                zeroColoumn = layerYperX.Count;
+                                layerYperX.Add(0);
+                                layerYperX.Add(0);
+                            }
+                            continue;
                         }
-                        continue;
-                    }
-                    if (layerYperX.Count <= 1)
-                    {
-                        layerYperX.Add(layerYperX[zeroColoumn]);
-                    }
-                    else
-                    {
-                        layerYperX[zeroColoumn + 1] = Math.Max(layerYperX[zeroColoumn], layerYperX[zeroColoumn + 1]);
-                    }
-                    //Debug.WriteLine("on node " + key.control.Text + " we went to its children at y level " + layerYperX[0]);
-                    DoAllChilds(zeroColoumn, zeroColoumn + 1, family.Childs);
-                    layerYperX[zeroColoumn]++;
+                        if (layerYperX.Count <= 1)
+                        {
+                            layerYperX.Add(layerYperX[zeroColoumn]);
+                        }
+                        else
+                        {
+                            layerYperX[zeroColoumn + 1] = Math.Max(layerYperX[zeroColoumn], layerYperX[zeroColoumn + 1]);
+                        }
+                        //Debug.WriteLine("on node " + key.control.Text + " we went to its children at y level " + layerYperX[0]);
+                        DoAllChilds(zeroColoumn, zeroColoumn + 1, family.Childs);
+                        layerYperX[zeroColoumn]++;
 
+                    }
                 }
             }
         }
 
         private void Start_Click(object sender, EventArgs e)
         {
-            
+
         }
 
         private Node UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
         {
             Node node = GetNodeAtPoint(ScreenPos);
 
-            if (node == Node.NullNode)
-            {
-                return node;
-            }
-
             if (MouseButtons == MouseButtons.Right)
             {
+                if (node == Node.NullNode)
+                {
+                    return node;
+                }
                 if (!MovingChild)
                 {
                     movedNode = node;
@@ -809,15 +771,249 @@ namespace CSC
             else
             {
                 MovingChild = false;
-                SetSelectedObject(node);
+                if (clickedNode != node && node != Node.NullNode)
+                {
+                    SetSelectedObject(node);
+                }
+
                 clickedNode = node;
             }
             return node;
         }
 
-        private void SetSelectedObject(Node clickedNode)
+        private void SetSelectedObject(Node node)
         {
             //todo fill the propertyinspector with the required fields and dropdowns we need depending on the item
+            PropertyInspector.Controls.Clear();
+            PropertyInspector.ColumnCount = 1;
+            if (node == Node.NullNode)
+            {
+                return;
+            }
+
+            switch (node.Type)
+            {
+                case NodeType.Criterion:
+                {
+
+                    break;
+                }
+                case NodeType.BGC:
+                {
+
+                    break;
+                }
+                case NodeType.BGCResponse:
+                {
+
+                    break;
+                }
+                case NodeType.Dialogue:
+                {
+                    PropertyInspector.RowCount = 2;
+                    PropertyInspector.ColumnCount = 5;
+                    Label label = new()
+                    {
+                        Text = node.FileName + "'s Dialogue " + node.ID + "\n Talking to:",
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    PropertyInspector.Controls.Add(label);
+                    Dialogue dialogue = ((Dialogue)node.Data!);
+
+                    ComboBox talkingTo = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Dock = DockStyle.Top
+                    };
+                    talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
+                    talkingTo.SelectedItem = dialogue.SpeakingToCharacterName;
+                    talkingTo.SelectedText = string.Empty;
+                    talkingTo.SelectionLength = 0;
+                    talkingTo.SelectionStart = 0;
+                    talkingTo.PerformLayout();
+                    talkingTo.SelectedIndexChanged += (sender, values) => dialogue.SpeakingToCharacterName = talkingTo.SelectedItem!.ToString();
+                    PropertyInspector.Controls.Add(talkingTo);
+
+                    CheckBox checkBox = new()
+                    {
+                        Checked = dialogue.DoesNotCountAsMet,
+                        Dock = DockStyle.Top,
+                        Text = "Doesn't count as met:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.DoesNotCountAsMet = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    checkBox = new()
+                    {
+                        Checked = dialogue.ShowGlobalResponses,
+                        Dock = DockStyle.Top,
+                        Text = "Show global repsonses:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalResponses = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    checkBox = new()
+                    {
+                        Checked = dialogue.ShowGlobalGoodByeResponses,
+                        Dock = DockStyle.Top,
+                        Text = "Use goodbye responses:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalGoodByeResponses = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    TextBox text = new()
+                    {
+                        Text = dialogue.Text,
+                        Multiline = true,
+                        WordWrap = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                        BackColor = Color.FromArgb(255, 50, 50, 50),
+                    };
+                    text.TextChanged += (sender, values) => dialogue.Text = text.Text;
+                    text.Select();
+                    PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
+                    PropertyInspector.RowStyles[0].Height = 35;
+                    PropertyInspector.Controls.Add(text, 0, 1);
+                    PropertyInspector.SetColumnSpan(text, 5);
+                    PropertyInspector.PerformLayout();
+
+                    break;
+                }
+                case NodeType.AlternateText:
+                {
+                    PropertyInspector.RowCount = 2;
+                    PropertyInspector.ColumnCount = 3;
+                    Label label = new()
+                    {
+                        Text = "Alternate text for " + node.FileName + "'s Dialogue " + node.ID + "\n Sort order:",
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    PropertyInspector.Controls.Add(label);
+                    AlternateText alternate = ((AlternateText)node.Data!);
+
+                    NumericUpDown sortOrder = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Value = alternate.Order,
+                        Dock = DockStyle.Top
+                    };
+                    sortOrder.PerformLayout();
+                    sortOrder.ValueChanged += (sender, values) => alternate.Order = (int)sortOrder.Value;
+                    PropertyInspector.Controls.Add(sortOrder);
+                    TextBox text = new()
+                    {
+                        Text = alternate.Text,
+                        Multiline = true,
+                        WordWrap = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                        BackColor = Color.FromArgb(255, 50, 50, 50),
+                    };
+                    text.TextChanged += (sender, values) => alternate.Text = text.Text;
+                    text.Select();
+                    PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
+                    PropertyInspector.RowStyles[0].Height = 35;
+                    PropertyInspector.Controls.Add(text, 0, 1);
+                    PropertyInspector.SetColumnSpan(text, 3);
+                    PropertyInspector.PerformLayout();
+                    break;
+                }
+                case NodeType.Event:
+                {
+
+                    break;
+                }
+                case NodeType.EventTrigger:
+                {
+
+                    break;
+                }
+                case NodeType.Property:
+                {
+
+                    break;
+                }
+                case NodeType.Response:
+                {
+
+                    break;
+                }
+                case NodeType.Social:
+                {
+
+                    break;
+                }
+                case NodeType.Achievement:
+                case NodeType.CharacterGroup:
+                case NodeType.Clothing:
+                case NodeType.CriteriaGroup:
+                case NodeType.Cutscene:
+                case NodeType.Door:
+                case NodeType.Inventory:
+                case NodeType.Item:
+                case NodeType.ItemAction:
+                case NodeType.ItemGroup:
+                case NodeType.ItemGroupBehaviour:
+                case NodeType.ItemGroupInteraction:
+                case NodeType.Null:
+                case NodeType.Personality:
+                case NodeType.Pose:
+                case NodeType.Quest:
+                case NodeType.State:
+                case NodeType.Value:
+                default:
+                {
+                    PropertyInspector.RowCount = 1;
+                    PropertyInspector.ColumnCount = 3;
+                    Label label = new()
+                    {
+                        Text = node.Type.ToString(),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                    };
+                    PropertyInspector.Controls.Add(label, 0, 0);
+                    label = new()
+                    {
+                        Text = node.ID,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                    };
+                    PropertyInspector.Controls.Add(label, 1, 0);
+                    label = new()
+                    {
+                        Text = node.Text,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                    };
+                    PropertyInspector.Controls.Add(label, 2, 0);
+                    break;
+                }
+            }
+
+            foreach (ColumnStyle coloumn in PropertyInspector.ColumnStyles)
+            {
+                coloumn.SizeType = SizeType.Percent;
+                coloumn.Width = 100 / PropertyInspector.ColumnCount;
+            }
         }
 
         private void UpdateHighlightNode(Point ScreenPos)

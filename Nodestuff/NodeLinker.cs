@@ -103,6 +103,7 @@ namespace CSC.Nodestuff
                                 {
                                     //add cutscene
                                     var item = new Node(criterion.Key!, NodeType.Cutscene, criterion.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -138,7 +139,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!, nodes.Positions);
-                                    door.FileName = FileName;
+                                    door.FileName = FileName!;
                                     Doors.Add(door);
                                     nodes.AddParent(newList[i], door);
                                 }
@@ -246,7 +247,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key, nodes.Positions);
-                                    item.FileName = FileName;
+                                    item.FileName = FileName!;
                                     InventoryItems.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -276,7 +277,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add pose node, hasnt been referenced yet
                                     var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value, nodes.Positions);
-                                    pose.FileName = FileName;
+                                    pose.FileName = FileName!;
                                     Poses.Add(pose);
                                     nodes.AddParent(newList[i], pose);
                                 }
@@ -431,6 +432,7 @@ namespace CSC.Nodestuff
                                 {
                                     //add cutscene
                                     var item = new Node(gameEvent.Key!, NodeType.Cutscene, gameEvent.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
@@ -466,7 +468,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!, nodes.Positions);
-                                    door.FileName = FileName;
+                                    door.FileName = FileName!;
                                     Doors.Add(door);
                                     nodes.AddChild(newList[i], door);
                                 }
@@ -505,6 +507,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(gameEvent.Key!, NodeType.Item, gameEvent.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
@@ -522,6 +525,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(gameEvent.Key!, NodeType.Item, gameEvent.Key!, nodes.Positions);
+                                    item.FileName = FileName!;
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
@@ -620,7 +624,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add item node, hasnt been referenced yet
                                     var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value, nodes.Positions);
-                                    item.FileName = FileName;
+                                    item.FileName = FileName!;
                                     InventoryItems.Add(item);
                                     nodes.AddParent(newList[i], item);
                                 }
@@ -644,6 +648,7 @@ namespace CSC.Nodestuff
                                 {
                                     //create and add pose node, hasnt been referenced yet
                                     var pose = new Node(gameEvent.Value!, NodeType.Pose, "Pose number " + gameEvent.Value, nodes.Positions);
+                                    pose.FileName = FileName!;
                                     Poses.Add(pose);
                                     nodes.AddChild(newList[i], pose);
                                 }
@@ -816,7 +821,102 @@ namespace CSC.Nodestuff
             //merge doors with items if applicable
             MergeDoors(nodes);
         }
+        public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores)
+        {
+            foreach (var store in stores.Keys)
+            {
+                if (store == Main.NoCharacter)
+                {
+                    continue;
+                }
 
+                var tempList = stores[store].Nodes;
+                foreach (var node in tempList)
+                {
+                    if (node.FileName == Main.NoCharacter)
+                    {
+                        //currently we dont have any here <3
+                        Debugger.Break();
+                    }
+
+                    if (node.FileName != store)
+                    {
+                        if (stores.TryGetValue(node.FileName, out var nodeStore))
+                        {
+                            var templist2 = nodeStore.Nodes;
+                            //todo need to link here more
+                            switch (node.Type)
+                            {
+                                case NodeType.Null:
+                                    break;
+                                case NodeType.CharacterGroup:
+                                    break;
+                                case NodeType.Criterion:
+                                    break;
+                                case NodeType.ItemAction:
+                                    break;
+                                case NodeType.ItemGroupBehaviour:
+                                    break;
+                                case NodeType.ItemGroupInteraction:
+                                    break;
+                                case NodeType.Pose:
+                                    break;
+                                case NodeType.Achievement:
+                                    break;
+                                case NodeType.BGC:
+                                    break;
+                                case NodeType.BGCResponse:
+                                    break;
+                                case NodeType.Clothing:
+                                    break;
+                                case NodeType.CriteriaGroup:
+                                    break;
+                                case NodeType.Cutscene:
+                                    break;
+                                case NodeType.Dialogue:
+                                    var result = templist2.Find(newRefNode => newRefNode.Type == node.Type && newRefNode.ID == node.ID && newRefNode.FileName == node.FileName);
+                                    if (result is not null)
+                                    {
+                                        stores[store].Replace(node, result);
+                                        result.DupeToOtherSorting(store, node.CurrentPositionSorting);
+                                    }
+                                    break;
+                                case NodeType.AlternateText:
+                                    break;
+                                case NodeType.Door:
+                                    break;
+                                case NodeType.Event:
+                                    break;
+                                case NodeType.EventTrigger:
+                                    break;
+                                case NodeType.Inventory:
+                                    break;
+                                case NodeType.Item:
+                                    break;
+                                case NodeType.ItemGroup:
+                                    break;
+                                case NodeType.Personality:
+                                    break;
+                                case NodeType.Property:
+                                    break;
+                                case NodeType.Quest:
+                                    break;
+                                case NodeType.Response:
+                                    break;
+                                case NodeType.Social:
+                                    break;
+                                case NodeType.State:
+                                    break;
+                                case NodeType.Value:
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         private static void MergeDoors(NodeStore nodes)
         {
             Node? result;

@@ -62,7 +62,7 @@ namespace CSC
             Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, OpenButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
-            Menu.Size = new Size(1141, 25);
+            Menu.Size = new Size(1211, 25);
             Menu.TabIndex = 0;
             Menu.Text = "toolStrip1";
             // 
@@ -153,7 +153,7 @@ namespace CSC
             treeNode2.ToolTipText = "The Story itself and the Characters are in here";
             StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
             StoryTree.ShowNodeToolTips = true;
-            StoryTree.Size = new Size(223, 464);
+            StoryTree.Size = new Size(201, 492);
             StoryTree.TabIndex = 1;
             StoryTree.AfterSelect += StoryTree_AfterSelect;
             // 
@@ -170,8 +170,8 @@ namespace CSC
             // HierarchyAndRest.Panel2
             // 
             HierarchyAndRest.Panel2.Controls.Add(GraphAndProperties);
-            HierarchyAndRest.Size = new Size(1141, 464);
-            HierarchyAndRest.SplitterDistance = 223;
+            HierarchyAndRest.Size = new Size(1211, 492);
+            HierarchyAndRest.SplitterDistance = 201;
             HierarchyAndRest.TabIndex = 2;
             // 
             // GraphAndProperties
@@ -188,8 +188,8 @@ namespace CSC
             // GraphAndProperties.Panel2
             // 
             GraphAndProperties.Panel2.Controls.Add(PropertyInspector);
-            GraphAndProperties.Size = new Size(914, 464);
-            GraphAndProperties.SplitterDistance = 347;
+            GraphAndProperties.Size = new Size(1006, 492);
+            GraphAndProperties.SplitterDistance = 353;
             GraphAndProperties.TabIndex = 0;
             // 
             // Graph
@@ -197,7 +197,7 @@ namespace CSC
             Graph.Dock = DockStyle.Fill;
             Graph.Location = new Point(0, 0);
             Graph.Name = "Graph";
-            Graph.Size = new Size(914, 347);
+            Graph.Size = new Size(1006, 353);
             Graph.TabIndex = 0;
             Graph.Paint += Main_Paint;
             Graph.MouseClick += HandleMouseEvents;
@@ -206,16 +206,22 @@ namespace CSC
             // 
             // PropertyInspector
             // 
+            PropertyInspector.AutoSize = true;
             PropertyInspector.BackColor = Color.FromArgb(64, 64, 64);
-            PropertyInspector.ColumnCount = 2;
+            PropertyInspector.ColumnCount = 3;
             PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 142F));
+            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
             PropertyInspector.Dock = DockStyle.Fill;
+            PropertyInspector.GrowStyle = TableLayoutPanelGrowStyle.AddColumns;
             PropertyInspector.Location = new Point(0, 0);
             PropertyInspector.Name = "PropertyInspector";
-            PropertyInspector.RowCount = 1;
+            PropertyInspector.RowCount = 2;
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            PropertyInspector.Size = new Size(914, 113);
+            PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
+            PropertyInspector.Size = new Size(1006, 135);
             PropertyInspector.TabIndex = 0;
             // 
             // Main
@@ -223,7 +229,7 @@ namespace CSC
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1141, 489);
+            ClientSize = new Size(1211, 517);
             Controls.Add(HierarchyAndRest);
             Controls.Add(Menu);
             DoubleBuffered = true;
@@ -242,6 +248,7 @@ namespace CSC
             HierarchyAndRest.ResumeLayout(false);
             GraphAndProperties.Panel1.ResumeLayout(false);
             GraphAndProperties.Panel2.ResumeLayout(false);
+            GraphAndProperties.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)GraphAndProperties).EndInit();
             GraphAndProperties.ResumeLayout(false);
             ResumeLayout(false);

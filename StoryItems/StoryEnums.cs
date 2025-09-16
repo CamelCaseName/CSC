@@ -635,5 +635,30 @@ namespace CSC.StoryItems
             ItemGroup,
             CutSceneEvents
         }
+
+        public enum Characters
+        {
+            Amy,
+            Arin,
+            Ashley,
+            Brittney,
+            Compubrah,
+            Dan,
+            Derek,
+            Frank,
+            Katherine,
+            Leah,
+            Lety,
+            Madison,
+            Patrick,
+            PhoneCall,
+            Player,
+            Rachael,
+            Stephanie,
+            Vickie,
+            Amala,
+            DojaCat,
+            LizKatz
+        }
     }
 }

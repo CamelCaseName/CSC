@@ -1,4 +1,5 @@
 ﻿using CSC.StoryItems;
+using Newtonsoft.Json.Linq;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -64,7 +65,7 @@ namespace CSC.Nodestuff
         public int Mass = 1;
         public NodeType Type;
         private object? data = null;
-        public SizeF Size = SizeF.Empty;
+        public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
         public string ID;
         public string Text;
         private string fileName = Main.NoCharacter;
@@ -111,7 +112,8 @@ namespace CSC.Nodestuff
 
         public void DupeToOtherSorting(string filename, NodePositionSorting sorting)
         {
-            SortingList.Add(filename, sorting);
+            SortingList[filename] = sorting;
+            Positions[filename] = new();
             sorting.SetNode(this);
         }
 

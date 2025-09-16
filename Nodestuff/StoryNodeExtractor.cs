@@ -57,7 +57,7 @@ namespace CSC.Nodestuff
                 //add all alternate texts to teh dialogue
                 foreach (AlternateText alternateText in dialogue.AlternateTexts ?? [])
                 {
-                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.Dialogue, alternateText.Text ?? string.Empty, nodeDialogue, nodes.Positions) { Data = alternateText, DataType = typeof(AlternateText), FileName = story.CharacterName! };
+                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue, nodes.Positions) { Data = alternateText, DataType = typeof(AlternateText), FileName = story.CharacterName! };
 
                     //increasse counter to ensure valid id
                     alternateTextCounter++;
@@ -211,7 +211,7 @@ namespace CSC.Nodestuff
                 foreach (ItemAction itemAction in itemOverride.ItemActions ?? [])
                 {
                     //create action node to add criteria and events to
-                    var nodeAction = new Node(itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem, nodes.Positions) { Data = itemAction, DataType = typeof(ItemAction)};
+                    var nodeAction = new Node(itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem, nodes.Positions) { Data = itemAction, DataType = typeof(ItemAction) };
 
                     //add text that is shown when item is taken
                     nodeAction.AddEvents(itemAction.OnTakeActionEvents ?? [], nodes);
@@ -265,35 +265,36 @@ namespace CSC.Nodestuff
 
         public static void GetQuests(CharacterStory story, NodeStore nodes)
         {
-
+            var questRoot = new Node(story.CharacterName + "'s Quests", NodeType.Quest, story.CharacterName + "'s Quests", nodes.Positions) { FileName = story.CharacterName! };
+            nodes.Add(questRoot);
             foreach (Quest quest in story.Quests ?? [])
             {
-                var nodeQuest = new Node(quest.ID ?? string.Empty, NodeType.Quest, quest.Name ?? string.Empty, nodes.Positions) { Data = quest, DataType = typeof(Quest) };
+                var nodeQuest = new Node(quest.ID ?? string.Empty, NodeType.Quest, quest.Name ?? string.Empty, nodes.Positions) { Data = quest, DataType = typeof(Quest), FileName = story.CharacterName! };
 
+                nodes.AddChild(questRoot, nodeQuest);
                 //Add details
                 if (quest.Details?.Length > 0)
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description", NodeType.Quest, quest.Details, nodes.Positions));
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description", NodeType.Quest, quest.Details, nodes.Positions) { FileName = story.CharacterName! });
                 }
                 //Add completed details
                 if (quest.CompletedDetails?.Length > 0)
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}CompletedDetails", NodeType.Quest, quest.CompletedDetails, nodes.Positions));
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}CompletedDetails", NodeType.Quest, quest.CompletedDetails, nodes.Positions) { FileName = story.CharacterName! });
                 }
                 //Add failed details
                 if (quest.FailedDetails?.Length > 0)
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}FailedDetails", NodeType.Quest, quest.FailedDetails, nodes.Positions));
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}FailedDetails", NodeType.Quest, quest.FailedDetails, nodes.Positions) { FileName = story.CharacterName! });
                 }
 
                 //Add extended details
 
                 foreach (ExtendedDetail detail in quest.ExtendedDetails ?? [])
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description{detail.Value}", NodeType.Quest, detail.Details ?? string.Empty, nodes.Positions) { Data = detail, DataType = typeof(ExtendedDetail) });
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description{detail.Value}", NodeType.Quest, detail.Details ?? string.Empty, nodes.Positions) { Data = detail, DataType = typeof(ExtendedDetail), FileName = story.CharacterName! });
                 }
 
-                nodes.Add(nodeQuest);
             }
         }
 
@@ -302,7 +303,7 @@ namespace CSC.Nodestuff
             foreach (EventTrigger playerReaction in story.Reactions ?? [])
             {
                 //add items to list
-                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty, nodes.Positions) { Data = playerReaction, DataType = typeof(EventTrigger) , FileName = story.CharacterName!};
+                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty, nodes.Positions) { Data = playerReaction, DataType = typeof(EventTrigger), FileName = story.CharacterName! };
                 //get actions for item
                 nodeReaction.AddEvents(playerReaction.Events ?? [], nodes);
 
@@ -330,11 +331,13 @@ namespace CSC.Nodestuff
 
         public static void GetPersonality(CharacterStory story, NodeStore nodes)
         {
+            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", nodes.Positions) { FileName = story.CharacterName! };
+            nodes.Add(traitRoot);
             foreach (Trait valuee in story.Personality?.Values ?? [])
             {
                 //add items to list
-                var nodeValue = new Node(valuee.Type.ToString()!, NodeType.Personality, story.CharacterName + " " + valuee.Type + " " + valuee.Value, nodes.Positions) { Data = valuee, DataType = typeof(Trait) };
-                nodes.Add(nodeValue);
+                var nodeValue = new Node(valuee.Type.ToString()!, NodeType.Personality, valuee.Type + " " + valuee.Value, nodes.Positions) { Data = valuee, DataType = typeof(Trait) };
+                nodes.AddChild(traitRoot, nodeValue);
             }
         }
 
@@ -354,11 +357,17 @@ namespace CSC.Nodestuff
 
         public static void GetValues(CharacterStory story, NodeStore nodes)
         {
+            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values", nodes.Positions) { FileName = story.CharacterName! };
+            nodes.Add(ValueStore);
             foreach (string value in story.StoryValues ?? [])
             {
+                if (value == string.Empty)
+                {
+                    continue;
+                }
                 //add items to list
-                var nodeValue = new Node(value!, NodeType.Value, story.CharacterName + value + ", referenced values: ", nodes.Positions) { Data = new Value() { value = value }, DataType = typeof(Value) };
-                nodes.Add(nodeValue);
+                var nodeValue = new Node(value!, NodeType.Value, value + ", referenced values: ", nodes.Positions) { Data = new Value() { value = value }, DataType = typeof(Value), FileName = story.CharacterName! };
+                nodes.AddChild(ValueStore, nodeValue);
             }
         }
 
