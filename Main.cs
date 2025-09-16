@@ -30,6 +30,8 @@ namespace CSC
         private readonly SolidBrush eventNodeBrush;
         private readonly SolidBrush eventTriggerNodeBrush;
         private readonly SolidBrush HighlightNodeBrush;
+        private readonly HatchBrush InterlinkedNodeBrush;
+        private readonly SolidBrush ClickedNodeBrush;
         private readonly Pen highlightPen;
         private readonly SolidBrush inventoryNodeBrush;
         private readonly SolidBrush itemActionNodeBrush;
@@ -89,7 +91,7 @@ namespace CSC
             StoryTree.ExpandAll();
             Application.AddMessageFilter(new MouseMessageFilter());
             MouseMessageFilter.MouseMove += HandleMouseEvents;
-            linePen = new Pen(Brushes.LightGray, 2)
+            linePen = new Pen(Brushes.LightGray, 1.3f)
             {
                 EndCap = LineCap.Triangle,
                 StartCap = LineCap.Round
@@ -128,6 +130,8 @@ namespace CSC
             stateNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 190, 50));
             valueNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 0, 190));
             HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
+            InterlinkedNodeBrush = new HatchBrush(HatchStyle.LightUpwardDiagonal, Color.DeepPink, BackColor);
+            ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
 
             nodes.Add(NoCharacter, new());
             Scaling.Add(NoCharacter, 0.3f);
@@ -289,75 +293,17 @@ namespace CSC
 
         private void Add_Click(object sender, EventArgs e)
         {
-            Node node = CreateNode(typeof(Criterion));
 
-            nodes[NoCharacter].Add(node);
-
-            clickedNode = node;
-
-            Graph.Invalidate();
         }
 
         private void AddChild_Click(object sender, EventArgs e)
         {
-            Node node = CreateNode(typeof(Response));
 
-            nodes[NoCharacter].AddChild(clickedNode, node);
-
-            clickedNode = node;
-
-            Graph.Invalidate();
         }
 
         private void AddParent_Click(object sender, EventArgs e)
         {
-            Node node = CreateNode(typeof(Dialogue));
 
-            nodes[NoCharacter].AddParent(clickedNode, node);
-
-            clickedNode = node;
-
-            Graph.Invalidate();
-        }
-
-        private Node CreateNode(Type type)
-        {
-            object item;
-            if (type == typeof(Dialogue))
-            {
-                item = new Dialogue
-                {
-                    ID = counter
-                };
-            }
-            else if (type == typeof(Response))
-            {
-                item = new Response
-                {
-                    Order = counter
-                };
-            }
-            else
-            {
-                item = new Criterion
-                {
-                    Order = counter
-                };
-            }
-
-            GetStartingPos(out int x, out int y);
-
-            //Debug.WriteLine($"spawned number {counter} at {x}|{y}");
-
-            var node = new Node(counter.ToString(), NodeType.Null, "blabla", item, nodes[NoCharacter].Positions)
-            {
-                Position = new PointF(x, y),
-                Size = new SizeF(NodeSizeX, NodeSizeY),
-                ID = item.GetType().Name + counter
-            };
-
-            counter++;
-            return node;
         }
 
         private void DoAllChilds(int zeroRow, int layerX, List<Node> childs)
@@ -435,7 +381,21 @@ namespace CSC
 
         private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush)
         {
+            if (node == clickedNode)
+            {
+                if (node.FileName != SelectedCharacter)
+                {
+                    e.Graphics.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 25), 18f));
+                }
+                e.Graphics.FillPath(ClickedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
+            }
+            else if (node.FileName != SelectedCharacter)
+            {
+                e.Graphics.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
+            }
+
             e.Graphics.FillPath(brush, RoundedRect(node.Rectangle, 10f));
+
             if (Scaling[SelectedCharacter] > 0.2f)
             {
                 int length = 32;
@@ -459,6 +419,8 @@ namespace CSC
                                       TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             }
         }
+
+        private static RectangleF ScaleRect(RectangleF rect, float increase) => new(rect.X - (increase / 2), rect.Y - (increase / 2), rect.Width + increase, rect.Height + increase);
 
         //see https://stackoverflow.com/questions/33853434/how-to-draw-a-rounded-rectangle-in-c-sharp
         private static GraphicsPath RoundedRect(RectangleF bounds, float radius)
@@ -823,64 +785,7 @@ namespace CSC
 
         private void Start_Click(object sender, EventArgs e)
         {
-            Node node = CreateNode(typeof(Criterion));
-
-            nodes[SelectedCharacter].Add(node);
-
-            clickedNode = node;
-            for (int i = 0; i < NodeCount; i++)
-            {
-                switch (Random.Shared.Next(20))
-                {
-                    case 9:
-                    case 8:
-                    case 7:
-                    case 6:
-                    case 5:
-                    case 4:
-                    case 19:
-                    case 18:
-                    case 17:
-                    case 16:
-                    case 15:
-                    case 14:
-                    case 13:
-                    case 12:
-                    case 11:
-                    {
-                        node = CreateNode(typeof(Response));
-                        nodes[SelectedCharacter].AddChild(clickedNode, node);
-                        break;
-                    }
-                    case 3:
-                    {
-                        node = CreateNode(typeof(Criterion));
-                        nodes[SelectedCharacter].Add(node);
-                        break;
-                    }
-                    case 10:
-                    case 2:
-                    case 1:
-                    case 0:
-                    {
-                        node = CreateNode(typeof(Dialogue));
-                        nodes[SelectedCharacter].AddParent(clickedNode, node);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-
-                if (Random.Shared.Next(5) < 3)
-                {
-                    clickedNode = node;
-                }
-            }
-
-            //position according to the child system
-            SetupStartPositions();
-
-            Graph.Invalidate();
+            
         }
 
         private Node UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
