@@ -1,5 +1,9 @@
 ﻿using Newtonsoft.Json.Converters;// Token: 0x(\w|d|\s|:)*\n
+using System.Diagnostics.Metrics;
 using System.Text.Json.Serialization;
+using static CSC.StoryItems.StoryEnums;
+using static System.Formats.Asn1.AsnWriter;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace CSC.StoryItems
 {
@@ -660,6 +664,31 @@ namespace CSC.StoryItems
             LizKatz
         }
 
+        public enum IntimateCharacters
+        {
+            None,
+            Amy,
+            Arin,
+            Ashley,
+            Brittney,
+            Compubrah,
+            Dan,
+            Derek,
+            Frank,
+            Katherine,
+            Leah,
+            Lety,
+            Madison,
+            Patrick,
+            Player,
+            Rachael,
+            Stephanie,
+            Vickie,
+            Amala,
+            DojaCat,
+            LizKatz
+        }
+
         public enum BGCCharacters
         {
             Anybody,
@@ -711,6 +740,141 @@ namespace CSC.StoryItems
             AnyCutScenePlaying = 1,
             AnySexCutscenePlaying,
             CensoredSexScenePlaying
+        }
+
+        public enum Doors
+        {
+            BathroomDoor,
+            BedroomClosetDoorLeft,
+            BedroomClosetDoorRight,
+            CabinetLeft,
+            CabinetRight,
+            DeskDrawerLeft,
+            DeskDrawerRight,
+            EscapeHatch,
+            Fridge,
+            FrontDoor,
+            GarageDoor,
+            KitchenCabinet5,
+            KitchenCabinet6,
+            LaundryRoomDoor,
+            MasterBathroomDoor,
+            MasterBedroomDoor,
+            Nightstand1,
+            Nightstand2,
+            OfficeDrawerLeft,
+            OfficeDrawerRight,
+            PantryDoorLeft,
+            PantryDoorRight,
+            Safe, SliderDoor, SmallSpareClosetDoorL,
+            SmallSpareClosetDoorR,
+            SpareRoom2,
+            DoorSpareRoomDoor,
+            SRClosetDoorl,
+            SRClosetDoor2,
+            SRClosetDoor3,
+            SRClosetDoor4,
+            StudyClosetDoorL,
+            StudyClosetDoorR,
+            StudyDoor,
+            TerrariumSlider,
+            UpstairsBathroomDoor,
+            UtilityClosetDoor
+        }
+
+        public enum SexualActs
+        {
+            None,
+            MakingOut = 5,
+            Masturbating = 10,
+            BlowJob = 20,
+            MissionarySex = 30,
+            DoggieStyleSex = 40,
+            Cowgirl = 50,
+            Cunnilingus = 60,
+            HotTubHandJob = 70,
+            SixtyNine = 80,
+            WallSex = 90,
+            WallSex2,
+            WallSex3,
+            Fingering = 100,
+            Scissoring = 200,
+            InSexCutScene = 1000
+        }
+
+        public enum ZoneEnums
+        {
+            ArtRoomZone,
+            BalloonZone,
+            CompubrahZone,
+            DiningRoomZone,
+            DownStairsHallZone,
+            FrontEntryWayZone,
+            FrontSidewalkZone,
+            GarageZone,
+            KitchenZone,
+            LaundryRoomZone,
+            LivingRoomZone,
+            LoadingDockZone,
+            MasterBedroomZone,
+            OutsideRoofZone,
+            SpareRoomZone,
+            StairwayZone,
+            StudyZone,
+            YardGazeboZone,
+            YardHotTubZone,
+            YardLeftCornerZone,
+            YardNearFirePitZone,
+            YardPathGardenZone,
+            YardRearLeftCornerZone,
+            YardRightCornerZone,
+            UpstairsBathroomZone,
+            UpstairsHallZone,
+            BehindFenceZone,
+            None,
+            ApartmentZone
+        }
+        public enum Poses
+        {
+            HandsBehindHead,
+            SittingOnFloor = 11,
+            BentOver = 20,
+            HandsBehindBack = 30,
+            StickingAssOut = 40,
+            Sitting1 = 50,
+            Sitting2,
+            Sitting3,
+            Sitting4,
+            BlowjobAction = 60,
+            BlowJobReady,
+            FemaleLay1 = 70,
+            FemaleLay2,
+            FemaleLay3,
+            ModelPose1 = 80,
+            ModelPose2,
+            ModelPose3,
+            AllFours = 90,
+            MissionaryTop = 100,
+            MissionaryBottom,
+            SexReady = 110,
+            DoggieStyleFront = 120,
+            DoggieStyleBehind,
+            CowGirlTop = 130,
+            CowGirlBottom,
+            CunnilingusTop = 140,
+            CunnilingusBottom,
+            HotTubSit1 = 150,
+            HotTubHandJob = 160,
+            TakeCellPhoto = 170,
+            SixtyNineTop = 180,
+            SixtyNineBottom,
+            Selfie = 190,
+            MakingOutPrimary = 200,
+            MakingOutSecondary,
+            WallSexPrimary = 210,
+            WallSexSecondary,
+            WallSex2Primary = 220,
+            WallSex2Secondary
         }
     }
 }
