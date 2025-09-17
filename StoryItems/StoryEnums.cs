@@ -1,9 +1,5 @@
 ﻿using Newtonsoft.Json.Converters;// Token: 0x(\w|d|\s|:)*\n
-using System.Diagnostics.Metrics;
 using System.Text.Json.Serialization;
-using static CSC.StoryItems.StoryEnums;
-using static System.Formats.Asn1.AsnWriter;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace CSC.StoryItems
 {
@@ -875,6 +871,11 @@ namespace CSC.StoryItems
             WallSexSecondary,
             WallSex2Primary = 220,
             WallSex2Secondary
+        }
+
+        public enum PlayerPrefs
+        {
+            ShowTutorial
         }
     }
 }

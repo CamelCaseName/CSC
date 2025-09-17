@@ -3,6 +3,7 @@ using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Reflection.Metadata.Ecma335;
 using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 
@@ -848,7 +849,14 @@ namespace CSC
                                 Dock = DockStyle.Fill,
                             };
                             clothing.Items.AddRange(Enum.GetNames(typeof(Clothes)));
-                            clothing.SelectedIndex = int.Parse(criterion.Value!);
+                            if (int.TryParse(criterion.Value!, out int res))
+                            {
+                                clothing.SelectedIndex = res;
+                            }
+                            else
+                            {
+                                clothing.SelectedIndex = 0;
+                            }
                             clothing.Select(clothing.SelectedItem?.ToString()?.Length ?? 0, 0);
                             clothing.PerformLayout();
                             clothing.SelectedIndexChanged += (_, _) => criterion.Value = clothing.SelectedIndex!.ToString();
@@ -870,6 +878,11 @@ namespace CSC
 
                             PutBoolValue(criterion);
 
+                            break;
+                        }
+                        case CompareTypes.CoinFlip:
+                        {
+                            PutCompareType(criterion, node);
                             break;
                         }
                         case CompareTypes.CompareValues:
@@ -974,8 +987,14 @@ namespace CSC
                                 Dock = DockStyle.Fill,
                             };
                             cutscene.Items.AddRange(Enum.GetNames(typeof(CutscenePlaying)));
-                            cutscene.SelectedIndex = int.Parse(criterion.Value!) - 1;
-                            cutscene.Select(cutscene.SelectedItem?.ToString()?.Length ?? 0, 0);
+                            if (int.TryParse(criterion.Value!, out int res))
+                            {
+                                cutscene.SelectedIndex = res - 1;
+                            }
+                            else
+                            {
+                                cutscene.SelectedIndex = 0;
+                            }
                             cutscene.PerformLayout();
                             cutscene.SelectedIndexChanged += (_, _) => criterion.Value = (cutscene.SelectedIndex! + 1).ToString();
                             PropertyInspector.Controls.Add(cutscene);
@@ -1035,9 +1054,9 @@ namespace CSC
                             {
                                 Dock = DockStyle.Fill,
                                 TextAlign = HorizontalAlignment.Center,
-                                Text = criterion.Key
+                                Text = criterion.Key2
                             };
-                            obj2.TextChanged += (_, args) => criterion.Key = obj2.Text;
+                            obj2.TextChanged += (_, args) => criterion.Key2 = obj2.Text;
                             PropertyInspector.Controls.Add(obj2);
 
                             PutComparison(criterion);
@@ -1058,10 +1077,12 @@ namespace CSC
                                 Location = new(0, PropertyInspector.Size.Height / 2),
                                 Dock = DockStyle.Fill,
                             };
+                            //todo issue when getting the door as the game names include spaces
+                            //will probably have to make a list of doors instead of enum
                             door.Items.AddRange(Enum.GetNames(typeof(Doors)));
-                            door.SelectedIndex = int.Parse(criterion.Key!);
+                            door.SelectedItem = criterion.Key;
                             door.PerformLayout();
-                            door.SelectedIndexChanged += (_, _) => criterion.Key = (door.SelectedIndex).ToString();
+                            door.SelectedIndexChanged += (_, _) => criterion.Key = door.SelectedItem!.ToString();
                             PropertyInspector.Controls.Add(door);
 
                             ComboBox doorstate = new()
@@ -1183,7 +1204,9 @@ namespace CSC
                         }
                         case CompareTypes.IsAloneWithPlayer:
                         {
-                            //todo
+                            PutCharacter1(criterion);
+                            PutCompareType(criterion, node);
+                            PutBoolValue(criterion);
                             break;
                         }
                         case CompareTypes.IsDLCActive:
@@ -1221,7 +1244,8 @@ namespace CSC
                         }
                         case CompareTypes.IsGameUncensored:
                         {
-                            //todo
+                            PutCompareType(criterion, node);
+                            PutBoolValue(criterion);
                             break;
                         }
                         case CompareTypes.IsPackageInstalled:
@@ -1282,7 +1306,14 @@ namespace CSC
                                 Dock = DockStyle.Fill,
                             };
                             trait.Items.AddRange(Enum.GetNames(typeof(PersonalityTraits)));
-                            trait.SelectedIndex = int.Parse(criterion.Key!);
+                            if (int.TryParse(criterion.Key!, out int res))
+                            {
+                                trait.SelectedIndex = res;
+                            }
+                            else
+                            {
+                                trait.SelectedIndex = 0;
+                            }
                             trait.PerformLayout();
                             trait.SelectedIndexChanged += (_, _) => criterion.Key = trait.SelectedIndex.ToString();
                             PropertyInspector.Controls.Add(trait);
@@ -1334,7 +1365,24 @@ namespace CSC
                         }
                         case CompareTypes.PlayerPrefs:
                         {
-                            //todo
+                            PutCompareType(criterion, node);
+
+                            ComboBox pref = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            pref.Items.AddRange(Enum.GetNames(typeof(PlayerPrefs)));
+                            pref.SelectedItem = criterion.Key;
+                            pref.PerformLayout();
+                            pref.SelectedIndexChanged += (_, _) => criterion.Key = pref.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(pref);
+
+                            PutComparison(criterion);
+                            PutTextValue(criterion);
+
                             break;
                         }
                         case CompareTypes.Posing:
@@ -1464,7 +1512,8 @@ namespace CSC
                         }
                         case CompareTypes.ScreenFadeVisible:
                         {
-                            //todo
+                            PutCompareType(criterion, node);
+                            PutBoolValue(criterion);
                             break;
                         }
                         case CompareTypes.Social:
@@ -1513,17 +1562,59 @@ namespace CSC
                         }
                         case CompareTypes.Value:
                         {
+                            PutCompareType(criterion, node);
+                            PutCharacter1(criterion).SelectedIndexChanged += (_, _) => SetSelectedObject(node);
+
+                            ComboBox value = new()
+                            {
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            if (criterion.Character == "Player")
+                            {
+                                for (int i = 0; i < Story.PlayerValues!.Count; i++)
+                                {
+                                    value.Items.Add(Story.PlayerValues![i]);
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 0; i < characterStories[criterion.Character!].StoryValues!.Count; i++)
+                                {
+                                    value.Items.Add(characterStories[criterion.Character!].StoryValues![i]);
+                                }
+                            }
+                            value.SelectedItem = criterion.Key!;
+                            value.PerformLayout();
+                            value.SelectedIndexChanged += (sender, values) => criterion.Key = value.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(value);
+
+                            PutComparison(criterion);
+
+                            TextBox obj2 = new()
+                            {
+                                Dock = DockStyle.Fill,
+                                TextAlign = HorizontalAlignment.Center,
+                                Text = criterion.Value
+                            };
+                            obj2.TextChanged += (_, args) => criterion.Value = obj2.Text;
+                            PropertyInspector.Controls.Add(obj2);
 
                             break;
                         }
                         case CompareTypes.Vision:
                         {
-
+                            PutCharacter1(criterion);
+                            PutCompareType(criterion, node);
+                            PutCharacter2(criterion);
+                            PutBoolValue(criterion);
                             break;
                         }
                         case CompareTypes.UseLegacyIntimacy:
                         {
-
+                            PutCompareType(criterion, node);
+                            PutBoolValue(criterion);
                             break;
                         }
                         default:
@@ -1891,6 +1982,18 @@ namespace CSC
             }
         }
 
+        private void PutTextValue(Criterion criterion)
+        {
+            TextBox obj2 = new()
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = HorizontalAlignment.Center,
+                Text = criterion.Value
+            };
+            obj2.TextChanged += (_, args) => criterion.Value = obj2.Text;
+            PropertyInspector.Controls.Add(obj2);
+        }
+
         private void PutNumericOption(Criterion criterion)
         {
             NumericUpDown option = new()
@@ -1914,10 +2017,17 @@ namespace CSC
                 //Dock = DockStyle.Fill,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
                 Location = new(0, PropertyInspector.Size.Height / 2),
-                Value = int.Parse(criterion.Value!),
                 Dock = DockStyle.Left,
                 Width = 50
             };
+            if (int.TryParse(criterion.Value!, out int res))
+            {
+                option.Value = res;
+            }
+            else
+            {
+                option.Value = 0;
+            }
             option.PerformLayout();
             option.ValueChanged += (_, _) => criterion.Value = option.Value.ToString();
             PropertyInspector.Controls.Add(option);
@@ -1933,7 +2043,14 @@ namespace CSC
                 Dock = DockStyle.Fill,
             };
             equ.Items.AddRange(Enum.GetNames(typeof(ComparisonEquations)));
-            equ.SelectedIndex = int.Parse(criterion.Value!);
+            if (int.TryParse(criterion.Value!, out int res))
+            {
+                equ.SelectedIndex = res;
+            }
+            else
+            {
+                equ.SelectedIndex = 0;
+            }
             equ.Select(equ.SelectedItem?.ToString()?.Length ?? 0, 0);
             equ.PerformLayout();
             equ.SelectedIndexChanged += (_, _) => criterion.Value = (equ.SelectedIndex).ToString();
@@ -1978,7 +2095,7 @@ namespace CSC
             PropertyInspector.Controls.Add(compareType);
         }
 
-        void PutCharacter1(Criterion criterion)
+        ComboBox PutCharacter1(Criterion criterion)
         {
             ComboBox compareType = new()
             {
@@ -1994,6 +2111,7 @@ namespace CSC
             compareType.PerformLayout();
             compareType.SelectedIndexChanged += (_, _) => criterion.Character = (string)compareType.SelectedItem!;
             PropertyInspector.Controls.Add(compareType);
+            return compareType;
         }
 
         void PutCharacter2(Criterion criterion)
