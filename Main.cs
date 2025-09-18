@@ -1078,10 +1078,8 @@ namespace CSC
                                 Location = new(0, PropertyInspector.Size.Height / 2),
                                 Dock = DockStyle.Fill,
                             };
-                            //todo issue when getting the door as the game names include spaces
-                            //will probably have to make a list of doors instead of enum
                             door.Items.AddRange(Enum.GetNames(typeof(Doors)));
-                            door.SelectedItem = criterion.Key;
+                            door.SelectedItem = criterion.Key?.Replace(" ", "");
                             door.PerformLayout();
                             door.SelectedIndexChanged += (_, _) => criterion.Key = door.SelectedItem!.ToString();
                             PropertyInspector.Controls.Add(door);
@@ -1762,7 +1760,7 @@ namespace CSC
                     {
                         Text = node.FileName + "'s Dialogue " + node.ID + "\n Talking to:",
                         TextAlign = ContentAlignment.MiddleRight,
-                        Dock = DockStyle.Top,
+                        Dock = DockStyle.Fill,
                         ForeColor = Color.LightGray,
                         AutoSize = true,
                     };
@@ -1773,9 +1771,8 @@ namespace CSC
                         {
                             Text = "No data on this node",
                             TextAlign = ContentAlignment.MiddleLeft,
-                            Dock = DockStyle.Top,
-                            ForeColor = Color.LightGray,
-                            Height = 30,
+                            Dock = DockStyle.Fill,
+                            ForeColor = Color.LightGray
                         };
                         PropertyInspector.Controls.Add(label2);
                         break;
@@ -1788,7 +1785,7 @@ namespace CSC
                         //Dock = DockStyle.Fill,
                         Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
                         Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Top
+                        Dock = DockStyle.Fill
                     };
                     talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
                     talkingTo.SelectedItem = dialogue.SpeakingToCharacterName;
@@ -1801,11 +1798,12 @@ namespace CSC
                     CheckBox checkBox = new()
                     {
                         Checked = dialogue.DoesNotCountAsMet,
-                        Dock = DockStyle.Top,
+                        Dock = DockStyle.Fill,
                         Text = "Doesn't count as met:",
                         CheckAlign = ContentAlignment.MiddleRight,
                         TextAlign = ContentAlignment.MiddleRight,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     checkBox.CheckedChanged += (_, args) => dialogue.DoesNotCountAsMet = checkBox.Checked;
                     PropertyInspector.Controls.Add(checkBox);
@@ -1813,11 +1811,12 @@ namespace CSC
                     checkBox = new()
                     {
                         Checked = dialogue.ShowGlobalResponses,
-                        Dock = DockStyle.Top,
+                        Dock = DockStyle.Fill,
                         Text = "Show global repsonses:",
                         CheckAlign = ContentAlignment.MiddleRight,
                         TextAlign = ContentAlignment.MiddleRight,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalResponses = checkBox.Checked;
                     PropertyInspector.Controls.Add(checkBox);
@@ -1825,13 +1824,27 @@ namespace CSC
                     checkBox = new()
                     {
                         Checked = dialogue.ShowGlobalGoodByeResponses,
-                        Dock = DockStyle.Top,
+                        Dock = DockStyle.Fill,
                         Text = "Use goodbye responses:",
                         CheckAlign = ContentAlignment.MiddleRight,
                         TextAlign = ContentAlignment.MiddleRight,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalGoodByeResponses = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    checkBox = new()
+                    {
+                        Checked = dialogue.IsDynamic,
+                        Dock = DockStyle.Fill,
+                        Text = "Auto Immersive:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    checkBox.CheckedChanged += (_, args) => dialogue.IsDynamic = checkBox.Checked;
                     PropertyInspector.Controls.Add(checkBox);
 
                     TextBox text = new()
@@ -1849,7 +1862,7 @@ namespace CSC
                     PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                     PropertyInspector.RowStyles[0].Height = 35;
                     PropertyInspector.Controls.Add(text, 0, 1);
-                    PropertyInspector.SetColumnSpan(text, 5);
+                    PropertyInspector.SetColumnSpan(text, 6);
 
                     break;
                 }
@@ -1899,6 +1912,199 @@ namespace CSC
                 }
                 case NodeType.Event:
                 {
+                    if (node.Data?.GetType() != typeof(GameEvent))
+                    {
+                        Label label2 = new()
+                        {
+                            Text = "No data on this node",
+                            TextAlign = ContentAlignment.MiddleLeft,
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            Height = 30,
+                        };
+                        PropertyInspector.Controls.Add(label2);
+                        break;
+                    }
+
+                    PropertyInspector.RowCount = 2;
+                    PropertyInspector.ColumnCount = 5;
+
+                    GameEvent gevent = (GameEvent)node.Data;
+
+                    Label label = new()
+                    {
+                        Text = "Order:",
+                        TextAlign = ContentAlignment.TopRight,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label, 0, 0);
+
+                    NumericUpDown sortOrder = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Value = gevent.SortOrder,
+                        Dock = DockStyle.Left,
+                        Width = 50
+                    };
+                    sortOrder.ValueChanged += (_, _) => gevent.SortOrder = (int)sortOrder.Value;
+                    PropertyInspector.Controls.Add(sortOrder, 1, 0);
+
+                    ComboBox type = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Dock = DockStyle.Fill,
+                    };
+                    type.Items.AddRange(Enum.GetNames(typeof(GameEvents)));
+                    type.SelectedItem = gevent.EventType.ToString();
+                    type.SelectedIndexChanged += (_, _) => gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
+                    PropertyInspector.Controls.Add(type, 2, 0);
+
+                    Label label3 = new()
+                    {
+                        Text = "Delay:",
+                        TextAlign = ContentAlignment.TopRight,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label3, 3, 0);
+
+                    NumericUpDown delay = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Value = (decimal)gevent.Delay,
+                        Dock = DockStyle.Left,
+                        DecimalPlaces = 2,
+                    };
+                    delay.ValueChanged += (_, _) => gevent.Delay = (double)delay.Value;
+                    PropertyInspector.Controls.Add(delay, 4, 0);
+
+                    switch (gevent.EventType)
+                    {
+                        case GameEvents.AddForce:
+                        {
+                            ComboBox characters = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            characters.Items.AddRange(Enum.GetNames(typeof(Characters)));
+                            characters.SelectedItem = gevent.Value!;
+                            characters.SelectedIndexChanged += (_, _) => gevent.Value = characters.SelectedItem.ToString()!;
+                            PropertyInspector.Controls.Add(characters);
+
+                            //todo
+                            break;
+                        }
+                        case GameEvents.AllowPlayerSave:
+                            break;
+                        case GameEvents.ChangeBodyScale:
+                            break;
+                        case GameEvents.CharacterFromCharacterGroup:
+                            break;
+                        case GameEvents.CharacterFunction:
+                            break;
+                        case GameEvents.Clothing:
+                            break;
+                        case GameEvents.Combat:
+                            break;
+                        case GameEvents.CombineValue:
+                            break;
+                        case GameEvents.CutScene:
+                            break;
+                        case GameEvents.Dialogue:
+                            break;
+                        case GameEvents.DisableNPC:
+                            break;
+                        case GameEvents.DisplayGameMessage:
+                            break;
+                        case GameEvents.Door:
+                            break;
+                        case GameEvents.Emote:
+                            break;
+                        case GameEvents.EnableNPC:
+                            break;
+                        case GameEvents.EventTriggers:
+                            break;
+                        case GameEvents.FadeIn:
+                            break;
+                        case GameEvents.FadeOut:
+                            break;
+                        case GameEvents.IKReach:
+                            break;
+                        case GameEvents.Intimacy:
+                            break;
+                        case GameEvents.Item:
+                            break;
+                        case GameEvents.ItemFromItemGroup:
+                            break;
+                        case GameEvents.LookAt:
+                            break;
+                        case GameEvents.Personality:
+                            break;
+                        case GameEvents.Property:
+                            break;
+                        case GameEvents.MatchValue:
+                            break;
+                        case GameEvents.ModifyValue:
+                            break;
+                        case GameEvents.Player:
+                            break;
+                        case GameEvents.PlaySoundboardClip:
+                            break;
+                        case GameEvents.Pose:
+                            break;
+                        case GameEvents.Quest:
+                            break;
+                        case GameEvents.RandomizeIntValue:
+                            break;
+                        case GameEvents.ResetReactionCooldown:
+                            break;
+                        case GameEvents.Roaming:
+                            break;
+                        case GameEvents.SendEvent:
+                            break;
+                        case GameEvents.SetPlayerPref:
+                            break;
+                        case GameEvents.Social:
+                            break;
+                        case GameEvents.State:
+                            Label label4 = new()
+                            {
+                                Text = "testing:",
+                                TextAlign = ContentAlignment.TopRight,
+                                Dock = DockStyle.Fill,
+                                ForeColor = Color.LightGray,
+                            };
+                            PropertyInspector.Controls.Add(label4);
+                            break;
+                        case GameEvents.TriggerBGC:
+                            break;
+                        case GameEvents.Turn:
+                            break;
+                        case GameEvents.TurnInstantly:
+                            break;
+                        case GameEvents.UnlockAchievement:
+                            break;
+                        case GameEvents.WalkTo:
+                            break;
+                        case GameEvents.WarpOverTime:
+                            break;
+                        case GameEvents.WarpTo:
+                            break;
+                        case GameEvents.None:
+                            break;
+                        default:
+                            break;
+                    }
 
                     break;
                 }
@@ -2023,7 +2229,6 @@ namespace CSC
                             targetType.SelectedIndexChanged += (_, _) => SetSelectedObject(node);
                             PropertyInspector.Controls.Add(targetType);
 
-                            //todo put item or character or targets here
                             switch (eventTrigger.LocationTargetOption)
                             {
                                 case LocationTargetOption.MoveTarget:
@@ -2813,15 +3018,8 @@ namespace CSC
                 Location = new(0, PropertyInspector.Size.Height / 2),
                 Dock = DockStyle.Fill,
             };
-            //todo replace by all all items at some point but this must do for now
-            foreach (string key in characterStories.Keys)
-            {
-                for (int i = 0; i < characterStories[key].StoryItems!.Count; i++)
-                {
-                    item.Items.Add(characterStories[key].StoryItems![i].ItemName!);
-                }
-            }
-            item.SelectedItem = criterion.Key!;
+            item.Items.AddRange(Enum.GetNames<Items>());
+            item.SelectedItem = criterion.Key!.Replace(" ", "");
             item.PerformLayout();
             item.SelectedIndexChanged += (_, _) => criterion.Key = item.SelectedItem!.ToString();
             PropertyInspector.Controls.Add(item);
