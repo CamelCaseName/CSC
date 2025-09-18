@@ -685,7 +685,7 @@ namespace CSC.StoryItems
             LizKatz
         }
 
-        public enum BGCCharacters
+        public enum AnybodyCharacters
         {
             Anybody,
             Amy,
@@ -877,5 +877,13 @@ namespace CSC.StoryItems
         {
             ShowTutorial
         }
+
+        public enum LocationTargetOption
+        {
+            MoveTarget,
+            Character,
+            Item
+        }
+    }
     }
 }

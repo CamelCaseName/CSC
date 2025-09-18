@@ -174,12 +174,12 @@ namespace CSC.StoryItems
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string? Name { get; set; }
         public bool ShowInInspector { get; set; }
-        public EventTypes? Type { get; set; }
+        public EventTypes Type { get; set; }
         public double UpdateIteration { get; set; }
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string? Value { get; set; }
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
-        public string? LocationTargetOption { get; set; }
+        public LocationTargetOption LocationTargetOption { get; set; }
     }
 
     public sealed class CharacterGroup

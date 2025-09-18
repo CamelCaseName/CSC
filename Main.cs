@@ -809,11 +809,11 @@ namespace CSC
 
                     Label label = new()
                     {
-                        Text = "Order",
+                        Text = "Order:",
                         TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Top,
                         ForeColor = Color.LightGray,
-                        AutoSize = true,
+                        Height = 30
                     };
                     PropertyInspector.Controls.Add(label);
 
@@ -1644,7 +1644,7 @@ namespace CSC
                         Location = new(0, PropertyInspector.Size.Height / 2),
                         Dock = DockStyle.Fill,
                     };
-                    talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.BGCCharacters)));
+                    talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.AnybodyCharacters)));
                     talkingTo.SelectedItem = dialogue.SpeakingTo;
                     talkingTo.SelectedText = string.Empty;
                     talkingTo.Select(talkingTo.SelectedItem?.ToString()?.Length ?? 0, 0);
@@ -1757,7 +1757,7 @@ namespace CSC
                 }
                 case NodeType.Dialogue:
                 {
-                    PropertyInspector.RowCount = 2;
+                    PropertyInspector.RowCount = 1;
                     Label label = new()
                     {
                         Text = node.FileName + "'s Dialogue " + node.ID + "\n Talking to:",
@@ -1772,14 +1772,15 @@ namespace CSC
                         Label label2 = new()
                         {
                             Text = "No data on this node",
-                            TextAlign = ContentAlignment.MiddleRight,
+                            TextAlign = ContentAlignment.MiddleLeft,
                             Dock = DockStyle.Top,
                             ForeColor = Color.LightGray,
-                            AutoSize = true,
+                            Height = 30,
                         };
                         PropertyInspector.Controls.Add(label2);
                         break;
                     }
+                    PropertyInspector.RowCount = 2;
                     Dialogue dialogue = ((Dialogue)node.Data!);
 
                     ComboBox talkingTo = new()
@@ -1876,7 +1877,6 @@ namespace CSC
                         Dock = DockStyle.Left,
                         Width = 50
                     };
-                    sortOrder.PerformLayout();
                     sortOrder.ValueChanged += (_, _) => alternate.Order = (int)sortOrder.Value;
                     PropertyInspector.Controls.Add(sortOrder);
                     TextBox text = new()
@@ -1895,7 +1895,6 @@ namespace CSC
                     PropertyInspector.RowStyles[0].Height = 35;
                     PropertyInspector.Controls.Add(text, 0, 1);
                     PropertyInspector.SetColumnSpan(text, 3);
-                    PropertyInspector.PerformLayout();
                     break;
                 }
                 case NodeType.Event:
@@ -1905,6 +1904,189 @@ namespace CSC
                 }
                 case NodeType.EventTrigger:
                 {
+                    if (node.Data?.GetType() != typeof(EventTrigger))
+                    {
+                        Label label2 = new()
+                        {
+                            Text = "No data on this node",
+                            TextAlign = ContentAlignment.MiddleLeft,
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            Height = 30
+                        };
+                        PropertyInspector.Controls.Add(label2);
+                        break;
+                    }
+                    EventTrigger eventTrigger = ((EventTrigger)node.Data!);
+
+                    Label label = new()
+                    {
+                        Text = "Name:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        Height = 30,
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    TextBox customName = new()
+                    {
+                        Text = eventTrigger.Name,
+                        Multiline = true,
+                        WordWrap = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                        BackColor = Color.FromArgb(255, 50, 50, 50),
+                    };
+                    customName.TextChanged += (_, _) => eventTrigger.Name = customName.Text;
+                    PropertyInspector.Controls.Add(customName);
+
+                    switch (eventTrigger.Type)
+                    {
+                        case EventTypes.CaughtHavingSex:
+                        case EventTypes.CaughtMasturbating:
+                        case EventTypes.Dies:
+                        case EventTypes.EjaculatesOnMe:
+                        case EventTypes.EntersVicinity:
+                        case EventTypes.EntersVision:
+                        case EventTypes.ExitsVision:
+                        case EventTypes.ExposesChest:
+                        case EventTypes.ExposesGenitals:
+                        case EventTypes.FallsOver:
+                        case EventTypes.FinishedPopulatingMainDialogueText:
+                        case EventTypes.GetsKnockedOut:
+                        case EventTypes.GropesMyAss:
+                        case EventTypes.GropesMyBreast:
+                        case EventTypes.ImpactsGround:
+                        case EventTypes.ImpactsWall:
+                        case EventTypes.IsBottomless:
+                        case EventTypes.IsDancing:
+                        case EventTypes.IsNaked:
+                        case EventTypes.IsTopless:
+                        case EventTypes.Orgasms:
+                        case EventTypes.PeesOnMe:
+                        case EventTypes.PhoneBlindedMe:
+                        case EventTypes.PopperedMe:
+                        case EventTypes.ScoredBeerPongPoint:
+                        case EventTypes.StartedLapDance:
+                        case EventTypes.StartedPeeing:
+                        case EventTypes.StoppedPeeing:
+                        case EventTypes.VapesOnMe:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+                            break;
+                        }
+                        case EventTypes.EntersZone:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+
+                            ComboBox zone = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            zone.Items.AddRange(Enum.GetNames(typeof(ZoneEnums)));
+                            zone.SelectedItem = eventTrigger.Value;
+                            zone.PerformLayout();
+                            zone.SelectedIndexChanged += (_, _) => eventTrigger.Value = (string)zone.SelectedItem!;
+                            PropertyInspector.Controls.Add(zone);
+
+                            break;
+                        }
+                        case EventTypes.ReachesTarget:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+
+                            ComboBox targetType = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            targetType.Items.AddRange(Enum.GetNames(typeof(LocationTargetOption)));
+                            targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
+                            targetType.PerformLayout();
+                            targetType.SelectedIndexChanged += (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>( targetType.SelectedItem!.ToString());
+                            PropertyInspector.Controls.Add(targetType);
+
+                            //todo put item
+
+                            break;
+                        }
+                        case EventTypes.IsBlockedByLockedDoor:
+                            break;
+                        case EventTypes.IsAttacked:
+                            break;
+                        case EventTypes.GetsHitWithProjectile:
+                            break;
+                        case EventTypes.StartedIntimacyAct:
+                            break;
+                        case EventTypes.PlayerGrabsItem:
+                            break;
+                        case EventTypes.PlayerReleasesItem:
+                            break;
+                        case EventTypes.Periodically:
+                            break;
+                        case EventTypes.OnItemFunction:
+                            break;
+                        case EventTypes.OnAnyItemAcceptFallback:
+                            break;
+                        case EventTypes.OnAnyItemRefuseFallback:
+                            break;
+                        case EventTypes.CombatModeToggled:
+                            break;
+                        case EventTypes.PokedByVibrator:
+                            break;
+                        case EventTypes.PeesOnItem:
+                            break;
+                        case EventTypes.PlayerThrowsItem:
+                            break;
+                        case EventTypes.StartedUsingActionItem:
+                            break;
+                        case EventTypes.StoppedUsingActionItem:
+                            break;
+                        case EventTypes.OnFriendshipIncreaseWith:
+                            break;
+                        case EventTypes.OnRomanceIncreaseWith:
+                            break;
+                        case EventTypes.OnFriendshipDecreaseWith:
+                            break;
+                        case EventTypes.OnRomanceDecreaseWith:
+                            break;
+                        case EventTypes.PlayerInventoryOpened:
+                            break;
+                        case EventTypes.PlayerInventoryClosed:
+                            break;
+                        case EventTypes.PlayerOpportunityWindowOpened:
+                            break;
+                        case EventTypes.PlayerInteractsWithCharacter:
+                            break;
+                        case EventTypes.PlayerInteractsWithItem:
+                            break;
+                        case EventTypes.PlayerTookCameraPhoto:
+                            break;
+                        case EventTypes.OnAfterCutSceneEnds:
+                            break;
+                        case EventTypes.Ejaculates:
+                            break;
+                        default:
+                        case EventTypes.GameStarts:
+                        case EventTypes.Never:
+                        case EventTypes.None:
+                        case EventTypes.OnScreenFadeInComplete:
+                        case EventTypes.OnScreenFadeOutComplete:
+                        {
+                            PutStartCondition(node, eventTrigger);
+                            break;
+                        }
+                    }
 
                     break;
                 }
@@ -1916,10 +2098,10 @@ namespace CSC
                         Label label2 = new()
                         {
                             Text = "No data on this node",
-                            TextAlign = ContentAlignment.MiddleRight,
+                            TextAlign = ContentAlignment.MiddleLeft,
                             Dock = DockStyle.Top,
                             ForeColor = Color.LightGray,
-                            AutoSize = true,
+                            Height = 30
                         };
                         PropertyInspector.Controls.Add(label2);
                         break;
@@ -2037,7 +2219,7 @@ namespace CSC
                         TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Top,
                         ForeColor = Color.LightGray,
-                        AutoSize = true,
+                        Height = 30,
                     };
                     PropertyInspector.Controls.Add(label);
 
@@ -2062,7 +2244,7 @@ namespace CSC
                             TextAlign = ContentAlignment.MiddleLeft,
                             Dock = DockStyle.Top,
                             ForeColor = Color.LightGray,
-                            AutoSize = true,
+                            Height = 30
                         };
                         PropertyInspector.Controls.Add(label2);
                     }
@@ -2072,11 +2254,11 @@ namespace CSC
                 {
                     Label label = new()
                     {
-                        Text = node.FileName + "'s " + node.ID + " value:",
+                        Text = node.FileName + "'s " + node.ID,
                         TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Top,
                         ForeColor = Color.LightGray,
-                        AutoSize = true,
+                        Height = 30
                     };
                     PropertyInspector.Controls.Add(label);
 
@@ -2102,10 +2284,10 @@ namespace CSC
                         Label label2 = new()
                         {
                             Text = "No data on this node!",
-                            TextAlign = ContentAlignment.MiddleRight,
+                            TextAlign = ContentAlignment.MiddleLeft,
                             Dock = DockStyle.Top,
                             ForeColor = Color.LightGray,
-                            AutoSize = true,
+                            Height = 30
                         };
                         PropertyInspector.Controls.Add(label2);
                     }
@@ -2187,6 +2369,60 @@ namespace CSC
                     }
                 }
             }
+        }
+
+        private ComboBox PutCharacter(EventTrigger eventTrigger)
+        {
+            ComboBox character = new()
+            {
+                //Dock = DockStyle.Fill,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                Location = new(0, PropertyInspector.Size.Height / 2),
+                Dock = DockStyle.Fill,
+            };
+            character.Items.AddRange(Enum.GetNames(typeof(AnybodyCharacters)));
+            character.SelectedItem = eventTrigger.CharacterToReactTo;
+            character.PerformLayout();
+            character.SelectedIndexChanged += (_, _) => eventTrigger.CharacterToReactTo = character.SelectedItem!.ToString();
+            PropertyInspector.Controls.Add(character);
+            return character;
+        }
+
+        private void PutStartCondition(Node node, EventTrigger eventTrigger)
+        {
+            Label label3 = new()
+            {
+                Text = "Trigger when:",
+                TextAlign = ContentAlignment.TopRight,
+                Dock = DockStyle.Top,
+                ForeColor = Color.LightGray,
+                Height = 30,
+            };
+            PropertyInspector.Controls.Add(label3);
+
+            ComboBox startCondition = new()
+            {
+                //Dock = DockStyle.Fill,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                Location = new(0, PropertyInspector.Size.Height / 2),
+                Dock = DockStyle.Fill,
+            };
+            startCondition.Items.AddRange(Enum.GetNames<EventTypes>());
+            startCondition.SelectedItem = eventTrigger.Type.ToString()!;
+            startCondition.PerformLayout();
+            startCondition.SelectedIndexChanged += (_, _) =>
+            {
+                if (Enum.TryParse(startCondition.SelectedItem!.ToString()!, out EventTypes res))
+                {
+                    eventTrigger.Type = res;
+                }
+                else
+                {
+                    eventTrigger.Type = EventTypes.None;
+                }
+                SetSelectedObject(node);
+            };
+            PropertyInspector.Controls.Add(startCondition);
         }
 
         private void PutTextValue(Criterion criterion)
