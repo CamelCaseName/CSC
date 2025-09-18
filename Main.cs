@@ -793,6 +793,7 @@ namespace CSC
             PropertyInspector.Controls.Clear();
             PropertyInspector.SuspendLayout();
             PropertyInspector.ColumnCount = 1;
+            PropertyInspector.RowCount = 1;
             if (node == Node.NullNode)
             {
                 return;
@@ -1757,7 +1758,6 @@ namespace CSC
                 case NodeType.Dialogue:
                 {
                     PropertyInspector.RowCount = 2;
-                    PropertyInspector.ColumnCount = 5;
                     Label label = new()
                     {
                         Text = node.FileName + "'s Dialogue " + node.ID + "\n Talking to:",
@@ -1767,6 +1767,19 @@ namespace CSC
                         AutoSize = true,
                     };
                     PropertyInspector.Controls.Add(label);
+                    if (node.Data?.GetType() != typeof(Dialogue))
+                    {
+                        Label label2 = new()
+                        {
+                            Text = "No data on this node",
+                            TextAlign = ContentAlignment.MiddleRight,
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            AutoSize = true,
+                        };
+                        PropertyInspector.Controls.Add(label2);
+                        break;
+                    }
                     Dialogue dialogue = ((Dialogue)node.Data!);
 
                     ComboBox talkingTo = new()
@@ -1895,25 +1908,212 @@ namespace CSC
 
                     break;
                 }
-                case NodeType.Property:
-                {
-
-                    break;
-                }
                 case NodeType.Response:
                 {
+                    PropertyInspector.RowCount = 2;
+                    if (node.Data?.GetType() != typeof(Response))
+                    {
+                        Label label2 = new()
+                        {
+                            Text = "No data on this node",
+                            TextAlign = ContentAlignment.MiddleRight,
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            AutoSize = true,
+                        };
+                        PropertyInspector.Controls.Add(label2);
+                        break;
+                    }
+                    Response response = ((Response)node.Data!);
 
-                    break;
-                }
-                case NodeType.Social:
-                {
+                    PropertyInspector.ColumnCount = 6;
 
+                    Label label = new()
+                    {
+                        Text = "Trigger New Dialogue:\n\nResponse Text:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        Height = 49,
+                        Width = 100
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    ComboBox dialogue = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Dock = DockStyle.Fill,
+                    };
+                    dialogue.Items.Add("Do not trigger new dialogue");
+                    for (int i = 0; i < characterStories[node.FileName].Dialogues!.Count; i++)
+                    {
+                        dialogue.Items.Add(characterStories[node.FileName].Dialogues![i].ID.ToString());
+                    }
+                    dialogue.SelectedItem = response.Next.ToString()!;
+                    dialogue.PerformLayout();
+                    dialogue.SelectedIndexChanged += (_, _) =>
+                    {
+                        if (int.TryParse(dialogue.SelectedItem!.ToString()!, out int res))
+                        {
+                            response.Next = res;
+                        }
+                        else
+                        {
+                            response.Next = 0;
+                        }
+                        SetSelectedObject(node);
+                    };
+                    PropertyInspector.Controls.Add(dialogue);
+
+                    Label label3 = new()
+                    {
+                        Text = characterStories[node.FileName].Dialogues!.Find((dialog) => dialog.ID.ToString() == dialogue.SelectedItem.ToString())?.Text ?? "No text on dialogue",
+                        TextAlign = ContentAlignment.TopLeft,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label3);
+
+                    Label label4 = new()
+                    {
+                        Text = "Display Order",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                    };
+                    PropertyInspector.Controls.Add(label4);
+
+                    NumericUpDown option = new()
+                    {
+                        //Dock = DockStyle.Fill,
+                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                        Location = new(0, PropertyInspector.Size.Height / 2),
+                        Value = response.Order,
+                        Dock = DockStyle.Left,
+                        Width = 50
+                    };
+                    option.PerformLayout();
+                    option.ValueChanged += (_, _) => response.Order = (int)option.Value;
+                    PropertyInspector.Controls.Add(option);
+
+                    CheckBox checkBox = new()
+                    {
+                        Checked = response.AlwaysDisplay,
+                        Dock = DockStyle.Top,
+                        Text = "Always Available:",
+                        CheckAlign = ContentAlignment.MiddleRight,
+                        TextAlign = ContentAlignment.MiddleRight,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    checkBox.CheckedChanged += (_, args) => response.AlwaysDisplay = checkBox.Checked;
+                    PropertyInspector.Controls.Add(checkBox);
+
+                    TextBox text = new()
+                    {
+                        Text = response.Text,
+                        Multiline = true,
+                        WordWrap = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.LightGray,
+                        BackColor = Color.FromArgb(255, 50, 50, 50),
+                    };
+                    text.TextChanged += (_, _) => response.Text = text.Text;
+                    text.Select();
+                    PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
+                    PropertyInspector.RowStyles[0].Height = 50;
+                    PropertyInspector.Controls.Add(text, 0, 1);
+                    PropertyInspector.SetColumnSpan(text, 6);
                     break;
                 }
                 case NodeType.Value:
                 {
+                    Label label = new()
+                    {
+                        Text = node.FileName + "'s value:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    if (node.Data?.GetType() == typeof(Value))
+                    {
+                        TextBox obj2 = new()
+                        {
+                            Dock = DockStyle.Fill,
+                            TextAlign = HorizontalAlignment.Center,
+                            ForeColor = Color.LightGray,
+                            Text = ((Value)node.Data).value,
+                            AutoSize = true,
+                        };
+                        obj2.TextChanged += (_, args) => ((Value)node.Data).value = obj2.Text;
+                        PropertyInspector.Controls.Add(obj2);
+                    }
+                    else
+                    {
+                        Label label2 = new()
+                        {
+                            Text = "No data on this node!",
+                            TextAlign = ContentAlignment.MiddleLeft,
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            AutoSize = true,
+                        };
+                        PropertyInspector.Controls.Add(label2);
+                    }
                     break;
                 }
+                case NodeType.Personality:
+                {
+                    Label label = new()
+                    {
+                        Text = node.FileName + "'s " + node.ID + " value:",
+                        TextAlign = ContentAlignment.MiddleRight,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
+                    };
+                    PropertyInspector.Controls.Add(label);
+
+                    if (node.Data?.GetType() == typeof(Trait))
+                    {
+                        NumericUpDown option = new()
+                        {
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                            Location = new(0, PropertyInspector.Size.Height / 2),
+                            Value = ((Trait)(node.Data)).Value,
+                            Maximum = 100,
+                            Minimum = -100,
+                            Width = 50
+                        };
+                        option.PerformLayout();
+                        option.ValueChanged += (_, _) => ((Trait)(node.Data)).Value = (int)option.Value;
+                        PropertyInspector.Controls.Add(option);
+                    }
+                    else
+                    {
+                        Label label2 = new()
+                        {
+                            Text = "No data on this node!",
+                            TextAlign = ContentAlignment.MiddleRight,
+                            Dock = DockStyle.Top,
+                            ForeColor = Color.LightGray,
+                            AutoSize = true,
+                        };
+                        PropertyInspector.Controls.Add(label2);
+                    }
+                    break;
+                }
+                case NodeType.State:
+                case NodeType.Property:
+                case NodeType.Social:
                 case NodeType.Achievement:
                 case NodeType.BGCResponse:
                 case NodeType.CharacterGroup:
@@ -1928,10 +2128,8 @@ namespace CSC
                 case NodeType.ItemGroupBehaviour:
                 case NodeType.ItemGroupInteraction:
                 case NodeType.Null:
-                case NodeType.Personality:
                 case NodeType.Pose:
                 case NodeType.Quest:
-                case NodeType.State:
                 default:
                 {
                     PropertyInspector.RowCount = 1;
@@ -1940,20 +2138,29 @@ namespace CSC
                     {
                         Text = node.Type.ToString(),
                         TextAlign = ContentAlignment.MiddleCenter,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
-                    PropertyInspector.Controls.Add(label, 0, 0);
+                    PropertyInspector.Controls.Add(label);
                     label = new()
                     {
                         Text = node.ID,
                         TextAlign = ContentAlignment.MiddleCenter,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
-                    PropertyInspector.Controls.Add(label, 1, 0);
+                    PropertyInspector.Controls.Add(label);
                     label = new()
                     {
                         Text = node.Text,
                         TextAlign = ContentAlignment.MiddleCenter,
+                        Dock = DockStyle.Top,
+                        ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
-                    PropertyInspector.Controls.Add(label, 2, 0);
+                    PropertyInspector.Controls.Add(label);
                     break;
                 }
             }

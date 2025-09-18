@@ -124,6 +124,7 @@ namespace CSC.Nodestuff
 
         public Rectangle RectangleNonF { get => new((int)Position.X, (int)Position.Y, (int)Size.Width, (int)Size.Height); }
 
+        //todo replace by generic type
         public object? Data
         {
             get
