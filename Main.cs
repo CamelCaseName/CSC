@@ -1919,15 +1919,17 @@ namespace CSC
                     }
                     EventTrigger eventTrigger = ((EventTrigger)node.Data!);
 
+                    PropertyInspector.RowCount = 2;
+
                     Label label = new()
                     {
                         Text = "Name:",
-                        TextAlign = ContentAlignment.MiddleRight,
-                        Dock = DockStyle.Top,
+                        TextAlign = ContentAlignment.TopRight,
+                        Dock = DockStyle.Fill,
                         ForeColor = Color.LightGray,
                         Height = 30,
                     };
-                    PropertyInspector.Controls.Add(label);
+                    PropertyInspector.Controls.Add(label, 0, 0);
 
                     TextBox customName = new()
                     {
@@ -1940,7 +1942,8 @@ namespace CSC
                         BackColor = Color.FromArgb(255, 50, 50, 50),
                     };
                     customName.TextChanged += (_, _) => eventTrigger.Name = customName.Text;
-                    PropertyInspector.Controls.Add(customName);
+                    PropertyInspector.Controls.Add(customName, 1, 0);
+                    PropertyInspector.SetColumnSpan(customName, 4);
 
                     switch (eventTrigger.Type)
                     {
@@ -1971,8 +1974,11 @@ namespace CSC
                         case EventTypes.ScoredBeerPongPoint:
                         case EventTypes.StartedLapDance:
                         case EventTypes.StartedPeeing:
+                        case EventTypes.CombatModeToggled:
                         case EventTypes.StoppedPeeing:
                         case EventTypes.VapesOnMe:
+                        case EventTypes.OnAnyItemAcceptFallback:
+                        case EventTypes.OnAnyItemRefuseFallback:
                         {
                             PutCharacter(eventTrigger);
                             PutStartCondition(node, eventTrigger);
@@ -2013,71 +2019,227 @@ namespace CSC
                             targetType.Items.AddRange(Enum.GetNames(typeof(LocationTargetOption)));
                             targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
                             targetType.PerformLayout();
-                            targetType.SelectedIndexChanged += (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>( targetType.SelectedItem!.ToString());
+                            targetType.SelectedIndexChanged += (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>(targetType.SelectedItem!.ToString()!);
+                            targetType.SelectedIndexChanged += (_, _) => SetSelectedObject(node);
                             PropertyInspector.Controls.Add(targetType);
 
-                            //todo put item
+                            //todo put item or character or targets here
+                            switch (eventTrigger.LocationTargetOption)
+                            {
+                                case LocationTargetOption.MoveTarget:
+                                {
+                                    ComboBox target = new()
+                                    {
+                                        //Dock = DockStyle.Fill,
+                                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                        Location = new(0, PropertyInspector.Size.Height / 2),
+                                        Dock = DockStyle.Fill,
+                                    };
+                                    target.Items.AddRange(Enum.GetNames(typeof(MoveTargets)));
+                                    target.SelectedItem = eventTrigger.Value.Replace(" ", "");
+                                    target.PerformLayout();
+                                    target.SelectedIndexChanged += (_, _) => eventTrigger.Value = target.SelectedItem!.ToString()!;
+                                    PropertyInspector.Controls.Add(target);
+                                    break;
+                                }
+                                case LocationTargetOption.Character:
+                                {
+                                    PutCharacterValue(eventTrigger);
+                                    break;
+                                }
+                                case LocationTargetOption.Item:
+                                {
+                                    PutItemValue(eventTrigger);
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
 
                             break;
                         }
                         case EventTypes.IsBlockedByLockedDoor:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+
+                            TextBox door = new()
+                            {
+                                Text = eventTrigger.Value,
+                                Multiline = true,
+                                WordWrap = true,
+                                ScrollBars = ScrollBars.Both,
+                                Dock = DockStyle.Fill,
+                                ForeColor = Color.LightGray,
+                                BackColor = Color.FromArgb(255, 50, 50, 50),
+                            };
+                            door.TextChanged += (_, _) => eventTrigger.Value = door.Text;
+                            PropertyInspector.Controls.Add(door);
+
                             break;
+                        }
                         case EventTypes.IsAttacked:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+                            PutCharacterValue(eventTrigger);
                             break;
+                        }
                         case EventTypes.GetsHitWithProjectile:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+                            PutItemKey(eventTrigger);
+
+                            Label inlabel = new()
+                            {
+                                Text = "in the:",
+                                TextAlign = ContentAlignment.MiddleRight,
+                                Dock = DockStyle.Top,
+                                ForeColor = Color.LightGray,
+                                Height = 30,
+                            };
+                            PropertyInspector.Controls.Add(inlabel);
+
+                            ComboBox zone = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            zone.Items.AddRange(Enum.GetNames(typeof(BodyRegion)));
+                            zone.SelectedItem = ((BodyRegion)int.Parse(eventTrigger.Value)).ToString();
+                            zone.PerformLayout();
+                            zone.SelectedIndexChanged += (_, _) => eventTrigger.Value = ((int)Enum.Parse<BodyRegion>(zone.SelectedItem!.ToString())).ToString();
+                            PropertyInspector.Controls.Add(zone);
+
                             break;
+                        }
                         case EventTypes.StartedIntimacyAct:
+                        {
+                            //todo
                             break;
+                        }
                         case EventTypes.PlayerGrabsItem:
+                        {
+                            //todo
                             break;
+                        }
                         case EventTypes.PlayerReleasesItem:
+                        {
+                            //todo
                             break;
+                        }
                         case EventTypes.Periodically:
+                        {
+                            PutStartCondition(node, eventTrigger);
+
+                            Label inlabel = new()
+                            {
+                                Text = "every:",
+                                TextAlign = ContentAlignment.MiddleRight,
+                                Dock = DockStyle.Top,
+                                ForeColor = Color.LightGray,
+                                Height = 30,
+                            };
+                            PropertyInspector.Controls.Add(inlabel);
+
+                            NumericUpDown option = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Left,
+                                Width = 50,
+                                Value = (decimal)eventTrigger.UpdateIteration
+                            };
+                            option.PerformLayout();
+                            option.ValueChanged += (_, _) => eventTrigger.UpdateIteration = (double)option.Value;
+                            PropertyInspector.Controls.Add(option);
+
+                            Label seconds = new()
+                            {
+                                Text = "seconds",
+                                TextAlign = ContentAlignment.MiddleRight,
+                                Dock = DockStyle.Top,
+                                ForeColor = Color.LightGray,
+                                Height = 30,
+                            };
+                            PropertyInspector.Controls.Add(seconds);
                             break;
+                        }
                         case EventTypes.OnItemFunction:
+                        {
+                            //todo
                             break;
-                        case EventTypes.OnAnyItemAcceptFallback:
-                            break;
-                        case EventTypes.OnAnyItemRefuseFallback:
-                            break;
-                        case EventTypes.CombatModeToggled:
-                            break;
+                        }
                         case EventTypes.PokedByVibrator:
+                        {
+                            //todo
                             break;
+                        }
                         case EventTypes.PeesOnItem:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+                            PutItemValue(eventTrigger);
                             break;
+                        }
                         case EventTypes.PlayerThrowsItem:
+                        {
+                            PutCharacter(eventTrigger);
+                            PutStartCondition(node, eventTrigger);
+                            PutItemValue(eventTrigger);
                             break;
+                        }
                         case EventTypes.StartedUsingActionItem:
-                            break;
                         case EventTypes.StoppedUsingActionItem:
+                        {
+                            //todo
                             break;
+                        }
                         case EventTypes.OnFriendshipIncreaseWith:
-                            break;
-                        case EventTypes.OnRomanceIncreaseWith:
-                            break;
                         case EventTypes.OnFriendshipDecreaseWith:
-                            break;
                         case EventTypes.OnRomanceDecreaseWith:
-                            break;
-                        case EventTypes.PlayerInventoryOpened:
-                            break;
-                        case EventTypes.PlayerInventoryClosed:
-                            break;
-                        case EventTypes.PlayerOpportunityWindowOpened:
-                            break;
+                        case EventTypes.OnRomanceIncreaseWith:
                         case EventTypes.PlayerInteractsWithCharacter:
+                        {
+                            PutStartCondition(node, eventTrigger);
+                            PutCharacter(eventTrigger);
                             break;
+                        }
                         case EventTypes.PlayerInteractsWithItem:
+                        {
+                            //todo
                             break;
-                        case EventTypes.PlayerTookCameraPhoto:
-                            break;
+                        }
                         case EventTypes.OnAfterCutSceneEnds:
+                        {
+                            PutStartCondition(node, eventTrigger);
+
+                            ComboBox cutscene = new()
+                            {
+                                //Dock = DockStyle.Fill,
+                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                                Location = new(0, PropertyInspector.Size.Height / 2),
+                                Dock = DockStyle.Fill,
+                            };
+                            cutscene.Items.AddRange(Enum.GetNames(typeof(Cutscenes)));
+                            cutscene.SelectedItem = eventTrigger.Value;
+                            cutscene.PerformLayout();
+                            cutscene.SelectedIndexChanged += (_, _) => eventTrigger.Value = cutscene.SelectedItem!.ToString();
+                            PropertyInspector.Controls.Add(cutscene);
+
                             break;
-                        case EventTypes.Ejaculates:
-                            break;
+                        }
                         default:
                         case EventTypes.GameStarts:
+                        case EventTypes.Ejaculates:
+                        case EventTypes.PlayerInventoryOpened:
+                        case EventTypes.PlayerInventoryClosed:
+                        case EventTypes.PlayerTookCameraPhoto:
+                        case EventTypes.PlayerOpportunityWindowOpened:
                         case EventTypes.Never:
                         case EventTypes.None:
                         case EventTypes.OnScreenFadeInComplete:
@@ -2369,6 +2531,54 @@ namespace CSC
                     }
                 }
             }
+        }
+
+        private void PutItemValue(EventTrigger eventTrigger)
+        {
+            ComboBox item = new()
+            {
+                //Dock = DockStyle.Fill,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                Location = new(0, PropertyInspector.Size.Height / 2),
+                Dock = DockStyle.Fill,
+            };
+            item.Items.AddRange(Enum.GetNames(typeof(Items)));
+            item.SelectedItem = eventTrigger.Value;
+            item.PerformLayout();
+            item.SelectedIndexChanged += (_, _) => eventTrigger.Value = item.SelectedItem!.ToString()!;
+            PropertyInspector.Controls.Add(item);
+        }
+
+        private void PutItemKey(EventTrigger eventTrigger)
+        {
+            ComboBox item = new()
+            {
+                //Dock = DockStyle.Fill,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                Location = new(0, PropertyInspector.Size.Height / 2),
+                Dock = DockStyle.Fill,
+            };
+            item.Items.AddRange(Enum.GetNames(typeof(Items)));
+            item.SelectedItem = eventTrigger.Key;
+            item.PerformLayout();
+            item.SelectedIndexChanged += (_, _) => eventTrigger.Key = item.SelectedItem!.ToString()!;
+            PropertyInspector.Controls.Add(item);
+        }
+
+        private void PutCharacterValue(EventTrigger eventTrigger)
+        {
+            ComboBox character = new()
+            {
+                //Dock = DockStyle.Fill,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+                Location = new(0, PropertyInspector.Size.Height / 2),
+                Dock = DockStyle.Fill,
+            };
+            character.Items.AddRange(Enum.GetNames(typeof(AnybodyCharacters)));
+            character.SelectedItem = eventTrigger.Value;
+            character.PerformLayout();
+            character.SelectedIndexChanged += (_, _) => eventTrigger.Value = character.SelectedItem!.ToString();
+            PropertyInspector.Controls.Add(character);
         }
 
         private ComboBox PutCharacter(EventTrigger eventTrigger)
