@@ -153,6 +153,8 @@ namespace CSC
             ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
             NodeToLinkNextBrush = new SolidBrush(Color.LightGray);
 
+            NodeSpawnBox.Items.AddRange(Enum.GetNames<SpawnableNodeType>());
+
             nodes.Add(NoCharacter, new());
             Scaling.Add(NoCharacter, 0.3f);
             OffsetX.Add(NoCharacter, 0);
@@ -164,6 +166,27 @@ namespace CSC
             //get the shift key state so we can determine later if we want to redraw the tree on node selection or not
             IsShiftPressed = e.KeyData == (Keys.ShiftKey | Keys.Shift);
             IsCtrlPressed = e.KeyData == (Keys.Control | Keys.ControlKey);
+
+            if (e.KeyData == Keys.Space && !NodeSpawnBox.Enabled)
+            {
+                if (Main.ActiveForm is null)
+                {
+                    return;
+                }
+                var pos = Graph.PointToClient(Cursor.Position);
+                ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+                if (adjustedMouseClipBounds.Contains(new PointF(ScreenPosX, ScreenPosY)) && Graph.Focused)
+                {
+                    NodeSpawnBox.Enabled = true;
+                    NodeSpawnBox.Visible = true;
+                    NodeSpawnBox.Focus();
+                }
+            }
+            else if (e.KeyData == Keys.Escape && NodeSpawnBox.Enabled)
+            {
+                NodeSpawnBox.Enabled = false;
+                NodeSpawnBox.Visible = false;
+            }
         }
 
         public void HandleMouseEvents(object? sender, MouseEventArgs e)
@@ -183,11 +206,16 @@ namespace CSC
                     {
                         //double click
                         UpdateDoubleClickTransition(ScreenPos);
+                        Graph.Focus();
                     }
                     else
                     {
                         _ = UpdateClickedNode(ScreenPos);
                         Graph.Invalidate();
+                        if (adjustedMouseClipBounds.Contains(ScreenPos))
+                        {
+                            Graph.Focus();
+                        }
                     }
                     break;
                 case MouseButtons.None:
@@ -200,10 +228,12 @@ namespace CSC
                 case MouseButtons.Right:
                 {
                     _ = UpdateClickedNode(ScreenPos);
+                    Graph.Focus();
                 }
                 break;
                 case MouseButtons.Middle:
                     UpdatePan(pos);
+                    Graph.Focus();
                     break;
                 case MouseButtons.XButton1:
                     break;
@@ -793,7 +823,7 @@ namespace CSC
             }
             else
             {
-                if(RightHasJustBeenClicked && !MovingChild)
+                if (RightHasJustBeenClicked && !MovingChild)
                 {
                     //right click only no move, spawn context
                     SpawnContext(node, ScreenPos);
@@ -834,6 +864,7 @@ namespace CSC
 
         private void SpawnContext(Node node, PointF screenPos)
         {
+
             //todo
         }
 
@@ -1047,13 +1078,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox clothing = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox clothing = GetComboBox();
                             clothing.Items.AddRange(Enum.GetNames(typeof(Clothes)));
                             if (int.TryParse(criterion.Value!, out int res))
                             {
@@ -1068,13 +1093,7 @@ namespace CSC
                             clothing.SelectedIndexChanged += (_, _) => criterion.Value = clothing.SelectedIndex!.ToString();
                             PropertyInspector.Controls.Add(clothing);
 
-                            ComboBox set = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox set = GetComboBox();
                             set.Items.AddRange(Enum.GetNames(typeof(ClothingSet)));
                             set.SelectedIndex = criterion.Option!;
                             set.Select(set.SelectedItem?.ToString()?.Length ?? 0, 0);
@@ -1096,13 +1115,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox valueChar1 = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox valueChar1 = GetComboBox();
                             if (criterion.Key == "Player")
                             {
                                 valueChar1.Items.AddRange([.. Story.PlayerValues!]);
@@ -1117,13 +1130,7 @@ namespace CSC
                             valueChar1.SelectedIndexChanged += (_, _) => criterion.Key = valueChar1.SelectedItem!.ToString();
                             PropertyInspector.Controls.Add(valueChar1);
 
-                            ComboBox formula = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox formula = GetComboBox();
                             formula.Items.AddRange(Enum.GetNames(typeof(ValueSpecificFormulas)));
                             formula.SelectedIndex = (int)criterion.ValueFormula!;
                             formula.Select(formula.SelectedItem?.ToString()?.Length ?? 0, 0);
@@ -1133,13 +1140,7 @@ namespace CSC
 
                             PutCharacter2(criterion);
 
-                            ComboBox valueChar2 = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox valueChar2 = GetComboBox();
                             if (criterion.Key2 == "Player")
                             {
                                 valueChar2.Items.AddRange([.. Story.PlayerValues!]);
@@ -1160,13 +1161,7 @@ namespace CSC
                         {
                             PutCompareType(criterion, node);
 
-                            ComboBox group = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox group = GetComboBox();
                             for (int i = 0; i < Story.CriteriaGroups!.Count; i++)
                             {
                                 group.Items.Add(Story.CriteriaGroups[i].Name!);
@@ -1185,13 +1180,7 @@ namespace CSC
                         {
                             PutCompareType(criterion, node);
 
-                            ComboBox cutscene = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox cutscene = GetComboBox();
                             cutscene.Items.AddRange(Enum.GetNames(typeof(CutscenePlaying)));
                             if (int.TryParse(criterion.Value!, out int res))
                             {
@@ -1213,13 +1202,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox dialogue = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox dialogue = GetComboBox();
                             for (int i = 0; i < characterStories[criterion.Character!].Dialogues!.Count; i++)
                             {
                                 dialogue.Items.Add(characterStories[criterion.Character!].Dialogues![i].ID.ToString());
@@ -1229,13 +1212,7 @@ namespace CSC
                             dialogue.SelectedIndexChanged += (_, _) => criterion.Value = dialogue.SelectedItem!.ToString();
                             PropertyInspector.Controls.Add(dialogue);
 
-                            ComboBox status = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox status = GetComboBox();
                             status.Items.AddRange(Enum.GetNames(typeof(DialogueStatuses)));
                             status.SelectedItem = ((DialogueStatuses)criterion.Option!).ToString();
                             status.PerformLayout();
@@ -1276,26 +1253,14 @@ namespace CSC
 
                             PutCompareType(criterion, node);
 
-                            ComboBox door = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox door = GetComboBox();
                             door.Items.AddRange(Enum.GetNames(typeof(Doors)));
                             door.SelectedItem = criterion.Key?.Replace(" ", "");
                             door.PerformLayout();
                             door.SelectedIndexChanged += (_, _) => criterion.Key = door.SelectedItem!.ToString();
                             PropertyInspector.Controls.Add(door);
 
-                            ComboBox doorstate = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox doorstate = GetComboBox();
                             doorstate.Items.AddRange(Enum.GetNames(typeof(DoorOptionValues)));
                             doorstate.SelectedIndex = criterion.Option!;
                             doorstate.PerformLayout();
@@ -1315,13 +1280,7 @@ namespace CSC
 
                             PutEquals(criterion);
 
-                            ComboBox character = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox character = GetComboBox();
                             character.Items.AddRange(Enum.GetNames(typeof(IntimateCharacters)));
                             character.SelectedItem = criterion.Value;
                             character.SelectionLength = 0;
@@ -1339,13 +1298,7 @@ namespace CSC
 
                             PutEquals(criterion);
 
-                            ComboBox state = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox state = GetComboBox();
                             state.Items.AddRange(Enum.GetNames(typeof(SexualActs)));
                             state.SelectedItem = criterion.Value;
                             state.SelectionLength = 0;
@@ -1382,13 +1335,7 @@ namespace CSC
 
                             PutItem(criterion);
 
-                            ComboBox state = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox state = GetComboBox();
                             state.Items.AddRange(Enum.GetNames(typeof(ItemComparisonTypes)));
                             state.SelectedItem = criterion.ItemComparison.ToString();
                             state.SelectionLength = 0;
@@ -1502,13 +1449,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox trait = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox trait = GetComboBox();
                             trait.Items.AddRange(Enum.GetNames(typeof(PersonalityTraits)));
                             if (int.TryParse(criterion.Key!, out int res))
                             {
@@ -1531,13 +1472,7 @@ namespace CSC
                         {
                             PutCompareType(criterion, node);
 
-                            ComboBox gender = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox gender = GetComboBox();
                             gender.Items.AddRange(Enum.GetNames(typeof(Gender)));
                             gender.SelectedItem = criterion.Value;
                             gender.PerformLayout();
@@ -1550,13 +1485,7 @@ namespace CSC
                         {
                             PutCompareType(criterion, node);
 
-                            ComboBox state = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox state = GetComboBox();
                             state.Items.AddRange(Enum.GetNames(typeof(PlayerInventoryOptions)));
                             state.SelectedItem = criterion.PlayerInventoryOption.ToString();
                             state.PerformLayout();
@@ -1571,13 +1500,7 @@ namespace CSC
                         {
                             PutCompareType(criterion, node);
 
-                            ComboBox pref = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox pref = GetComboBox();
                             pref.Items.AddRange(Enum.GetNames(typeof(PlayerPrefs)));
                             pref.SelectedItem = criterion.Key;
                             pref.PerformLayout();
@@ -1594,13 +1517,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox option = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox option = GetComboBox();
                             option.Items.AddRange(Enum.GetNames(typeof(PoseOptions)));
                             option.SelectedItem = criterion.PoseOption.ToString();
                             option.PerformLayout();
@@ -1612,13 +1529,7 @@ namespace CSC
                             {
                                 PutEquals(criterion);
 
-                                ComboBox pose = new()
-                                {
-                                    //Dock = DockStyle.Fill,
-                                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                    Location = new(0, PropertyInspector.Size.Height / 2),
-                                    Dock = DockStyle.Fill,
-                                };
+                                ComboBox pose = GetComboBox();
                                 pose.Items.AddRange(Enum.GetNames(typeof(Poses)));
                                 pose.SelectedItem = Enum.Parse<Poses>(criterion.Value!).ToString();
                                 pose.PerformLayout();
@@ -1636,13 +1547,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox property = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox property = GetComboBox();
                             property.Items.AddRange(Enum.GetNames(typeof(InteractiveProperties)));
                             property.SelectedItem = Enum.Parse<InteractiveProperties>(criterion.Value!).ToString();
                             property.PerformLayout();
@@ -1657,13 +1562,7 @@ namespace CSC
                         {
                             PutCompareType(criterion, node);
 
-                            ComboBox quest = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox quest = GetComboBox();
                             foreach (string key in characterStories.Keys)
                             {
                                 for (int i = 0; i < characterStories[key].Quests!.Count; i++)
@@ -1692,13 +1591,7 @@ namespace CSC
 
                             PutEquals(criterion);
 
-                            ComboBox obtained = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox obtained = GetComboBox();
                             obtained.Items.AddRange(Enum.GetNames(typeof(QuestStatus)));
                             obtained.SelectedItem = Enum.Parse<QuestStatus>(criterion.Value!).ToString();
                             obtained.PerformLayout();
@@ -1725,13 +1618,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox social = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox social = GetComboBox();
                             social.Items.AddRange(Enum.GetNames(typeof(SocialStatuses)));
                             social.SelectedItem = criterion.SocialStatus!.ToString();
                             social.PerformLayout();
@@ -1748,13 +1635,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion);
 
-                            ComboBox state = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox state = GetComboBox();
                             state.Items.AddRange(Enum.GetNames(typeof(InteractiveStates)));
                             state.SelectedItem = Enum.Parse<InteractiveStates>(criterion.Value!).ToString();
                             state.PerformLayout();
@@ -1769,12 +1650,7 @@ namespace CSC
                             PutCompareType(criterion, node);
                             PutCharacter1(criterion).SelectedIndexChanged += (_, _) => SetSelectedObject(node);
 
-                            ComboBox value = new()
-                            {
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox value = GetComboBox();
                             if (criterion.Character == "Player")
                             {
                                 for (int i = 0; i < Story.PlayerValues!.Count; i++)
@@ -1832,26 +1708,18 @@ namespace CSC
                     PropertyInspector.ColumnCount = 9;
                     Label label = new()
                     {
-                        Text = node.FileName + "'s Background Chatter" + node.ID + " Speaking to:",
+                        Text = node.FileName + "'s\n Background Chatter" + node.ID + "\nSpeaking to:",
                         TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Fill,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     PropertyInspector.Controls.Add(label);
                     BackgroundChatter dialogue = ((BackgroundChatter)node.Data!);
 
-                    ComboBox talkingTo = new()
-                    {
-                        //Dock = DockStyle.Fill,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Fill,
-                    };
+                    ComboBox talkingTo = GetComboBox();
                     talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.AnybodyCharacters)));
                     talkingTo.SelectedItem = dialogue.SpeakingTo;
-                    talkingTo.SelectedText = string.Empty;
-                    talkingTo.Select(talkingTo.SelectedItem?.ToString()?.Length ?? 0, 0);
-                    talkingTo.PerformLayout();
                     talkingTo.SelectedIndexChanged += (_, _) => dialogue.SpeakingTo = talkingTo.SelectedItem!.ToString();
                     PropertyInspector.Controls.Add(talkingTo);
 
@@ -1861,21 +1729,13 @@ namespace CSC
                         TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Fill,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     PropertyInspector.Controls.Add(label);
 
-                    ComboBox importance = new()
-                    {
-                        //Dock = DockStyle.Fill,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Fill,
-                    };
+                    ComboBox importance = GetComboBox();
                     importance.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Importance)));
                     importance.SelectedItem = dialogue.SpeakingTo;
-                    importance.SelectedText = string.Empty;
-                    importance.Select(importance.SelectedItem?.ToString()?.Length ?? 0, 0);
-                    importance.PerformLayout();
                     importance.SelectedIndexChanged += (_, _) => dialogue.SpeakingTo = importance.SelectedItem!.ToString();
                     PropertyInspector.Controls.Add(importance);
 
@@ -1887,6 +1747,7 @@ namespace CSC
                         CheckAlign = ContentAlignment.MiddleRight,
                         TextAlign = ContentAlignment.MiddleRight,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     checkBox.CheckedChanged += (_, args) => dialogue.IsConversationStarter = checkBox.Checked;
                     PropertyInspector.Controls.Add(checkBox);
@@ -1899,6 +1760,7 @@ namespace CSC
                         CheckAlign = ContentAlignment.MiddleRight,
                         TextAlign = ContentAlignment.MiddleRight,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     checkBox.CheckedChanged += (_, args) => dialogue.OverrideCombatRestriction = checkBox.Checked;
                     PropertyInspector.Controls.Add(checkBox);
@@ -1907,10 +1769,11 @@ namespace CSC
                     {
                         Checked = dialogue.PlaySilently,
                         Dock = DockStyle.Fill,
-                        Text = "Play voice acting at zero volume:",
+                        Text = "Silence Voice Acting:",
                         CheckAlign = ContentAlignment.MiddleRight,
                         TextAlign = ContentAlignment.MiddleRight,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     checkBox.CheckedChanged += (_, args) => dialogue.PlaySilently = checkBox.Checked;
                     PropertyInspector.Controls.Add(checkBox);
@@ -1921,21 +1784,13 @@ namespace CSC
                         TextAlign = ContentAlignment.MiddleRight,
                         Dock = DockStyle.Fill,
                         ForeColor = Color.LightGray,
+                        AutoSize = true,
                     };
                     PropertyInspector.Controls.Add(label);
 
-                    ComboBox pairedEmote = new()
-                    {
-                        //Dock = DockStyle.Fill,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Fill,
-                    };
+                    ComboBox pairedEmote = GetComboBox();
                     pairedEmote.Items.AddRange(Enum.GetNames(typeof(StoryEnums.BGCEmotes)));
                     pairedEmote.SelectedItem = dialogue.PairedEmote;
-                    pairedEmote.SelectedText = string.Empty;
-                    pairedEmote.Select(pairedEmote.SelectedItem?.ToString()?.Length ?? 0, 0);
-                    pairedEmote.PerformLayout();
                     pairedEmote.SelectedIndexChanged += (_, _) => dialogue.PairedEmote = pairedEmote.SelectedItem!.ToString();
                     PropertyInspector.Controls.Add(pairedEmote);
 
@@ -1952,7 +1807,7 @@ namespace CSC
                     text.TextChanged += (_, _) => dialogue.Text = text.Text;
                     text.Select();
                     PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
-                    PropertyInspector.RowStyles[0].Height = 50;
+                    PropertyInspector.RowStyles[0].Height = 55;
                     PropertyInspector.Controls.Add(text, 0, 1);
                     PropertyInspector.SetColumnSpan(text, 9);
                     PropertyInspector.AutoSize = false;
@@ -1985,13 +1840,7 @@ namespace CSC
                     PropertyInspector.RowCount = 2;
                     Dialogue dialogue = ((Dialogue)node.Data!);
 
-                    ComboBox talkingTo = new()
-                    {
-                        //Dock = DockStyle.Fill,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Fill
-                    };
+                    ComboBox talkingTo = GetComboBox();
                     talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
                     talkingTo.SelectedItem = dialogue.SpeakingToCharacterName;
                     talkingTo.SelectedText = string.Empty;
@@ -2157,13 +2006,7 @@ namespace CSC
                     sortOrder.ValueChanged += (_, _) => gevent.SortOrder = (int)sortOrder.Value;
                     PropertyInspector.Controls.Add(sortOrder, 1, 0);
 
-                    ComboBox type = new()
-                    {
-                        //Dock = DockStyle.Fill,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Fill,
-                    };
+                    ComboBox type = GetComboBox();
                     type.Items.AddRange(Enum.GetNames(typeof(GameEvents)));
                     type.SelectedItem = gevent.EventType.ToString();
                     type.SelectedIndexChanged += (_, _) => gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
@@ -2194,13 +2037,7 @@ namespace CSC
                     {
                         case GameEvents.AddForce:
                         {
-                            ComboBox characters = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox characters = GetComboBox();
                             characters.Items.AddRange(Enum.GetNames(typeof(Characters)));
                             characters.SelectedItem = gevent.Value!;
                             characters.SelectedIndexChanged += (_, _) => gevent.Value = characters.SelectedItem.ToString()!;
@@ -2400,13 +2237,7 @@ namespace CSC
                             PutCharacter(eventTrigger);
                             PutStartCondition(node, eventTrigger);
 
-                            ComboBox zone = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox zone = GetComboBox();
                             zone.Items.AddRange(Enum.GetNames(typeof(ZoneEnums)));
                             zone.SelectedItem = eventTrigger.Value;
                             zone.PerformLayout();
@@ -2420,13 +2251,7 @@ namespace CSC
                             PutCharacter(eventTrigger);
                             PutStartCondition(node, eventTrigger);
 
-                            ComboBox targetType = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox targetType = GetComboBox();
                             targetType.Items.AddRange(Enum.GetNames(typeof(LocationTargetOption)));
                             targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
                             targetType.PerformLayout();
@@ -2438,13 +2263,7 @@ namespace CSC
                             {
                                 case LocationTargetOption.MoveTarget:
                                 {
-                                    ComboBox target = new()
-                                    {
-                                        //Dock = DockStyle.Fill,
-                                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                        Location = new(0, PropertyInspector.Size.Height / 2),
-                                        Dock = DockStyle.Fill,
-                                    };
+                                    ComboBox target = GetComboBox();
                                     target.Items.AddRange(Enum.GetNames(typeof(MoveTargets)));
                                     target.SelectedItem = eventTrigger.Value.Replace(" ", "");
                                     target.PerformLayout();
@@ -2511,13 +2330,7 @@ namespace CSC
                             };
                             PropertyInspector.Controls.Add(inlabel);
 
-                            ComboBox zone = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox zone = GetComboBox();
                             zone.Items.AddRange(Enum.GetNames(typeof(BodyRegion)));
                             zone.SelectedItem = ((BodyRegion)int.Parse(eventTrigger.Value)).ToString();
                             zone.PerformLayout();
@@ -2628,13 +2441,7 @@ namespace CSC
                         {
                             PutStartCondition(node, eventTrigger);
 
-                            ComboBox cutscene = new()
-                            {
-                                //Dock = DockStyle.Fill,
-                                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                                Location = new(0, PropertyInspector.Size.Height / 2),
-                                Dock = DockStyle.Fill,
-                            };
+                            ComboBox cutscene = GetComboBox();
                             cutscene.Items.AddRange(Enum.GetNames(typeof(Cutscenes)));
                             cutscene.SelectedItem = eventTrigger.Value;
                             cutscene.PerformLayout();
@@ -2693,13 +2500,7 @@ namespace CSC
                     };
                     PropertyInspector.Controls.Add(label);
 
-                    ComboBox dialogue = new()
-                    {
-                        //Dock = DockStyle.Fill,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Dock = DockStyle.Fill,
-                    };
+                    ComboBox dialogue = GetComboBox();
                     dialogue.Items.Add("Do not trigger new dialogue");
                     for (int i = 0; i < characterStories[node.FileName].Dialogues!.Count; i++)
                     {
@@ -2945,13 +2746,7 @@ namespace CSC
 
         private void PutItemValue(EventTrigger eventTrigger)
         {
-            ComboBox item = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox item = GetComboBox();
             item.Items.AddRange(Enum.GetNames(typeof(Items)));
             item.SelectedItem = eventTrigger.Value;
             item.PerformLayout();
@@ -2961,13 +2756,7 @@ namespace CSC
 
         private void PutItemKey(EventTrigger eventTrigger)
         {
-            ComboBox item = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox item = GetComboBox();
             item.Items.AddRange(Enum.GetNames(typeof(Items)));
             item.SelectedItem = eventTrigger.Key;
             item.PerformLayout();
@@ -2977,13 +2766,7 @@ namespace CSC
 
         private void PutCharacterValue(EventTrigger eventTrigger)
         {
-            ComboBox character = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox character = GetComboBox();
             character.Items.AddRange(Enum.GetNames(typeof(AnybodyCharacters)));
             character.SelectedItem = eventTrigger.Value;
             character.PerformLayout();
@@ -2993,13 +2776,7 @@ namespace CSC
 
         private ComboBox PutCharacter(EventTrigger eventTrigger)
         {
-            ComboBox character = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox character = GetComboBox();
             character.Items.AddRange(Enum.GetNames(typeof(AnybodyCharacters)));
             character.SelectedItem = eventTrigger.CharacterToReactTo;
             character.PerformLayout();
@@ -3020,13 +2797,7 @@ namespace CSC
             };
             PropertyInspector.Controls.Add(label3);
 
-            ComboBox startCondition = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox startCondition = GetComboBox();
             startCondition.Items.AddRange(Enum.GetNames<EventTypes>());
             startCondition.SelectedItem = eventTrigger.Type.ToString()!;
             startCondition.PerformLayout();
@@ -3098,13 +2869,7 @@ namespace CSC
 
         private void PutComparison(Criterion criterion)
         {
-            ComboBox equ = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox equ = GetComboBox();
             equ.Items.AddRange(Enum.GetNames(typeof(ComparisonEquations)));
             if (int.TryParse(criterion.Value!, out int res))
             {
@@ -3122,13 +2887,7 @@ namespace CSC
 
         private void PutZone(Criterion criterion)
         {
-            ComboBox zone = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox zone = GetComboBox();
             zone.Items.AddRange(Enum.GetNames(typeof(ZoneEnums)));
             zone.SelectedItem = criterion.Key;
             zone.SelectionLength = 0;
@@ -3140,13 +2899,7 @@ namespace CSC
 
         void PutCompareType(Criterion criterion, Node node)
         {
-            ComboBox compareType = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox compareType = GetComboBox();
             compareType.Items.AddRange(Enum.GetNames(typeof(CompareTypes)));
             compareType.SelectedItem = criterion.CompareType.ToString();
             compareType.SelectedText = string.Empty;
@@ -3160,13 +2913,7 @@ namespace CSC
 
         ComboBox PutCharacter1(Criterion criterion)
         {
-            ComboBox compareType = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox compareType = GetComboBox();
             compareType.Items.AddRange(Enum.GetNames(typeof(Characters)));
             compareType.SelectedItem = criterion.Character;
             compareType.SelectionLength = 0;
@@ -3179,13 +2926,7 @@ namespace CSC
 
         void PutCharacter2(Criterion criterion)
         {
-            ComboBox compareType = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox compareType = GetComboBox();
             compareType.Items.AddRange(Enum.GetNames(typeof(Characters)));
             compareType.SelectedItem = criterion.Character2;
             compareType.SelectedText = string.Empty;
@@ -3198,13 +2939,7 @@ namespace CSC
 
         void PutBoolValue(Criterion criterion)
         {
-            ComboBox boolValue = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox boolValue = GetComboBox();
             boolValue.Items.AddRange(Enum.GetNames(typeof(BoolCritera)));
             boolValue.SelectedItem = criterion.BoolValue!.ToString();
             boolValue.SelectionLength = 0;
@@ -3216,13 +2951,7 @@ namespace CSC
 
         private void PutItem(Criterion criterion)
         {
-            ComboBox item = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            ComboBox item = GetComboBox();
             item.Items.AddRange(Enum.GetNames<Items>());
             item.SelectedItem = criterion.Key!.Replace(" ", "");
             item.PerformLayout();
@@ -3232,19 +2961,22 @@ namespace CSC
 
         private void PutEquals(Criterion criterion)
         {
-            ComboBox equals = new()
-            {
-                //Dock = DockStyle.Fill,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                Location = new(0, PropertyInspector.Size.Height / 2),
-                Dock = DockStyle.Fill,
-            };
+            //todo make one single and shared new constructor for getting this type of combobox...
+            ComboBox equals = GetComboBox();
             equals.Items.AddRange(Enum.GetNames(typeof(EqualsValues)));
             equals.SelectedIndex = (int)criterion.EqualsValue!;
             equals.PerformLayout();
             equals.SelectedIndexChanged += (_, _) => criterion.EqualsValue = (EqualsValues?)equals.SelectedIndex;
             PropertyInspector.Controls.Add(equals);
         }
+
+        private static ComboBox GetComboBox() => new()
+        {
+            Dock = DockStyle.Fill,
+            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+            AutoCompleteSource = AutoCompleteSource.ListItems,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+        };
 
         private void UpdateHighlightNode(PointF ScreenPos)
         {
@@ -3355,6 +3087,172 @@ namespace CSC
                 Main.SelectedCharacter = e.Node.Text;
                 Graph.Invalidate();
             }
+        }
+
+        private void SpaceNodeSpawnEnter(object sender, EventArgs e)
+        {
+            //todo
+            SpawnableNodeType selectedType = Enum.Parse<SpawnableNodeType>(NodeSpawnBox.SelectedItem?.ToString()!);
+
+            Node newNode = Node.NullNode;
+
+            string character = selectedCharacter;
+
+            switch (selectedType)
+            {
+                case SpawnableNodeType.CharacterGroup:
+                {
+                    string id = "Character group " + (Story.CharacterGroups!.Count + 1).ToString();
+                    newNode = new Node(id, NodeType.CharacterGroup, string.Empty, nodes[character].Positions)
+                    {
+                        Data = new CharacterGroup() { Id = Guid.NewGuid().ToString(), Name = id },
+                        DataType = typeof(CharacterGroup),
+                        FileName = character,
+                    };
+                    break;
+                }
+                case SpawnableNodeType.Criterion:
+                {
+                    string id = Guid.NewGuid().ToString();
+                    newNode = new Node(id, NodeType.Criterion, string.Empty, nodes[character].Positions)
+                    {
+                        Data = new Criterion() { Character = character },
+                        DataType = typeof(Criterion),
+                        FileName = character,
+                    };
+                    break;
+                }
+                case SpawnableNodeType.ItemAction:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.ItemGroupBehaviour:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.ItemGroupInteraction:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Achievement:
+                {
+                    var guid = Guid.NewGuid().ToString();
+                    newNode = new Node(guid, NodeType.Achievement, string.Empty, nodes[character].Positions)
+                    {
+                        Data = new Achievement() { Id = guid },
+                        DataType = typeof(Achievement),
+                        FileName = character,
+                    };
+                    break;
+                }
+                case SpawnableNodeType.BGC:
+                {
+                    newNode = new Node("BGC" + (characterStories[character].BackgroundChatter!.Count + 1).ToString(), NodeType.BGC, string.Empty, nodes[character].Positions)
+                    {
+                        Data = new BackgroundChatter() { Id = characterStories[character].BackgroundChatter!.Count + 1 },
+                        DataType = typeof(BackgroundChatter),
+                        FileName = character,
+                    };
+                    break;
+                }
+                case SpawnableNodeType.BGCResponse:
+                {
+                    newNode = new Node(Guid.NewGuid().ToString(), NodeType.BGCResponse, string.Empty, nodes[character].Positions)
+                    {
+                        Data = new BackgroundChatterResponse() { Label = "response:" },
+                        DataType = typeof(BackgroundChatterResponse),
+                        FileName = character,
+                    };
+                    break;
+                }
+                case SpawnableNodeType.CriteriaGroup:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Cutscene:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Dialogue:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.AlternateText:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Event:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.EventTrigger:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Item:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.ItemGroup:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Property:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Quest:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Response:
+                {
+
+                    break;
+                }
+                case SpawnableNodeType.Value:
+                {
+
+                    break;
+                }
+                default:
+                {
+
+                    break;
+                }
+            }
+            if (Main.ActiveForm is null)
+            {
+                return;
+            }
+
+            //todo pull character from selected node oooor selected character
+            var pos = Graph.PointToClient(Cursor.Position);
+            ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+            ScreenPosX -= NodeSizeX / 2;
+            ScreenPosY -= NodeSizeY / 2;
+            var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
+
+            newNode.Position = ScreenPos;
+            nodes[selectedCharacter].Add(newNode);
+
+            NodeSpawnBox.Enabled = false;
+            NodeSpawnBox.Visible = false;
+
+            Graph.Invalidate();
         }
     }
 }

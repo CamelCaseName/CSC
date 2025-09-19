@@ -50,6 +50,30 @@ namespace CSC.Nodestuff
         Value
     }
 
+    public enum SpawnableNodeType
+    {
+        CharacterGroup,
+        Criterion,
+        ItemAction,
+        ItemGroupBehaviour,
+        ItemGroupInteraction,
+        Achievement,
+        BGC,
+        BGCResponse,
+        CriteriaGroup,
+        Cutscene,
+        Dialogue,
+        AlternateText,
+        Event,
+        EventTrigger,
+        Item,
+        ItemGroup,
+        Property,
+        Quest,
+        Response,
+        Value
+    }
+
     public sealed class MissingreferenceInfo(string text)
     {
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]

@@ -45,6 +45,22 @@ namespace CSC.Nodestuff
             }
         }
 
+        public static void GetCriteriaGroups(MainStory story, NodeStore nodes)
+        {
+            foreach (CriteriaGroup group in story.CriteriaGroups ?? [])
+            {
+                //add items to list
+                var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition, nodes.Positions) { Data = group, DataType = typeof(CriteriaGroup) };
+
+                foreach (CriteriaList1 criteriaList in group.CriteriaList ?? [])
+                {
+                    nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
+                }
+
+                nodes.Add(nodeCriteriaGroup);
+            }
+        }
+
         public static void GetDialogues(CharacterStory story, NodeStore nodes)
         {
             var responseDialogueLinks = new List<Tuple<Node, int>>();
@@ -109,6 +125,20 @@ namespace CSC.Nodestuff
             }
 
             responseDialogueLinks.Clear();
+        }
+
+        public static void GetGameStartEvents(MainStory story, NodeStore nodes)
+        {
+            var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents", nodes.Positions);
+            foreach (GameEvent _event in story.GameStartEvents ?? [])
+            {
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", nodes.Positions) { Data = _event, DataType = typeof(GameEvent) };
+
+                nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);
+
+                nodes.AddChild(nodeEvents, nodeEvent);
+            }
+            nodes.Add(nodeEvents);
         }
 
         public static void GetGlobalGoodByeResponses(CharacterStory story, NodeStore nodes)
@@ -247,6 +277,32 @@ namespace CSC.Nodestuff
             }
         }
 
+        public static void GetItems(CharacterStory story, NodeStore nodes)
+        {
+            foreach (StoryItem item in story.StoryItems ?? [])
+            {
+                //add items to list
+                var nodeItem = new Node(item.ItemName!, NodeType.Item, item.ItemName!, nodes.Positions) { Data = item, DataType = typeof(StoryItem) };
+                nodeItem.FileName = story.CharacterName!;
+                nodeItem.AddCriteria(item.Critera ?? [], nodes);
+                nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);
+                nodeItem.AddEvents(item.OnAcceptEvents ?? [], nodes);
+                nodes.Add(nodeItem);
+            }
+        }
+
+        public static void GetPersonality(CharacterStory story, NodeStore nodes)
+        {
+            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", nodes.Positions) { FileName = story.CharacterName! };
+            nodes.Add(traitRoot);
+            foreach (Trait valuee in story.Personality?.Values ?? [])
+            {
+                //add items to list
+                var nodeValue = new Node(valuee.Type.ToString()!, NodeType.Personality, valuee.Type + " " + valuee.Value, nodes.Positions) { Data = valuee, DataType = typeof(Trait) };
+                nodes.AddChild(traitRoot, nodeValue);
+            }
+        }
+
         public static void GetPlayerReactions(MainStory story, NodeStore nodes)
         {
             foreach (EventTrigger playerReaction in story.PlayerReactions ?? [])
@@ -312,49 +368,6 @@ namespace CSC.Nodestuff
                 nodes.Add(nodeReaction);
             }
         }
-
-        public static void GetCriteriaGroups(MainStory story, NodeStore nodes)
-        {
-            foreach (CriteriaGroup group in story.CriteriaGroups ?? [])
-            {
-                //add items to list
-                var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition, nodes.Positions) { Data = group, DataType = typeof(CriteriaGroup) };
-
-                foreach (CriteriaList1 criteriaList in group.CriteriaList ?? [])
-                {
-                    nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
-                }
-
-                nodes.Add(nodeCriteriaGroup);
-            }
-        }
-
-        public static void GetPersonality(CharacterStory story, NodeStore nodes)
-        {
-            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", nodes.Positions) { FileName = story.CharacterName! };
-            nodes.Add(traitRoot);
-            foreach (Trait valuee in story.Personality?.Values ?? [])
-            {
-                //add items to list
-                var nodeValue = new Node(valuee.Type.ToString()!, NodeType.Personality, valuee.Type + " " + valuee.Value, nodes.Positions) { Data = valuee, DataType = typeof(Trait) };
-                nodes.AddChild(traitRoot, nodeValue);
-            }
-        }
-
-        public static void GetItems(CharacterStory story, NodeStore nodes)
-        {
-            foreach (StoryItem item in story.StoryItems ?? [])
-            {
-                //add items to list
-                var nodeItem = new Node(item.ItemName!, NodeType.Item, item.ItemName!, nodes.Positions) { Data = item, DataType = typeof(StoryItem) };
-                nodeItem.FileName = story.CharacterName!;
-                nodeItem.AddCriteria(item.Critera ?? [], nodes);
-                nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);
-                nodeItem.AddEvents(item.OnAcceptEvents ?? [], nodes);
-                nodes.Add(nodeItem);
-            }
-        }
-
         public static void GetValues(CharacterStory story, NodeStore nodes)
         {
             var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values", nodes.Positions) { FileName = story.CharacterName! };
@@ -379,20 +392,6 @@ namespace CSC.Nodestuff
                 var nodeValue = new Node(value, NodeType.Value, "Player " + value + ", referenced values: ", nodes.Positions) { Data = new Value() { value = value }, DataType = typeof(Value) };
                 nodes.Add(nodeValue);
             }
-        }
-
-        public static void GetGameStartEvents(MainStory story, NodeStore nodes)
-        {
-            var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents", nodes.Positions);
-            foreach (GameEvent _event in story.GameStartEvents ?? [])
-            {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", nodes.Positions) { Data = _event, DataType = typeof(GameEvent) };
-
-                nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);
-
-                nodes.AddChild(nodeEvents, nodeEvent);
-            }
-            nodes.Add(nodeEvents);
         }
     }
 }

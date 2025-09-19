@@ -31,8 +31,8 @@ namespace CSC
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            TreeNode treeNode1 = new TreeNode("Characters");
-            TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
+            TreeNode treeNode3 = new TreeNode("Characters");
+            TreeNode treeNode4 = new TreeNode("Story Root", new TreeNode[] { treeNode3 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -44,6 +44,7 @@ namespace CSC
             HierarchyAndRest = new SplitContainer();
             GraphAndProperties = new SplitContainer();
             Graph = new DoubleBufferedPanel();
+            NodeSpawnBox = new ComboBox();
             PropertyInspector = new TableLayoutPanel();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
@@ -54,6 +55,7 @@ namespace CSC
             GraphAndProperties.Panel1.SuspendLayout();
             GraphAndProperties.Panel2.SuspendLayout();
             GraphAndProperties.SuspendLayout();
+            Graph.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
@@ -62,7 +64,7 @@ namespace CSC
             Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, OpenButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
-            Menu.Size = new Size(1366, 25);
+            Menu.Size = new Size(1431, 25);
             Menu.TabIndex = 0;
             Menu.Text = "toolStrip1";
             // 
@@ -144,16 +146,16 @@ namespace CSC
             StoryTree.ForeColor = Color.White;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
-            treeNode1.Name = "Characters";
-            treeNode1.Text = "Characters";
-            treeNode1.ToolTipText = "You'll find all your Characters here";
-            treeNode2.Checked = true;
-            treeNode2.Name = "Story Name";
-            treeNode2.Text = "Story Root";
-            treeNode2.ToolTipText = "The Story itself and the Characters are in here";
-            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
+            treeNode3.Name = "Characters";
+            treeNode3.Text = "Characters";
+            treeNode3.ToolTipText = "You'll find all your Characters here";
+            treeNode4.Checked = true;
+            treeNode4.Name = "Story Name";
+            treeNode4.Text = "Story Root";
+            treeNode4.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode4 });
             StoryTree.ShowNodeToolTips = true;
-            StoryTree.Size = new Size(225, 501);
+            StoryTree.Size = new Size(235, 537);
             StoryTree.TabIndex = 1;
             StoryTree.AfterSelect += StoryTree_AfterSelect;
             // 
@@ -170,8 +172,8 @@ namespace CSC
             // HierarchyAndRest.Panel2
             // 
             HierarchyAndRest.Panel2.Controls.Add(GraphAndProperties);
-            HierarchyAndRest.Size = new Size(1366, 501);
-            HierarchyAndRest.SplitterDistance = 225;
+            HierarchyAndRest.Size = new Size(1431, 537);
+            HierarchyAndRest.SplitterDistance = 235;
             HierarchyAndRest.TabIndex = 2;
             // 
             // GraphAndProperties
@@ -188,21 +190,38 @@ namespace CSC
             // GraphAndProperties.Panel2
             // 
             GraphAndProperties.Panel2.Controls.Add(PropertyInspector);
-            GraphAndProperties.Size = new Size(1137, 501);
-            GraphAndProperties.SplitterDistance = 359;
+            GraphAndProperties.Size = new Size(1192, 537);
+            GraphAndProperties.SplitterDistance = 384;
             GraphAndProperties.TabIndex = 0;
             // 
             // Graph
             // 
+            Graph.Controls.Add(NodeSpawnBox);
             Graph.Dock = DockStyle.Fill;
             Graph.Location = new Point(0, 0);
             Graph.Name = "Graph";
-            Graph.Size = new Size(1137, 359);
+            Graph.Size = new Size(1192, 384);
             Graph.TabIndex = 0;
             Graph.Paint += Main_Paint;
             Graph.MouseClick += HandleMouseEvents;
             Graph.MouseDoubleClick += HandleMouseEvents;
             Graph.MouseWheel += HandleMouseEvents;
+            // 
+            // NodeSpawnBox
+            // 
+            NodeSpawnBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            NodeSpawnBox.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            NodeSpawnBox.AutoCompleteSource = AutoCompleteSource.ListItems;
+            NodeSpawnBox.Enabled = false;
+            NodeSpawnBox.FormattingEnabled = true;
+            NodeSpawnBox.Location = new Point(264, 62);
+            NodeSpawnBox.MinimumSize = new Size(200, 0);
+            NodeSpawnBox.Name = "NodeSpawnBox";
+            NodeSpawnBox.Size = new Size(674, 23);
+            NodeSpawnBox.TabIndex = 0;
+            NodeSpawnBox.Visible = false;
+            NodeSpawnBox.SelectionChangeCommitted += SpaceNodeSpawnEnter;
+            NodeSpawnBox.SelectedValueChanged += SpaceNodeSpawnEnter;
             // 
             // PropertyInspector
             // 
@@ -220,7 +239,7 @@ namespace CSC
             PropertyInspector.RowCount = 2;
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
-            PropertyInspector.Size = new Size(1137, 138);
+            PropertyInspector.Size = new Size(1192, 149);
             PropertyInspector.TabIndex = 0;
             // 
             // Main
@@ -228,7 +247,7 @@ namespace CSC
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1366, 526);
+            ClientSize = new Size(1431, 562);
             Controls.Add(HierarchyAndRest);
             Controls.Add(Menu);
             DoubleBuffered = true;
@@ -249,6 +268,7 @@ namespace CSC
             GraphAndProperties.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)GraphAndProperties).EndInit();
             GraphAndProperties.ResumeLayout(false);
+            Graph.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -267,5 +287,6 @@ namespace CSC
         private SplitContainer GraphAndProperties;
         private DoubleBufferedPanel Graph;
         private TableLayoutPanel PropertyInspector;
+        private ComboBox NodeSpawnBox;
     }
 }
