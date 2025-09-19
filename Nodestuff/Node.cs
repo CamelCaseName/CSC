@@ -247,12 +247,16 @@ namespace CSC.Nodestuff
         {
             foreach (GameEvent _event in events)
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this, CurrentPositionSorting) { Data = _event, DataType = typeof(GameEvent) };
-                nodeEvent.FileName = this.FileName;
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this, CurrentPositionSorting)
+                {
+                    Data = _event,
+                    DataType = typeof(GameEvent),
+                    FileName = this.FileName
+                };
 
-                nodeEvent.AddCriteria(_event.Criteria ?? new List<Criterion>(), nodes);
+                nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);
 
-                nodes.AddParent(this, nodeEvent);
+                nodes.AddChild(this, nodeEvent);
             }
         }
     }

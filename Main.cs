@@ -2,6 +2,7 @@ using CSC.Nodestuff;
 using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Drawing2D;
 using System.Reflection.Metadata.Ecma335;
 using System.Xml.Linq;
@@ -32,6 +33,7 @@ namespace CSC
         private readonly SolidBrush eventNodeBrush;
         private readonly SolidBrush eventTriggerNodeBrush;
         private readonly SolidBrush HighlightNodeBrush;
+        private readonly SolidBrush NodeToLinkNextBrush;
         private readonly HatchBrush InterlinkedNodeBrush;
         private readonly SolidBrush ClickedNodeBrush;
         private readonly Pen highlightPen;
@@ -64,6 +66,7 @@ namespace CSC
         private bool IsCtrlPressed;
         private bool IsShiftPressed;
         private Node clickedNode = Node.NullNode;
+        private Node nodeToLinkToNext = Node.NullNode;
         private Node movedNode = Node.NullNode;
         private Size OffsetFromDragClick = Size.Empty;
         private readonly Dictionary<string, float> OffsetX = [];
@@ -98,6 +101,8 @@ namespace CSC
                 }
             }
         }
+
+        public bool RightHasJustBeenClicked { get; private set; }
 
         public Main()
         {
@@ -146,6 +151,7 @@ namespace CSC
             HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
             InterlinkedNodeBrush = new HatchBrush(HatchStyle.LightUpwardDiagonal, Color.DeepPink, BackColor);
             ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
+            NodeToLinkNextBrush = new SolidBrush(Color.LightGray);
 
             nodes.Add(NoCharacter, new());
             Scaling.Add(NoCharacter, 0.3f);
@@ -168,7 +174,7 @@ namespace CSC
             }
             var pos = Graph.PointToClient(Cursor.Position);
             ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
-            var ScreenPos = new Point((int)ScreenPosX, (int)ScreenPosY);
+            var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
             //set old position for next frame/call
             switch (e.Button)
             {
@@ -176,11 +182,11 @@ namespace CSC
                     if (e.Clicks > 1)
                     {
                         //double click
-                        UpdateDoubleClickTransition(ScreenPosX, ScreenPosY, ScreenPos);
+                        UpdateDoubleClickTransition(ScreenPos);
                     }
                     else
                     {
-                        _ = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+                        _ = UpdateClickedNode(ScreenPos);
                         Graph.Invalidate();
                     }
                     break;
@@ -193,7 +199,7 @@ namespace CSC
                 break;
                 case MouseButtons.Right:
                 {
-                    _ = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+                    _ = UpdateClickedNode(ScreenPos);
                 }
                 break;
                 case MouseButtons.Middle:
@@ -240,9 +246,9 @@ namespace CSC
             }
         }
 
-        private void UpdateDoubleClickTransition(float ScreenPosX, float ScreenPosY, Point ScreenPos)
+        private void UpdateDoubleClickTransition(PointF ScreenPos)
         {
-            var node = UpdateClickedNode(ScreenPosX, ScreenPosY, ScreenPos);
+            var node = UpdateClickedNode(ScreenPos);
             if (node != Node.NullNode)
             {
                 if (node.FileName != SelectedCharacter && node.FileName != "Player")
@@ -291,7 +297,7 @@ namespace CSC
             screenY = (graphY - OffsetY[SelectedCharacter]) * Scaling[SelectedCharacter];
         }
 
-        private Node GetNodeAtPoint(Point mouseGraphLocation)
+        private Node GetNodeAtPoint(PointF mouseGraphLocation)
         {
             if (adjustedMouseClipBounds.Contains(mouseGraphLocation))
             {
@@ -576,6 +582,11 @@ namespace CSC
                 }
                 DrawNode(e, highlightNode, HighlightNodeBrush);
             }
+
+            if (nodeToLinkToNext != Node.NullNode)
+            {
+                DrawNode(e, nodeToLinkToNext, NodeToLinkNextBrush);
+            }
         }
 
         private void OpenButton_Click(object sender, EventArgs e)
@@ -756,7 +767,7 @@ namespace CSC
 
         }
 
-        private Node UpdateClickedNode(float ScreenPosX, float ScreenPosY, Point ScreenPos)
+        private Node UpdateClickedNode(PointF ScreenPos)
         {
             Node node = GetNodeAtPoint(ScreenPos);
 
@@ -768,19 +779,52 @@ namespace CSC
                 {
                     return node;
                 }
-                if (!MovingChild)
+
+                if (RightHasJustBeenClicked && !MovingChild)
                 {
                     movedNode = node;
                     MovingChild = true;
-                    OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPosX), (int)(movedNode.Position.Y - ScreenPosY));
+                    OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPos.X), (int)(movedNode.Position.Y - ScreenPos.Y));
+                }
+                else if (!RightHasJustBeenClicked)
+                {
+                    RightHasJustBeenClicked = true;
                 }
             }
             else
             {
-                MovingChild = false;
-                if (clickedNode != node && node != Node.NullNode)
+                if(RightHasJustBeenClicked && !MovingChild)
                 {
-                    SetSelectedObject(node);
+                    //right click only no move, spawn context
+                    SpawnContext(node, ScreenPos);
+                }
+
+                MovingChild = false;
+                if (node != Node.NullNode)
+                {
+                    if (IsCtrlPressed
+                        && node.Type is NodeType.Event or NodeType.Criterion
+                        && (node.Data != null && node.Data?.GetType() != typeof(MissingreferenceInfo)))
+                    {
+                        nodeToLinkToNext = node;
+                        if (highlightNode == node)
+                        {
+                            highlightNode = Node.NullNode;
+                        }
+                    }
+                    else if (!IsCtrlPressed && nodeToLinkToNext != Node.NullNode)
+                    {
+                        AddNodeToNextClicked(node);
+                        SetSelectedObject(node);
+                    }
+                    else if (clickedNode != node)
+                    {
+                        SetSelectedObject(node);
+                    }
+                }
+                else
+                {
+                    nodeToLinkToNext = Node.NullNode;
                 }
 
                 clickedNode = node;
@@ -788,6 +832,167 @@ namespace CSC
             return node;
         }
 
+        private void SpawnContext(Node node, PointF screenPos)
+        {
+            //todo
+        }
+
+        private void AddNodeToNextClicked(Node addToThis)
+        {
+            if (addToThis.Data is null || addToThis.Data?.GetType() == typeof(MissingreferenceInfo))
+            {
+                return;
+            }
+
+            bool linked = false;
+
+            if (nodeToLinkToNext.DataType == typeof(Criterion))
+            {
+                if (addToThis.DataType == typeof(ItemAction))
+                {
+                    ((ItemAction)addToThis.Data!).Criteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(UseWith))
+                {
+                    ((UseWith)addToThis.Data!).Criteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(CriteriaList1))
+                {
+                    ((CriteriaList1)addToThis.Data!).CriteriaList!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(GameEvent))
+                {
+                    ((GameEvent)addToThis.Data!).Criteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(EventTrigger))
+                {
+                    ((EventTrigger)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(AlternateText))
+                {
+                    ((AlternateText)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(Response))
+                {
+                    ((Response)addToThis.Data!).ResponseCriteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(BackgroundChatter))
+                {
+                    ((BackgroundChatter)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(StoryItem))
+                {
+                    ((StoryItem)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(ItemGroupInteraction))
+                {
+                    ((ItemGroupInteraction)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+
+                if (linked)
+                {
+                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkToNext);
+                }
+            }
+            else if (nodeToLinkToNext.DataType == typeof(GameEvent))
+            {
+                if (addToThis.DataType == typeof(ItemAction))
+                {
+                    ((ItemAction)addToThis.Data!).OnTakeActionEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(UseWith))
+                {
+                    ((UseWith)addToThis.Data!).OnSuccessEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(EventTrigger))
+                {
+                    ((EventTrigger)addToThis.Data!).Events!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(MainStory))
+                {
+                    ((MainStory)addToThis.Data!).GameStartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(Response))
+                {
+                    ((Response)addToThis.Data!).ResponseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(Dialogue))
+                {
+                    var result = MessageBox.Show("Add as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        ((Dialogue)addToThis.Data!).StartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                        linked = true;
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        ((Dialogue)addToThis.Data!).CloseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                        linked = true;
+                    }
+                }
+                else if (addToThis.DataType == typeof(BackgroundChatter))
+                {
+                    ((BackgroundChatter)addToThis.Data!).StartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    linked = true;
+                }
+                else if (addToThis.DataType == typeof(StoryItem))
+                {
+                    var result = MessageBox.Show("Add as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        ((StoryItem)addToThis.Data!).OnAcceptEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                        linked = true;
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        ((StoryItem)addToThis.Data!).OnRefuseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                        linked = true;
+                    }
+                }
+                else if (addToThis.DataType == typeof(ItemGroupInteraction))
+                {
+                    var result = MessageBox.Show("Add as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        ((ItemGroupInteraction)addToThis.Data!).OnAcceptEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                        linked = true;
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        ((ItemGroupInteraction)addToThis.Data!).OnRefuseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                        linked = true;
+                    }
+                }
+
+                if (linked)
+                {
+                    nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkToNext);
+                }
+            }
+
+            nodeToLinkToNext = Node.NullNode;
+        }
+
+        //todo implement updating of node references on changing values!!!
+        //todo implement drag/drop setting of node data like item name or sth
         private void SetSelectedObject(Node node)
         {
             PropertyInspector.Controls.Clear();
@@ -3041,7 +3246,7 @@ namespace CSC
             PropertyInspector.Controls.Add(equals);
         }
 
-        private void UpdateHighlightNode(Point ScreenPos)
+        private void UpdateHighlightNode(PointF ScreenPos)
         {
             var oldHighlight = highlightNode;
             highlightNode = GetNodeAtPoint(ScreenPos);
