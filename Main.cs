@@ -3216,6 +3216,7 @@ public partial class Main : Form
 
         newNode.Position = ScreenPos;
 
+        //todo auto link all other types
         switch (selectedType)
         {
             case SpawnableNodeType.Criterion:
@@ -3229,9 +3230,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if(clickedNode != Node.NullNode)
+                if (clickedNode != Node.NullNode)
                 {
-                    if(clickedNode.DataType == typeof(ItemAction))
+                    if (clickedNode.DataType == typeof(ItemAction))
                     {
                         ((ItemAction)clickedNode.Data!).Criteria.Add((Criterion)newNode.Data);
                         nodes[character].AddParent(clickedNode, newNode);
@@ -3299,6 +3300,32 @@ public partial class Main : Form
                     DataType = typeof(ItemAction),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((ItemAction)newNode.Data!).Criteria.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((ItemAction)newNode.Data!).OnTakeActionEvents.Add((GameEvent)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(ItemOverride))
+                    {
+                        ((ItemOverride)clickedNode.Data!).ItemActions.Add((ItemAction)newNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(ItemGroupBehavior))
+                    {
+                        ((ItemGroupBehavior)clickedNode.Data!).ItemActions.Add((ItemAction)newNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.Achievement:
@@ -3310,6 +3337,19 @@ public partial class Main : Form
                     DataType = typeof(Achievement),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        GameEvent gameEvent = ((GameEvent)clickedNode.Data!);
+                        gameEvent.Value = ((Achievement)newNode.Data!).Id;
+                        gameEvent.EventType = GameEvents.UnlockAchievement;
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.BGC:
@@ -3320,6 +3360,27 @@ public partial class Main : Form
                     DataType = typeof(BackgroundChatter),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((BackgroundChatter)newNode.Data!).Critera.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((BackgroundChatter)newNode.Data!).StartEvents.Add((GameEvent)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(BackgroundChatterResponse))
+                    {
+                        ((BackgroundChatter)newNode.Data!).Responses.Add((BackgroundChatterResponse)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.BGCResponse:
@@ -3330,6 +3391,17 @@ public partial class Main : Form
                     DataType = typeof(BackgroundChatterResponse),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(BackgroundChatter))
+                    {
+                        ((BackgroundChatter)clickedNode.Data!).Responses.Add((BackgroundChatterResponse)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.CriteriaGroup:
@@ -3341,6 +3413,17 @@ public partial class Main : Form
                     DataType = typeof(CriteriaGroup),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((CriteriaGroup)newNode.Data!).CriteriaList[0].CriteriaList.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.Dialogue:
@@ -3352,6 +3435,28 @@ public partial class Main : Form
                     DataType = typeof(Dialogue),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((Dialogue)newNode.Data!).DynamicDialogueCriteria.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((Dialogue)newNode.Data!).StartEvents.Add((GameEvent)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Response))
+                    {
+                        //todo maybe we have to duplicate?
+                        ((Dialogue)newNode.Data!).Responses.Add((Response)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.AlternateText:
@@ -3363,6 +3468,22 @@ public partial class Main : Form
                     DataType = typeof(AlternateText),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Dialogue))
+                    {
+                        ((Dialogue)clickedNode.Data!).AlternateTexts.Add((AlternateText)newNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((AlternateText)newNode.Data!).Critera.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                }
+
                 break;
             }
             case SpawnableNodeType.Event:
@@ -3374,6 +3495,13 @@ public partial class Main : Form
                     DataType = typeof(GameEvent),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.EventTrigger:
@@ -3385,6 +3513,13 @@ public partial class Main : Form
                     DataType = typeof(EventTrigger),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.Item:
@@ -3396,6 +3531,13 @@ public partial class Main : Form
                     DataType = typeof(StoryItem),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.ItemGroup:
@@ -3407,6 +3549,13 @@ public partial class Main : Form
                     DataType = typeof(ItemGroup),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.Quest:
@@ -3418,6 +3567,13 @@ public partial class Main : Form
                     DataType = typeof(Quest),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.Response:
@@ -3429,6 +3585,13 @@ public partial class Main : Form
                     DataType = typeof(Response),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.Value:
@@ -3440,6 +3603,13 @@ public partial class Main : Form
                     DataType = typeof(Value),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             case SpawnableNodeType.UseWith:
@@ -3451,6 +3621,13 @@ public partial class Main : Form
                     DataType = typeof(UseWith),
                     FileName = character,
                 };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+
+                }
+
                 break;
             }
             default:

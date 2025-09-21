@@ -52,10 +52,7 @@ namespace CSC.Nodestuff
                 //add items to list
                 var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition, nodes.Positions) { Data = group, DataType = typeof(CriteriaGroup) };
 
-                foreach (CriteriaList1 criteriaList in group.CriteriaList ?? [])
-                {
-                    nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
-                }
+                nodeCriteriaGroup.AddCriteria(group.CriteriaList ?? [], nodes);
 
                 nodes.Add(nodeCriteriaGroup);
             }

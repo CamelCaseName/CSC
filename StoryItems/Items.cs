@@ -109,7 +109,7 @@ namespace CSC.StoryItems
         public string? LinkedGroupName { get; set; }
         public bool DisplayInEditor { get; set; } = true;
         public PassCondition PassCondition { get; set; }
-        public List<CriteriaList1> CriteriaList { get; set; } = [];
+        public List<CriteriaList1> CriteriaList { get; set; } = [new CriteriaList1()];
     }
 
     public sealed class ItemGroup
