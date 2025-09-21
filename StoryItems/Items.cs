@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.Design;
-using System.Drawing.Design;
-using static CSC.StoryItems.StoryEnums;
+﻿using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.StoryItems
 {
@@ -9,12 +6,12 @@ namespace CSC.StoryItems
     {
         public BoolCritera? BoolValue { get; set; }
 
-        public string? Character { get; set; }
+        public string? Character { get; set; } = "Amy";
 
-        public string? Character2 { get; set; }
+        public string? Character2 { get; set; } = "Amy";
         public CompareTypes CompareType { get; set; }
         public DialogueStatuses? DialogueStatus { get; set; }
-        public bool DisplayInEditor { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
         public DoorOptionValues? DoorOptions { get; set; }
         public EqualsValues? EqualsValue { get; set; }
         public ComparisonEquations? EquationValue { get; set; }
@@ -39,33 +36,33 @@ namespace CSC.StoryItems
     {
 
         public string? ActionName { get; set; }
-        public List<Criterion>? Criteria { get; set; }
-        public bool DisplayInEditor { get; set; }
-        public List<GameEvent>? OnTakeActionEvents { get; set; }
+        public List<Criterion> Criteria { get; set; } = [];
+        public bool DisplayInEditor { get; set; } = true;
+        public List<GameEvent> OnTakeActionEvents { get; set; } = [];
     }
 
     public sealed class UseWith
     {
-        public List<Criterion>? Criteria { get; set; }
+        public List<Criterion> Criteria { get; set; } = [];
 
         public string? CustomCantDoThatMessage { get; set; }
-        public bool DisplayInEditor { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
 
         public string? ItemName { get; set; }
-        public List<GameEvent>? OnSuccessEvents { get; set; }
+        public List<GameEvent> OnSuccessEvents { get; set; } = [];
     }
 
     public sealed class ItemOverride
     {
 
         public string? Id { get; set; }
-        public bool DisplayInEditor { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
 
         public string? DisplayName { get; set; }
-        public List<ItemAction>? ItemActions { get; set; }
+        public List<ItemAction> ItemActions { get; set; } = [];
 
         public string? ItemName { get; set; }
-        public List<UseWith>? UseWiths { get; set; }
+        public List<UseWith> UseWiths { get; set; } = [];
         public bool UseDefaultRadialOptions { get; set; }
     }
 
@@ -77,9 +74,9 @@ namespace CSC.StoryItems
         public string? Name { get; set; }
 
         public string? GroupName { get; set; }
-        public bool DisplayInEditor { get; set; }
-        public List<ItemAction>? ItemActions { get; set; }
-        public List<object>? UseWiths { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
+        public List<ItemAction> ItemActions { get; set; } = [];
+        public List<UseWith> UseWiths { get; set; } = [];
     }
 
     public sealed class Achievement
@@ -99,7 +96,7 @@ namespace CSC.StoryItems
 
     public sealed class CriteriaList1
     {
-        public List<Criterion>? CriteriaList { get; set; }
+        public List<Criterion> CriteriaList { get; set; } = [];
     }
 
     public sealed class CriteriaGroup
@@ -110,9 +107,9 @@ namespace CSC.StoryItems
         public string? Name { get; set; }
 
         public string? LinkedGroupName { get; set; }
-        public bool DisplayInEditor { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
         public PassCondition PassCondition { get; set; }
-        public List<CriteriaList1>? CriteriaList { get; set; }
+        public List<CriteriaList1> CriteriaList { get; set; } = [];
     }
 
     public sealed class ItemGroup
@@ -121,8 +118,8 @@ namespace CSC.StoryItems
         public string? Id { get; set; }
 
         public string? Name { get; set; }
-        public bool DisplayInEditor { get; set; }
-        public List<string>? ItemsInGroup { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
+        public List<string> ItemsInGroup { get; set; } = [];
     }
 
     public sealed class GameEvent
@@ -137,9 +134,9 @@ namespace CSC.StoryItems
         public GameEvents EventType { get; set; }
         public GameEvents GroupSubEventType { get; set; }
 
-        public string? Character { get; set; }
+        public string? Character { get; set; } = "Amy";
 
-        public string? Character2 { get; set; }
+        public string? Character2 { get; set; } = "Amy";
 
         public string? Key { get; set; }
         public int Option { get; set; }
@@ -155,8 +152,8 @@ namespace CSC.StoryItems
         public double OriginalDelay { get; set; }
         public double StartDelayTime { get; set; }
         public bool UseConditions { get; set; }
-        public bool DisplayInEditor { get; set; }
-        public List<Criterion>? Criteria { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
+        public List<Criterion> Criteria { get; set; } = [];
     }
 
     public sealed class EventTrigger
@@ -165,10 +162,10 @@ namespace CSC.StoryItems
         public string? Id { get; set; }
 
         public string? CharacterToReactTo { get; set; }
-        public List<Criterion>? Critera { get; set; }
+        public List<Criterion> Critera { get; set; } = [];
         public double CurrentIteration { get; set; }
         public bool Enabled { get; set; }
-        public List<GameEvent>? Events { get; set; }
+        public List<GameEvent> Events { get; set; } = [];
 
         public string? Key { get; set; }
 
@@ -188,31 +185,31 @@ namespace CSC.StoryItems
         public string? Id { get; set; }
 
         public string? Name { get; set; }
-        public bool DisplayInEditor { get; set; }
-        public List<string>? CharactersInGroup { get; set; }
+        public bool DisplayInEditor { get; set; } = true;
+        public List<string> CharactersInGroup { get; set; } = [];
     }
 
     public sealed class MainStory
     {
-        public bool AllowPlayerFemale { get; set; }
-        public bool AllowPlayerMale { get; set; }
-        public bool UseEekDefaultItemEnableBehaviour { get; set; }
-        public List<Achievement>? Achievements { get; set; }
-        public List<CharacterGroup>? CharacterGroups { get; set; }
-        public List<CriteriaGroup>? CriteriaGroups { get; set; }
-        public List<EventTrigger>? PlayerReactions { get; set; }
-        public List<GameEvent>? GameStartEvents { get; set; }
-        public List<ItemGroup>? ItemGroups { get; set; }
-        public List<ItemGroupBehavior>? ItemGroupBehaviors { get; set; }
-        public List<ItemOverride>? ItemOverrides { get; set; }
-        public List<string>? PlayerValues { get; set; }
+        public bool AllowPlayerFemale { get; set; } = true;
+        public bool AllowPlayerMale { get; set; } = true;
+        public bool UseEekDefaultItemEnableBehaviour { get; set; } = true;
+        public List<Achievement> Achievements { get; set; } = [];
+        public List<CharacterGroup> CharacterGroups { get; set; } = [];
+        public List<CriteriaGroup> CriteriaGroups { get; set; } = [];
+        public List<EventTrigger> PlayerReactions { get; set; } = [];
+        public List<GameEvent> GameStartEvents { get; set; } = [];
+        public List<ItemGroup> ItemGroups { get; set; } = [];
+        public List<ItemGroupBehavior> ItemGroupBehaviors { get; set; } = [];
+        public List<ItemOverride> ItemOverrides { get; set; } = [];
+        public List<string> PlayerValues { get; set; } = [];
 
         public string? HousePartyVersion { get; set; }
     }
 
     public sealed class AlternateText
     {
-        public List<Criterion>? Critera { get; set; }
+        public List<Criterion> Critera { get; set; } = [];
         public int Order { get; set; }
         public bool Show { get; set; }
 
@@ -227,8 +224,8 @@ namespace CSC.StoryItems
         public bool AlwaysDisplay { get; set; }
         public int Next { get; set; }
         public int Order { get; set; }
-        public List<Criterion>? ResponseCriteria { get; set; }
-        public List<GameEvent>? ResponseEvents { get; set; }
+        public List<Criterion> ResponseCriteria { get; set; } = [];
+        public List<GameEvent> ResponseEvents { get; set; } = [];
         public bool TestingCriteraOverride { get; set; }
 
         public string? Text { get; set; }
@@ -242,20 +239,20 @@ namespace CSC.StoryItems
         public bool ShowTopics { get; set; }
         public bool ShowTones { get; set; }
         public bool ShowTypes { get; set; }
-        public List<ConversationalTopics>? Topics { get; set; }
-        public List<ResponseTones>? Tones { get; set; }
-        public List<Criterion>? DynamicPositiveCriteria { get; set; }
-        public List<Criterion>? DynamicNegativeCriteria { get; set; }
+        public List<ConversationalTopics> Topics { get; set; } = [];
+        public List<ResponseTones> Tones { get; set; } = [];
+        public List<Criterion> DynamicPositiveCriteria { get; set; } = [];
+        public List<Criterion> DynamicNegativeCriteria { get; set; } = [];
     }
 
     public sealed class Dialogue
     {
         public bool Shown { get; set; }
-        public List<AlternateText>? AlternateTexts { get; set; }
-        public List<GameEvent>? CloseEvents { get; set; }
+        public List<AlternateText> AlternateTexts { get; set; } = [];
+        public List<GameEvent> CloseEvents { get; set; } = [];
         public int ID { get; set; }
         public bool Important { get; set; }
-        public List<Response>? Responses { get; set; }
+        public List<Response> Responses { get; set; } = [];
         public bool ShowAcceptedItems { get; set; }
         public bool ShowAlternateTexts { get; set; }
         public bool ShowDynamicCriteria { get; set; }
@@ -263,9 +260,9 @@ namespace CSC.StoryItems
         public bool ShowCritera { get; set; }
         public bool ShowGlobalGoodByeResponses { get; set; }
         public bool IsDynamic { get; set; }
-        public List<ConversationalTopics>? TopicMatches { get; set; }
-        public List<ResponseTones>? MandatoryTones { get; set; }
-        public List<ResponseTones>? ToneMatches { get; set; }
+        public List<ConversationalTopics> TopicMatches { get; set; } = [];
+        public List<ResponseTones> MandatoryTones { get; set; } = [];
+        public List<ResponseTones> ToneMatches { get; set; } = [];
         public ResponseTypes TypeMatch { get; set; }
         public bool ShowDynamicDialogueResponses { get; set; }
         public bool OnlyOnPositiveInteraction { get; set; }
@@ -275,14 +272,14 @@ namespace CSC.StoryItems
         public int VoiceID { get; set; }
         public bool ShowGlobalResponses { get; set; }
         public bool DoesNotCountAsMet { get; set; }
-        public bool ShowResponses { get; set; }
+        public bool ShowResponses { get; set; } = true;
         public bool ShowStartValueAdjustments { get; set; }
         public bool ShowTopics { get; set; }
         public bool ShowTones { get; set; }
 
-        public string? SpeakingToCharacterName { get; set; }
-        public List<GameEvent>? StartEvents { get; set; }
-        public List<Criterion>? DynamicDialogueCriteria { get; set; }
+        public string? SpeakingToCharacterName { get; set; } = Main.Player;
+        public List<GameEvent> StartEvents { get; set; } = [];
+        public List<Criterion> DynamicDialogueCriteria { get; set; } = [];
 
         public string? Text { get; set; }
     }
@@ -292,7 +289,7 @@ namespace CSC.StoryItems
         public int Id { get; set; }
 
         public string? Text { get; set; }
-        public List<Criterion>? Critera { get; set; }
+        public List<Criterion> Critera { get; set; } = [];
         public bool IsConversationStarter { get; set; }
         public bool ShowInInspector { get; set; }
         public bool PlaySilently { get; set; }
@@ -301,8 +298,8 @@ namespace CSC.StoryItems
 
         public string? SpeakingTo { get; set; }
         public bool OverrideCombatRestriction { get; set; }
-        public List<GameEvent>? StartEvents { get; set; }
-        public List<BackgroundChatterResponse>? Responses { get; set; }
+        public List<GameEvent> StartEvents { get; set; } = [];
+        public List<BackgroundChatterResponse> Responses { get; set; } = [];
 
         public string? PairedEmote { get; set; }
         public Importance DefaultImportance { get; set; }
@@ -327,7 +324,7 @@ namespace CSC.StoryItems
 
     public sealed class Personality
     {
-        public List<Trait>? Values { get; set; }
+        public List<Trait> Values { get; set; } = [];
     }
 
     public sealed class ExtendedDetail
@@ -349,7 +346,7 @@ namespace CSC.StoryItems
         public string? CompletedDetails { get; set; }
 
         public string? FailedDetails { get; set; }
-        public List<ExtendedDetail>? ExtendedDetails { get; set; }
+        public List<ExtendedDetail> ExtendedDetails { get; set; } = [];
 
         public string? ID { get; set; }
 
@@ -365,26 +362,26 @@ namespace CSC.StoryItems
 
     public sealed class StoryItem
     {
-        public List<Criterion>? Critera { get; set; }
+        public List<Criterion> Critera { get; set; } = [];
 
         public string? ItemName { get; set; }
-        public List<GameEvent>? OnAcceptEvents { get; set; }
-        public List<GameEvent>? OnRefuseEvents { get; set; }
-        public bool DisplayInEditor { get; set; }
+        public List<GameEvent> OnAcceptEvents { get; set; } = [];
+        public List<GameEvent> OnRefuseEvents { get; set; } = [];
+        public bool DisplayInEditor { get; set; } = true;
     }
 
     public sealed class ItemGroupInteraction
     {
-        public List<Criterion>? Critera { get; set; }
+        public List<Criterion> Critera { get; set; } = [];
 
         public string? Name { get; set; }
 
         public string? GroupName { get; set; }
 
         public string? Id { get; set; }
-        public List<GameEvent>? OnAcceptEvents { get; set; }
-        public List<GameEvent>? OnRefuseEvents { get; set; }
-        public bool DisplayInEditor { get; set; }
+        public List<GameEvent> OnAcceptEvents { get; set; } = [];
+        public List<GameEvent> OnRefuseEvents { get; set; } = [];
+        public bool DisplayInEditor { get; set; } = true;
     }
 
     public sealed class CharacterStory
@@ -396,25 +393,25 @@ namespace CSC.StoryItems
         public bool ShowLikedTones { get; set; }
         public int DialogueID { get; set; }
         public int DynamicDialogueID { get; set; }
-        public List<BackgroundChatter>? BackgroundChatter { get; set; }
-        public List<Dialogue>? Dialogues { get; set; }
-        public List<Dialogue>? DynamicDialogues { get; set; }
-        public List<EventTrigger>? Reactions { get; set; }
-        public List<ItemGroupInteraction>? CharacterItemGroupInteractions { get; set; }
-        public List<Quest>? Quests { get; set; }
-        public List<Response>? GlobalGoodbyeResponses { get; set; }
-        public List<Response>? GlobalResponses { get; set; }
-        public List<StoryItem>? StoryItems { get; set; }
-        public List<string>? StoryValues { get; set; }
+        public List<BackgroundChatter> BackgroundChatter { get; set; } = [];
+        public List<Dialogue> Dialogues { get; set; } = [];
+        public List<Dialogue> DynamicDialogues { get; set; } = [];
+        public List<EventTrigger> Reactions { get; set; } = [];
+        public List<ItemGroupInteraction> CharacterItemGroupInteractions { get; set; } = [];
+        public List<Quest> Quests { get; set; } = [];
+        public List<Response> GlobalGoodbyeResponses { get; set; } = [];
+        public List<Response> GlobalResponses { get; set; } = [];
+        public List<StoryItem> StoryItems { get; set; } = [];
+        public List<string> StoryValues { get; set; } = [];
         public Personality? Personality { get; set; }
 
         public string? CharacterName { get; set; }
         public Dialogue? CurrentDialogue { get; set; }
         public Dialogue? CurrentDynamicDialogue { get; set; }
-        public List<ResponseTones>? LikedTones { get; set; }
-        public List<ConversationalTopics>? LikedTopics { get; set; }
-        public List<ResponseTones>? DislikedTones { get; set; }
-        public List<ConversationalTopics>? DislikedTopics { get; set; }
+        public List<ResponseTones> LikedTones { get; set; } = [];
+        public List<ConversationalTopics> LikedTopics { get; set; } = [];
+        public List<ResponseTones> DislikedTones { get; set; } = [];
+        public List<ConversationalTopics> DislikedTopics { get; set; } = [];
         public StoryAspects CurrentAspect { get; set; }
 
         public string? HousePartyVersion { get; set; }

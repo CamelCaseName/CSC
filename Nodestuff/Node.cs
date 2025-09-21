@@ -47,29 +47,26 @@ namespace CSC.Nodestuff
         Response,
         Social,
         State,
-        Value
+        Value,
+        UseWith
     }
 
     public enum SpawnableNodeType
     {
-        CharacterGroup,
         Criterion,
         ItemAction,
-        ItemGroupBehaviour,
-        ItemGroupInteraction,
         Achievement,
         BGC,
         BGCResponse,
         CriteriaGroup,
-        Cutscene,
         Dialogue,
         AlternateText,
         Event,
         EventTrigger,
         Item,
         ItemGroup,
-        Property,
         Quest,
+        UseWith,
         Response,
         Value
     }

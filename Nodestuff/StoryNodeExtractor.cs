@@ -260,7 +260,7 @@ namespace CSC.Nodestuff
                 foreach (UseWith use in itemOverride.UseWiths ?? [])
                 {
                     //node to add all references to
-                    var useNode = new Node(use.ItemName ?? string.Empty, NodeType.Item, use.CustomCantDoThatMessage ?? string.Empty, nodeItem, nodes.Positions) { Data = use, DataType = typeof(UseWith) };
+                    var useNode = new Node(use.ItemName ?? string.Empty, NodeType.UseWith, use.CustomCantDoThatMessage ?? string.Empty, nodeItem, nodes.Positions) { Data = use, DataType = typeof(UseWith) };
 
                     //add criteria that influence this item
                     useNode.AddCriteria(use.Criteria ?? [], nodes);

@@ -1071,6 +1071,8 @@ namespace CSC.StoryItems
             WatchTVSpot2,
         }
 
+        //(\s*\n\s+)EnableItemFunctions: \d(\s*\n\s+)ItemFunctions:\s*\n\s+[- \w*\s\n]*: \d[\s*\n\s+\w+: \d]+- Name: 
+        //replace with ,
         public enum Items
         {
             ACUnit,

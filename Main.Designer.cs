@@ -220,8 +220,8 @@ namespace CSC
             NodeSpawnBox.Size = new Size(674, 23);
             NodeSpawnBox.TabIndex = 0;
             NodeSpawnBox.Visible = false;
-            NodeSpawnBox.SelectionChangeCommitted += SpaceNodeSpawnEnter;
-            NodeSpawnBox.SelectedValueChanged += SpaceNodeSpawnEnter;
+            NodeSpawnBox.SelectionChangeCommitted += SpawnNodeFromSpaceSpawner;
+            NodeSpawnBox.SelectedValueChanged += SpawnNodeFromSpaceSpawner;
             // 
             // PropertyInspector
             // 
