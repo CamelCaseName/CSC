@@ -79,7 +79,7 @@ public partial class Main : Form
     public static string StoryName { get; private set; } = NoCharacter;
     private static string selectedCharacter = NoCharacter;
     private static MainStory Story = new();
-    private static readonly Dictionary<string, CharacterStory> characterStories = new();
+    private static readonly Dictionary<string, CharacterStory> characterStories = [];
 
     public static string SelectedCharacter
     {
@@ -248,14 +248,6 @@ public partial class Main : Form
                     NodeSpawnBox.Items.Add(NodeType.BGC);
                     break;
                 }
-
-                //criterion
-                case NodeType.CriteriaGroup:
-                {
-                    NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion]);
-                    break;
-                }
-
                 //criteria dialogue
                 case NodeType.Response:
                 {
@@ -263,9 +255,13 @@ public partial class Main : Form
                     break;
                 }
 
+                case NodeType.Dialogue:
+                {
+                    NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion, NodeType.Response]);
+                    break;
+                }
                 //event criterion
                 case NodeType.CharacterGroup:
-                case NodeType.Dialogue:
                 case NodeType.AlternateText:
                 case NodeType.EventTrigger:
                 case NodeType.Value:
@@ -277,6 +273,7 @@ public partial class Main : Form
                 case NodeType.Property:
                 case NodeType.Cutscene:
                 case NodeType.Door:
+                case NodeType.CriteriaGroup:
                 {
                     NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion]);
                     break;
@@ -492,12 +489,37 @@ public partial class Main : Form
                 {
                     layerYperX.Add(layerYperX[layerX]);
                 }
-                else
+
+                for (int i = zeroRow + 1; i < layerX; i++)
                 {
-                    layerYperX[layerX + 1] = Math.Max(layerYperX[layerX], layerYperX[layerX + 1]);
+                    layerYperX[i - 1] = Math.Max(layerYperX[i], layerYperX[i - 1]);
                 }
+
                 DoAllChilds(zeroRow, layerX + 1, newChilds);
                 layerYperX[layerX]++;
+                layerYperX[zeroRow] = Math.Max(layerYperX[zeroRow], layerYperX[layerX]);
+            }
+
+            var newParents = nodes[SelectedCharacter].Parents(currentChild);
+            if (newParents.Count == 0)
+            {
+                layerYperX[layerX]++;
+                continue;
+            }
+            else
+            {
+                if (layerYperX.Count <= layerX + 1)
+                {
+                    layerYperX.Add(layerYperX[layerX]);
+                }
+
+                for (int i = zeroRow + 1; i < layerX; i++)
+                {
+                    layerYperX[i - 1] = Math.Max(layerYperX[i], layerYperX[i - 1]);
+                }
+
+                DoAllChilds(zeroRow, layerX - 1, newParents);
+                layerYperX[layerX]--;
                 layerYperX[zeroRow] = Math.Max(layerYperX[zeroRow], layerYperX[layerX]);
             }
         }
@@ -857,19 +879,20 @@ public partial class Main : Form
         StartPanOffsetY = location.Y;
     }
 
-    //todo fix for stories, something is off. maybe also pull parents in in a second pass if they are too far away and have no other parent or sth. 
-    //like we start with a root parent, then do all its childs, all their parents, all the childs childs and so on
     private void SetupStartPositions()
     {
+        int zeroColoumn = 5;
         foreach (var store in nodes.Keys)
         {
             SelectedCharacter = store;
             layerYperX.Clear();
-            layerYperX.Add(0);
+            for (int i = 0; i <= (zeroColoumn + 1); i++)
+            {
+                layerYperX.Add(0);
+            }
             visited.Clear();
 
             int sideLengthY = (int)(Math.Sqrt(nodes[store].Count) + 0.5);
-            int zeroColoumn = 0;
 
             foreach (var key in nodes[store].Nodes)
             {
@@ -961,11 +984,11 @@ public partial class Main : Form
                 else if (!IsCtrlPressed && nodeToLinkToNext != Node.NullNode)
                 {
                     AddNodeToNextClicked(node);
-                    SetSelectedObject(node);
+                    ShowProperties(node);
                 }
                 else if (clickedNode != node)
                 {
-                    SetSelectedObject(node);
+                    ShowProperties(node);
                 }
             }
             else
@@ -1142,7 +1165,7 @@ public partial class Main : Form
 
     //todo implement updating of node references on changing values!!!
     //todo implement drag/drop setting of node data like item name or sth
-    private void SetSelectedObject(Node node)
+    private void ShowProperties(Node node)
     {
         PropertyInspector.Controls.Clear();
         PropertyInspector.SuspendLayout();
@@ -1640,7 +1663,7 @@ public partial class Main : Form
                         option.SelectedItem = criterion.PoseOption.ToString();
                         option.PerformLayout();
                         option.SelectedIndexChanged += (_, _) => criterion.PoseOption = Enum.Parse<PoseOptions>(option.SelectedItem!.ToString()!);
-                        option.SelectedIndexChanged += (_, _) => SetSelectedObject(node);
+                        option.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(option);
 
                         if (criterion.PoseOption == PoseOptions.CurrentPose)
@@ -1766,7 +1789,7 @@ public partial class Main : Form
                     case CompareTypes.Value:
                     {
                         PutCompareType(criterion, node);
-                        PutCharacter1(criterion).SelectedIndexChanged += (_, _) => SetSelectedObject(node);
+                        PutCharacter1(criterion).SelectedIndexChanged += (_, _) => ShowProperties(node);
 
                         ComboBox value = GetComboBox();
                         if (criterion.Character == Player)
@@ -2367,7 +2390,7 @@ public partial class Main : Form
                         targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
                         targetType.PerformLayout();
                         targetType.SelectedIndexChanged += (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>(targetType.SelectedItem!.ToString()!);
-                        targetType.SelectedIndexChanged += (_, _) => SetSelectedObject(node);
+                        targetType.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(targetType);
 
                         switch (eventTrigger.LocationTargetOption)
@@ -2629,13 +2652,13 @@ public partial class Main : Form
                     {
                         response.Next = 0;
                     }
-                    SetSelectedObject(node);
+                    ShowProperties(node);
                 };
                 PropertyInspector.Controls.Add(dialogue);
 
                 Label label3 = new()
                 {
-                    Text = characterStories[node.FileName].Dialogues!.Find((dialog) => dialog.ID.ToString() == dialogue.SelectedItem.ToString())?.Text ?? "No text on dialogue",
+                    Text = characterStories[node.FileName].Dialogues!.Find((dialog) => dialog.ID.ToString() == dialogue.SelectedItem?.ToString())?.Text ?? "No text on dialogue",
                     TextAlign = ContentAlignment.TopLeft,
                     Dock = DockStyle.Fill,
                     ForeColor = Color.LightGray,
@@ -2922,7 +2945,7 @@ public partial class Main : Form
             {
                 eventTrigger.Type = EventTypes.None;
             }
-            SetSelectedObject(node);
+            ShowProperties(node);
         };
         PropertyInspector.Controls.Add(startCondition);
     }
@@ -3018,7 +3041,7 @@ public partial class Main : Form
         compareType.SelectionStart = 0;
         compareType.PerformLayout();
         compareType.SelectedIndexChanged += (_, _) => criterion.CompareType = Enum.Parse<CompareTypes>((string)compareType.SelectedItem!);
-        compareType.SelectedIndexChanged += (_, _) => SetSelectedObject(node);
+        compareType.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(compareType);
     }
 
@@ -3200,10 +3223,16 @@ public partial class Main : Form
         }
     }
 
-    //todo this is triggered inconsistently
     private void SpawnNodeFromSpaceSpawner(object sender, EventArgs e)
     {
         SpawnableNodeType selectedType = Enum.Parse<SpawnableNodeType>(NodeSpawnBox.SelectedItem?.ToString()!);
+
+        if (!NodeSpawnBox.Enabled)
+        {
+            return;
+        }
+        NodeSpawnBox.Enabled = false;
+        NodeSpawnBox.Visible = false;
 
         Node newNode = Node.NullNode;
 
@@ -3433,6 +3462,7 @@ public partial class Main : Form
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
+                characterStories[character].Dialogues!.Add((Dialogue)newNode.Data!);
 
                 if (clickedNode != Node.NullNode)
                 {
@@ -3597,7 +3627,7 @@ public partial class Main : Form
                     }
                     else if (clickedNode.DataType == typeof(ItemGroup))
                     {
-                        ((ItemGroup)clickedNode.Data!).ItemsInGroup.Add(((ItemOverride)newNode.Data!).);
+                        ((ItemGroup)clickedNode.Data!).ItemsInGroup.Add(((ItemOverride)newNode.Data!).ItemName!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3768,9 +3798,10 @@ public partial class Main : Form
 
         newNode.Position = ScreenPos;
 
-        NodeSpawnBox.Enabled = false;
-        NodeSpawnBox.Visible = false;
+        clickedNode = newNode;
+        ShowProperties(newNode);
 
         Graph.Invalidate();
+        Graph.Focus();
     }
 }

@@ -222,6 +222,7 @@ namespace CSC
             NodeSpawnBox.Visible = false;
             NodeSpawnBox.SelectionChangeCommitted += SpawnNodeFromSpaceSpawner;
             NodeSpawnBox.SelectedValueChanged += SpawnNodeFromSpaceSpawner;
+            NodeSpawnBox.SelectedIndexChanged += SpawnNodeFromSpaceSpawner;
             // 
             // PropertyInspector
             // 
