@@ -71,10 +71,19 @@ namespace CSC.Nodestuff
         Value
     }
 
-    public sealed class MissingreferenceInfo(string text)
+    public sealed class MissingreferenceInfo
     {
+        public MissingreferenceInfo()
+        {
+            Text = string.Empty;
+        }
+        public MissingreferenceInfo(string text)
+        {
+            Text = text;
+        }
+
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
-        public string Text { get; set; } = text;
+        public string Text { get; set; }
     }
 
     public sealed class Node

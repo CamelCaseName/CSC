@@ -52,7 +52,10 @@ namespace CSC.Nodestuff
                 //add items to list
                 var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition, nodes.Positions) { Data = group, DataType = typeof(CriteriaGroup) };
 
-                nodeCriteriaGroup.AddCriteria(group.CriteriaList ?? [], nodes);
+                foreach (CriteriaList1 criteriaList in group.CriteriaList ?? [])
+                {
+                    nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
+                }
 
                 nodes.Add(nodeCriteriaGroup);
             }
@@ -276,10 +279,10 @@ namespace CSC.Nodestuff
 
         public static void GetItems(CharacterStory story, NodeStore nodes)
         {
-            foreach (StoryItem item in story.StoryItems ?? [])
+            foreach (ItemInteraction item in story.StoryItems ?? [])
             {
                 //add items to list
-                var nodeItem = new Node(item.ItemName!, NodeType.Item, item.ItemName!, nodes.Positions) { Data = item, DataType = typeof(StoryItem) };
+                var nodeItem = new Node(item.ItemName!, NodeType.Item, item.ItemName!, nodes.Positions) { Data = item, DataType = typeof(ItemInteraction) };
                 nodeItem.FileName = story.CharacterName!;
                 nodeItem.AddCriteria(item.Critera ?? [], nodes);
                 nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);

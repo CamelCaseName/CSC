@@ -360,7 +360,7 @@ namespace CSC.StoryItems
         public bool ShowInInspector { get; set; }
     }
 
-    public sealed class StoryItem
+    public sealed class ItemInteraction
     {
         public List<Criterion> Critera { get; set; } = [];
 
@@ -401,7 +401,7 @@ namespace CSC.StoryItems
         public List<Quest> Quests { get; set; } = [];
         public List<Response> GlobalGoodbyeResponses { get; set; } = [];
         public List<Response> GlobalResponses { get; set; } = [];
-        public List<StoryItem> StoryItems { get; set; } = [];
+        public List<ItemInteraction> StoryItems { get; set; } = [];
         public List<string> StoryValues { get; set; } = [];
         public Personality? Personality { get; set; }
 

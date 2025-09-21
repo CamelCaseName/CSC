@@ -201,9 +201,9 @@ public partial class Main : Form
     private void ShowNodeSpawnBox()
     {
         //only allow node types that make sense depending on the selected node type
+        NodeSpawnBox.Items.Clear();
         if (clickedNode != Node.NullNode)
         {
-            NodeSpawnBox.Items.Clear();
             switch (clickedNode.Type)
             {
                 //itemaction uswith criterialist event eventtrigger alternatetext
@@ -288,6 +288,10 @@ public partial class Main : Form
                     break;
                 }
             }
+        }
+        else
+        {
+            NodeSpawnBox.Items.AddRange(Enum.GetNames<SpawnableNodeType>());
         }
 
         NodeSpawnBox.Enabled = true;
@@ -657,6 +661,8 @@ public partial class Main : Form
         };
     }
 
+    //todo make objects with two different events (dialogues, items, etc) bigger and have the
+    //start or stop events paths come out of a different spor lower or higher on the node, maybe even with label
     private void Main_Paint(object sender, PaintEventArgs e)
     {
         var g = e.Graphics;
@@ -1029,9 +1035,9 @@ public partial class Main : Form
                 ((BackgroundChatter)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
                 linked = true;
             }
-            else if (addToThis.DataType == typeof(StoryItem))
+            else if (addToThis.DataType == typeof(ItemInteraction))
             {
-                ((StoryItem)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                ((ItemInteraction)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemGroupInteraction))
@@ -1092,18 +1098,18 @@ public partial class Main : Form
                 ((BackgroundChatter)addToThis.Data!).StartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
                 linked = true;
             }
-            else if (addToThis.DataType == typeof(StoryItem))
+            else if (addToThis.DataType == typeof(ItemInteraction))
             {
                 var result = MessageBox.Show("Add as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == DialogResult.Yes)
                 {
-                    ((StoryItem)addToThis.Data!).OnAcceptEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    ((ItemInteraction)addToThis.Data!).OnAcceptEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    ((StoryItem)addToThis.Data!).OnRefuseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    ((ItemInteraction)addToThis.Data!).OnRefuseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
                     linked = true;
                 }
             }
@@ -3194,9 +3200,9 @@ public partial class Main : Form
         }
     }
 
+    //todo this is triggered inconsistently
     private void SpawnNodeFromSpaceSpawner(object sender, EventArgs e)
     {
-        //todo
         SpawnableNodeType selectedType = Enum.Parse<SpawnableNodeType>(NodeSpawnBox.SelectedItem?.ToString()!);
 
         Node newNode = Node.NullNode;
@@ -3208,15 +3214,6 @@ public partial class Main : Form
             character = clickedNode.FileName;
         }
 
-        var pos = Graph.PointToClient(Cursor.Position);
-        ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
-        ScreenPosX -= NodeSizeX / 2;
-        ScreenPosY -= NodeSizeY / 2;
-        var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
-
-        newNode.Position = ScreenPos;
-
-        //todo auto link all other types
         switch (selectedType)
         {
             case SpawnableNodeType.Criterion:
@@ -3277,9 +3274,9 @@ public partial class Main : Form
                         ((BackgroundChatter)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
-                    else if (clickedNode.DataType == typeof(StoryItem))
+                    else if (clickedNode.DataType == typeof(ItemInteraction))
                     {
-                        ((StoryItem)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
+                        ((ItemInteraction)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemGroupInteraction))
@@ -3451,9 +3448,8 @@ public partial class Main : Form
                     }
                     else if (clickedNode.DataType == typeof(Response))
                     {
-                        //todo maybe we have to duplicate?
-                        ((Dialogue)newNode.Data!).Responses.Add((Response)clickedNode.Data!);
-                        nodes[character].AddChild(newNode, clickedNode);
+                        ((Response)clickedNode.Data!).Next = ((Dialogue)newNode.Data!).ID;
+                        nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
 
@@ -3499,7 +3495,52 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    GameEvent gameEvent = ((GameEvent)newNode.Data!);
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        gameEvent.Criteria.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(ItemAction))
+                    {
+                        ((ItemAction)clickedNode.Data!).OnTakeActionEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(UseWith))
+                    {
+                        ((UseWith)clickedNode.Data!).OnSuccessEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(EventTrigger))
+                    {
+                        ((EventTrigger)clickedNode.Data!).Events.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Response))
+                    {
+                        ((Response)clickedNode.Data!).ResponseEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Dialogue))
+                    {
+                        ((Dialogue)clickedNode.Data!).StartEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(BackgroundChatter))
+                    {
+                        ((BackgroundChatter)clickedNode.Data!).StartEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(ItemInteraction))
+                    {
+                        ((ItemInteraction)clickedNode.Data!).OnAcceptEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(ItemGroupInteraction))
+                    {
+                        ((ItemGroupInteraction)clickedNode.Data!).OnAcceptEvents.Add(gameEvent);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3517,7 +3558,21 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((EventTrigger)newNode.Data!).Events.Add((GameEvent)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(MainStory))
+                    {
+                        ((MainStory)clickedNode.Data!).PlayerReactions.Add((EventTrigger)newNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(CharacterStory))
+                    {
+                        ((CharacterStory)clickedNode.Data!).Reactions.Add((EventTrigger)newNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3527,15 +3582,24 @@ public partial class Main : Form
                 string id = "item name";
                 newNode = new Node(id, NodeType.Item, string.Empty, nodes[character].Positions)
                 {
-                    Data = new StoryItem() { ItemName = id },
-                    DataType = typeof(StoryItem),
+                    Data = new ItemOverride() { ItemName = id },
+                    DataType = typeof(ItemOverride),
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(ItemAction))
+                    {
+                        ((ItemOverride)newNode.Data!).ItemActions.Add((ItemAction)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(ItemGroup))
+                    {
+                        ((ItemGroup)clickedNode.Data!).ItemsInGroup.Add(((ItemOverride)newNode.Data!).);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3553,7 +3617,17 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(ItemOverride))
+                    {
+                        ((ItemGroup)newNode.Data!).ItemsInGroup.Add(((ItemOverride)clickedNode.Data!).ItemName!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((GameEvent)clickedNode.Data!).EventType = GameEvents.ItemFromItemGroup;
+                        ((GameEvent)clickedNode.Data!).Value = ((ItemGroup)newNode.Data!).Id;
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3571,7 +3645,18 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((GameEvent)clickedNode.Data!).EventType = GameEvents.Quest;
+                        ((GameEvent)clickedNode.Data!).Key = ((Quest)newNode.Data!).ID;
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((Criterion)clickedNode.Data!).CompareType = CompareTypes.Quest;
+                        ((Criterion)clickedNode.Data!).Key = ((Quest)newNode.Data!).ID;
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3589,7 +3674,21 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(Dialogue))
+                    {
+                        ((Dialogue)clickedNode.Data!).Responses.Add((Response)newNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((Response)newNode.Data!).ResponseCriteria.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((Response)newNode.Data!).ResponseEvents.Add((GameEvent)clickedNode.Data!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3607,7 +3706,18 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((Criterion)clickedNode.Data!).CompareType = CompareTypes.Value;
+                        ((Criterion)clickedNode.Data!).Key = ((Value)newNode.Data!).value;
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        ((GameEvent)clickedNode.Data!).EventType = GameEvents.ModifyValue;
+                        ((GameEvent)clickedNode.Data!).Key = ((Value)newNode.Data!).value;
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3625,7 +3735,16 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-
+                    if (clickedNode.DataType == typeof(ItemOverride))
+                    {
+                        ((ItemOverride)clickedNode.Data!).UseWiths.Add((UseWith)newNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        ((UseWith)newNode.Data!).Criteria.Add((Criterion)clickedNode.Data!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
                 }
 
                 break;
@@ -3640,6 +3759,14 @@ public partial class Main : Form
         {
             return;
         }
+
+        var pos = Graph.PointToClient(Cursor.Position);
+        ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+        ScreenPosX -= NodeSizeX / 2;
+        ScreenPosY -= NodeSizeY / 2;
+        var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
+
+        newNode.Position = ScreenPos;
 
         NodeSpawnBox.Enabled = false;
         NodeSpawnBox.Visible = false;
