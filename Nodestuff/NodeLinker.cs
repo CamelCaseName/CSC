@@ -54,7 +54,7 @@ namespace CSC.Nodestuff
                                 else
                                 {
                                     //create and add value node, hasnt been referenced yet
-                                    var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString()),nodes.Positions) { FileName = criterion.Character! };
+                                    var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString()), nodes.Positions) { FileName = criterion.Character! };
                                     Clothing.Add(clothing);
                                     nodes.AddParent(newList[i], clothing);
                                 }
@@ -778,7 +778,7 @@ namespace CSC.Nodestuff
                             }
                             else
                             {
-                                newList.Add(Node.CreateCriteriaNode(_criterion, newList[i],nodes));
+                                newList.Add(Node.CreateCriteriaNode(_criterion, newList[i], nodes));
                             }
                         }
                         newList[i].Text = trigger.Critera.Count == 0
@@ -1018,7 +1018,7 @@ namespace CSC.Nodestuff
                 {
                     if (nodes.Nodes[i].FileName is ("" or Main.NoCharacter))
                     {
-                        nodes.Nodes[i].FileName = StoryName ?? string.Empty;
+                        nodes.Nodes[i].FileName = Main.Player;
                     }
                 }
             }

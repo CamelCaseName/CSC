@@ -845,10 +845,12 @@ public partial class Main : Form
                 maxYperX[i] = 1;
             }
 
-            //todo getting somewhere, larger sets still need some love
-            foreach (var key in nodes[store].Nodes)
+            NodeStore nodeStore = nodes[store];
+            var nodeList = nodeStore.Nodes;
+            nodeList.Sort(new NodeParentComparer(nodes[store]));
+            foreach (var key in nodeList)
             {
-                Family family = nodes[store][key];
+                Family family = nodeStore[key];
                 if (family.Parents.Count != 0)
                 {
                     continue;
@@ -880,6 +882,8 @@ public partial class Main : Form
                 layerX.Enqueue(intX);
                 layerY.Enqueue(1);
 
+                Debug.WriteLine($"starting on {key.ID} at {intX}|{1}");
+
                 while (toExplore.Count > 0)
                 {
                     var node = toExplore.Dequeue();
@@ -895,10 +899,10 @@ public partial class Main : Form
                         visited.Add(node);
                     }
 
-                    var childs = nodes[store].Childs(node);
-                    childs.Sort(new NodeChildComparer(nodes[store]));
-                    var parents = nodes[store].Parents(node);
-                    parents.Sort(new NodeParentComparer(nodes[store]));
+                    var childs = nodeStore.Childs(node);
+                    childs.Sort(new NodeChildComparer(nodeStore));
+                    var parents = nodeStore.Parents(node);
+                    parents.Sort(new NodeParentComparer(nodeStore));
 
                     int newParentsX = intX - (parents.Count / 3) - 1;
                     int newChildX = intX + (childs.Count / 3) + 1;
@@ -907,7 +911,6 @@ public partial class Main : Form
                         maxYperX.Add(1);
                     }
 
-                    //todo investigate here
                     if (maxYperX[intX] < intY)
                     {
                         maxYperX[intX] = intY;
