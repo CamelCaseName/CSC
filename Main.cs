@@ -41,15 +41,15 @@ public partial class Main : Form
     private readonly SolidBrush itemGroupInteractionNodeBrush;
     private readonly SolidBrush itemGroupNodeBrush;
     private readonly SolidBrush itemNodeBrush;
-    private readonly List<int> layerYperX = [];
+    private readonly List<int> maxYperX = [];
     private readonly Pen linePen;
     private readonly SolidBrush personalityNodeBrush;
     private readonly SolidBrush poseNodeBrush;
     private readonly SolidBrush propertyNodeBrush;
     private readonly SolidBrush questNodeBrush;
     private readonly SolidBrush responseNodeBrush;
-    private readonly int scaleX = NodeSizeX + 40;
-    private readonly int scaleY = NodeSizeY + 20;
+    private readonly int scaleX = NodeSizeX * 2;
+    private readonly int scaleY = NodeSizeY * 2;
     private readonly SolidBrush socialNodeBrush;
     private readonly SolidBrush stateNodeBrush;
     private readonly SolidBrush valueNodeBrush;
@@ -180,7 +180,7 @@ public partial class Main : Form
 
         if (e.KeyData == Keys.Space && !NodeSpawnBox.Enabled)
         {
-            if (Main.ActiveForm is null)
+            if (ActiveForm is null)
             {
                 return;
             }
@@ -298,7 +298,7 @@ public partial class Main : Form
 
     public void HandleMouseEvents(object? sender, MouseEventArgs e)
     {
-        if (Main.ActiveForm is null)
+        if (ActiveForm is null)
         {
             return;
         }
@@ -411,9 +411,9 @@ public partial class Main : Form
         }
     }
 
-    private void CenterOnNode(Node node)
+    private void CenterOnNode(Node node, float newScale = 1.5f)
     {
-        Scaling[SelectedCharacter] = 1.5f;
+        Scaling[SelectedCharacter] = newScale;
         var clipWidth = Graph.Size.Width / Scaling[SelectedCharacter];
         var clipHeight = Graph.Size.Height / Scaling[SelectedCharacter];
         float x = node.Position.X - (clipWidth / 2) + (node.Size.Width / 2);
@@ -462,67 +462,6 @@ public partial class Main : Form
     private void AddParent_Click(object sender, EventArgs e)
     {
 
-    }
-
-    private void DoAllChilds(int zeroRow, int layerX, List<Node> childs)
-    {
-        foreach (var currentChild in childs)
-        {
-            if (visited.Contains(currentChild))
-            {
-                continue;
-            }
-
-            currentChild.Position = new PointF((layerX + 1) * scaleX, layerYperX[layerX] * scaleY);
-            //Debug.WriteLine("on node " + currentChild.control.Text + " we arrived at y level" + layerYperX[layerX]);
-            visited.Add(currentChild);
-
-            var newChilds = nodes[SelectedCharacter].Childs(currentChild);
-            if (newChilds.Count == 0)
-            {
-                layerYperX[layerX]++;
-                continue;
-            }
-            else
-            {
-                if (layerYperX.Count <= layerX + 1)
-                {
-                    layerYperX.Add(layerYperX[layerX]);
-                }
-
-                for (int i = zeroRow + 1; i < layerX; i++)
-                {
-                    layerYperX[i - 1] = Math.Max(layerYperX[i], layerYperX[i - 1]);
-                }
-
-                DoAllChilds(zeroRow, layerX + 1, newChilds);
-                layerYperX[layerX]++;
-                layerYperX[zeroRow] = Math.Max(layerYperX[zeroRow], layerYperX[layerX]);
-            }
-
-            var newParents = nodes[SelectedCharacter].Parents(currentChild);
-            if (newParents.Count == 0)
-            {
-                layerYperX[layerX]++;
-                continue;
-            }
-            else
-            {
-                if (layerYperX.Count <= layerX + 1)
-                {
-                    layerYperX.Add(layerYperX[layerX]);
-                }
-
-                for (int i = zeroRow + 1; i < layerX; i++)
-                {
-                    layerYperX[i - 1] = Math.Max(layerYperX[i], layerYperX[i - 1]);
-                }
-
-                DoAllChilds(zeroRow, layerX - 1, newParents);
-                layerYperX[layerX]--;
-                layerYperX[zeroRow] = Math.Max(layerYperX[zeroRow], layerYperX[layerX]);
-            }
-        }
     }
 
     private void DrawEdge(PaintEventArgs e, Node parent, Node child, Pen pen)
@@ -881,53 +820,138 @@ public partial class Main : Form
 
     private void SetupStartPositions()
     {
-        int zeroColoumn = 5;
         foreach (var store in nodes.Keys)
         {
-            SelectedCharacter = store;
-            layerYperX.Clear();
-            for (int i = 0; i <= (zeroColoumn + 1); i++)
+            if (nodes[store].Nodes.Count <= 0)
             {
-                layerYperX.Add(0);
+                continue;
             }
-            visited.Clear();
+
+            SelectedCharacter = store;
 
             int sideLengthY = (int)(Math.Sqrt(nodes[store].Count) + 0.5);
 
+            maxYperX.Clear();
+            var intX = 30;
+            var intY = 1;
+            for (int i = 0; i < intX; i++)
+            {
+                maxYperX.Add(1);
+            }
+
+            visited.Clear();
+            for (int i = 0; i < maxYperX.Count; i++)
+            {
+                maxYperX[i] = 1;
+            }
+
+            //todo getting somewhere, larger sets still need some love
             foreach (var key in nodes[store].Nodes)
             {
                 Family family = nodes[store][key];
-                if (family.Parents.Count == 0)
+                if (family.Parents.Count != 0)
                 {
-                    //we have a root start node with no parents, start child search and layout from here
-                    key.Position = new PointF((zeroColoumn + 1) * scaleX, layerYperX[zeroColoumn] * scaleY);
-                    visited.Add(key);
+                    continue;
+                }
 
-                    if (family.Childs.Count == 0)
+                if (visited.Contains(key))
+                {
+                    continue;
+                }
+
+                if (family.Childs.Count > 0)
+                {
+                    intX = maxYperX.Count + 1;
+                }
+                else
+                {
+                    intX += 1;
+                }
+
+                for (int i = maxYperX.Count; i <= intX; i++)
+                {
+                    maxYperX.Add(1);
+                }
+
+                Queue<Node> toExplore = [];
+                Queue<int> layerX = [];
+                Queue<int> layerY = [];
+                toExplore.Enqueue(key);
+                layerX.Enqueue(intX);
+                layerY.Enqueue(1);
+
+                while (toExplore.Count > 0)
+                {
+                    var node = toExplore.Dequeue();
+                    intX = layerX.Dequeue();
+                    intY = layerY.Dequeue();
+
+                    if (visited.Contains(node))
                     {
-                        layerYperX[zeroColoumn]++;
-                        if (layerYperX[zeroColoumn] > sideLengthY)
-                        {
-                            zeroColoumn = layerYperX.Count;
-                            layerYperX.Add(0);
-                            layerYperX.Add(0);
-                        }
                         continue;
-                    }
-                    if (layerYperX.Count <= 1)
-                    {
-                        layerYperX.Add(layerYperX[zeroColoumn]);
                     }
                     else
                     {
-                        layerYperX[zeroColoumn + 1] = Math.Max(layerYperX[zeroColoumn], layerYperX[zeroColoumn + 1]);
+                        visited.Add(node);
                     }
-                    //Debug.WriteLine("on node " + key.control.Text + " we went to its children at y level " + layerYperX[0]);
-                    DoAllChilds(zeroColoumn, zeroColoumn + 1, family.Childs);
-                    layerYperX[zeroColoumn]++;
 
+                    var childs = nodes[store].Childs(node);
+                    childs.Sort(new NodeChildComparer(nodes[store]));
+                    var parents = nodes[store].Parents(node);
+                    parents.Sort(new NodeParentComparer(nodes[store]));
+
+                    int newParentsX = intX - (parents.Count / 3) - 1;
+                    int newChildX = intX + (childs.Count / 3) + 1;
+                    for (int i = maxYperX.Count; i <= newChildX; i++)
+                    {
+                        maxYperX.Add(1);
+                    }
+
+                    //todo investigate here
+                    if (maxYperX[intX] < intY)
+                    {
+                        maxYperX[intX] = intY;
+                    }
+                    else
+                    {
+                        maxYperX[intX]++;
+                    }
+
+                    node.Position = new PointF(intX * scaleX, Math.Max(intY, maxYperX[intX]) * scaleY);
+
+                    if (parents.Count > 0)
+                    {
+                        foreach (var item in parents)
+                        {
+                            if (visited.Contains(item))
+                            {
+                                continue;
+                            }
+
+                            layerX.Enqueue(newParentsX);
+                            layerY.Enqueue(Math.Max(intY++, maxYperX[newParentsX]));
+                            toExplore.Enqueue(item);
+                        }
+                    }
+
+                    if (childs.Count > 0)
+                    {
+                        foreach (var item in childs)
+                        {
+                            if (visited.Contains(item))
+                            {
+                                continue;
+                            }
+
+                            layerX.Enqueue(newChildX);
+                            layerY.Enqueue(Math.Max(intY++, maxYperX[newChildX]));
+                            toExplore.Enqueue(item);
+                        }
+                    }
                 }
             }
+
+            CenterOnNode(nodes[store].Nodes.First(), 0.8f);
         }
     }
 
