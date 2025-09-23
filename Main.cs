@@ -148,7 +148,7 @@ public partial class Main : Form
         StoryTree.ExpandAll();
         Application.AddMessageFilter(new MouseMessageFilter());
         MouseMessageFilter.MouseMove += HandleMouseEvents;
-        linePen = new Pen(Color.FromArgb(255, 75, 75, 75), 0.2f)
+        linePen = new Pen(Color.FromArgb(75, 75, 75), 0.2f)
         {
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
@@ -163,34 +163,34 @@ public partial class Main : Form
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
         };
-        defaultNodeBrush = new SolidBrush(Color.FromArgb(255, 100, 100, 100));
-        achievementNodeBrush = new SolidBrush(Color.FromArgb(255, 200, 10, 200));
-        alternateTextNodeBrush = new SolidBrush(Color.FromArgb(255, 110, 120, 190));
-        bgcNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 190, 255));
-        bgcResponseNodeBrush = new SolidBrush(Color.FromArgb(255, 150, 225, 255));
-        characterGroupNodeBrush = new SolidBrush(Color.FromArgb(255, 190, 180, 130));
-        clothingNodeBrush = new SolidBrush(Color.FromArgb(255, 115, 235, 30));
-        criteriaGroupNodeBrush = new SolidBrush(Color.FromArgb(255, 150, 50, 50));
-        criterionNodeBrush = new SolidBrush(Color.FromArgb(255, 180, 20, 40));
-        cutsceneNodeBrush = new SolidBrush(Color.FromArgb(255, 235, 30, 160));
-        dialogueNodeBrush = new SolidBrush(Color.FromArgb(255, 45, 60, 185));
-        doorNodeBrush = new SolidBrush(Color.FromArgb(255, 200, 225, 65));
-        eventNodeBrush = new SolidBrush(Color.FromArgb(255, 50, 150, 50));
-        eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 120, 70));
-        inventoryNodeBrush = new SolidBrush(Color.FromArgb(255, 65, 225, 185));
-        itemActionNodeBrush = new SolidBrush(Color.FromArgb(255, 85, 195, 195));
-        itemGroupBehaviourNodeBrush = new SolidBrush(Color.FromArgb(255, 160, 200, 195));
-        itemGroupInteractionNodeBrush = new SolidBrush(Color.FromArgb(255, 95, 120, 115));
-        itemGroupNodeBrush = new SolidBrush(Color.FromArgb(255, 45, 190, 165));
-        itemNodeBrush = new SolidBrush(Color.FromArgb(255, 45, 255, 255));
-        personalityNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 255, 90));
-        poseNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 210, 90));
-        propertyNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 90, 150));
-        questNodeBrush = new SolidBrush(Color.FromArgb(255, 150, 210, 155));
-        responseNodeBrush = new SolidBrush(Color.FromArgb(255, 55, 155, 225));
-        socialNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 160, 90));
-        stateNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 190, 50));
-        valueNodeBrush = new SolidBrush(Color.FromArgb(255, 120, 0, 150));
+        defaultNodeBrush = new SolidBrush(Color.FromArgb(100, 100, 100));
+        achievementNodeBrush = new SolidBrush(Color.FromArgb(200, 10, 200));
+        alternateTextNodeBrush = new SolidBrush(Color.FromArgb(110, 120, 190));
+        bgcNodeBrush = new SolidBrush(Color.FromArgb(40, 190, 255));
+        bgcResponseNodeBrush = new SolidBrush(Color.FromArgb(150, 225, 255));
+        characterGroupNodeBrush = new SolidBrush(Color.FromArgb(190, 180, 130));
+        clothingNodeBrush = new SolidBrush(Color.FromArgb(115, 235, 30));
+        criteriaGroupNodeBrush = new SolidBrush(Color.FromArgb(150, 50, 50));
+        criterionNodeBrush = new SolidBrush(Color.FromArgb(180, 20, 40));
+        cutsceneNodeBrush = new SolidBrush(Color.FromArgb(235, 30, 160));
+        dialogueNodeBrush = new SolidBrush(Color.FromArgb(45, 60, 185));
+        doorNodeBrush = new SolidBrush(Color.FromArgb(200, 225, 65));
+        eventNodeBrush = new SolidBrush(Color.FromArgb(50, 150, 50));
+        eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(40, 120, 70));
+        inventoryNodeBrush = new SolidBrush(Color.FromArgb(65, 225, 185));
+        itemActionNodeBrush = new SolidBrush(Color.FromArgb(85, 195, 195));
+        itemGroupBehaviourNodeBrush = new SolidBrush(Color.FromArgb(160, 200, 195));
+        itemGroupInteractionNodeBrush = new SolidBrush(Color.FromArgb(95, 120, 115));
+        itemGroupNodeBrush = new SolidBrush(Color.FromArgb(45, 190, 165));
+        itemNodeBrush = new SolidBrush(Color.FromArgb(45, 255, 255));
+        personalityNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 90));
+        poseNodeBrush = new SolidBrush(Color.FromArgb(255, 210, 90));
+        propertyNodeBrush = new SolidBrush(Color.FromArgb(255, 90, 150));
+        questNodeBrush = new SolidBrush(Color.FromArgb(150, 210, 155));
+        responseNodeBrush = new SolidBrush(Color.FromArgb(55, 155, 225));
+        socialNodeBrush = new SolidBrush(Color.FromArgb(255, 160, 90));
+        stateNodeBrush = new SolidBrush(Color.FromArgb(40, 190, 50));
+        valueNodeBrush = new SolidBrush(Color.FromArgb(120, 0, 150));
         //darker color variants
         float darkening = 0.18f;
         darkdefaultNodeBrush = new SolidBrush(defaultNodeBrush.Color.Times(darkening));
@@ -1091,7 +1091,7 @@ public partial class Main : Form
         {
             if (IsCtrlPressed
                 && node.Type is NodeType.GameEvent or NodeType.Criterion
-                && node.Data<MissingReferenceInfo>() != null)
+                && node.DataType != typeof(MissingReferenceInfo))
             {
                 nodeToLinkToNext = node;
                 if (highlightNode == node)
@@ -1103,6 +1103,7 @@ public partial class Main : Form
             {
                 AddNodeToNextClicked(node);
                 ShowProperties(node);
+                nodeToLinkToNext = Node.NullNode;
             }
             else if (clickedNode != node)
             {
@@ -1127,7 +1128,7 @@ public partial class Main : Form
 
         foreach (var item in GetSpawnableNodeTypes())
         {
-            NodeContext.Items.Add(new ToolStripButton(item.ToString(), null, onClick: (_, _) =>
+            var button = new ToolStripMenuItem(item.ToString(), null, onClick: (_, _) =>
             {
                 string character = GetProbableCharacter();
                 var newNode = GetNodeFromSpawnableType((Enum.Parse<SpawnableNodeType>(item.ToString()!)), character);
@@ -1136,9 +1137,12 @@ public partial class Main : Form
             {
                 DisplayStyle = ToolStripItemDisplayStyle.Text,
                 AutoSize = true,
-                BackColor = Color.DarkGray,
-
-            });
+                BackColor = Color.FromArgb(64, 64, 64),
+                ForeColor = Color.LightGray,
+            };
+            button.MouseEnter += (_, _) => button.ForeColor = Color.Black;
+            button.MouseLeave += (_, _) => button.ForeColor = Color.LightGray;
+            NodeContext.Items.Add(button);
         }
 
         NodeContext.Show(Graph, ScreenPos);
@@ -1146,7 +1150,7 @@ public partial class Main : Form
 
     private void AddNodeToNextClicked(Node addToThis)
     {
-        if (addToThis.Data<MissingReferenceInfo>() is null)
+        if (addToThis.DataType == typeof(MissingReferenceInfo))
         {
             return;
         }
@@ -2080,7 +2084,7 @@ public partial class Main : Form
                     ScrollBars = ScrollBars.Both,
                     Dock = DockStyle.Fill,
                     ForeColor = Color.LightGray,
-                    BackColor = Color.FromArgb(255, 50, 50, 50),
+                    BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => dialogue.Text = text.Text;
                 text.Select();
@@ -2187,7 +2191,7 @@ public partial class Main : Form
                     ScrollBars = ScrollBars.Both,
                     Dock = DockStyle.Fill,
                     ForeColor = Color.LightGray,
-                    BackColor = Color.FromArgb(255, 50, 50, 50),
+                    BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => dialogue.Text = text.Text;
                 text.Select();
@@ -2232,7 +2236,7 @@ public partial class Main : Form
                     ScrollBars = ScrollBars.Both,
                     Dock = DockStyle.Fill,
                     ForeColor = Color.LightGray,
-                    BackColor = Color.FromArgb(255, 50, 50, 50),
+                    BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => alternate.Text = text.Text;
                 text.Select();
@@ -2458,7 +2462,7 @@ public partial class Main : Form
                     ScrollBars = ScrollBars.Both,
                     Dock = DockStyle.Fill,
                     ForeColor = Color.LightGray,
-                    BackColor = Color.FromArgb(255, 50, 50, 50),
+                    BackColor = Color.FromArgb(50, 50, 50),
                 };
                 customName.TextChanged += (_, _) => eventTrigger.Name = customName.Text;
                 PropertyInspector.Controls.Add(customName, 1, 0);
@@ -2571,7 +2575,7 @@ public partial class Main : Form
                             ScrollBars = ScrollBars.Both,
                             Dock = DockStyle.Fill,
                             ForeColor = Color.LightGray,
-                            BackColor = Color.FromArgb(255, 50, 50, 50),
+                            BackColor = Color.FromArgb(50, 50, 50),
                         };
                         door.TextChanged += (_, _) => eventTrigger.Value = door.Text;
                         PropertyInspector.Controls.Add(door);
@@ -2845,7 +2849,7 @@ public partial class Main : Form
                     ScrollBars = ScrollBars.Both,
                     Dock = DockStyle.Fill,
                     ForeColor = Color.LightGray,
-                    BackColor = Color.FromArgb(255, 50, 50, 50),
+                    BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => response.Text = text.Text;
                 text.Select();
@@ -3002,7 +3006,7 @@ public partial class Main : Form
         for (int i = 0; i < PropertyInspector.Controls.Count; i++)
         {
             PropertyInspector.Controls[i].ForeColor = Color.LightGray;
-            PropertyInspector.Controls[i].BackColor = Color.FromArgb(255, 50, 50, 50);
+            PropertyInspector.Controls[i].BackColor = Color.FromArgb(50, 50, 50);
 
             if (PropertyInspector.Controls[i] is ComboBox box)
             {
@@ -3692,7 +3696,7 @@ public partial class Main : Form
 
                 break;
             }
-            case SpawnableNodeType.Event:
+            case SpawnableNodeType.GameEvent:
             {
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.GameEvent, string.Empty, nodes[character].Positions)

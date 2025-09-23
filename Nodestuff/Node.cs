@@ -62,7 +62,7 @@ namespace CSC.Nodestuff
         CriteriaGroup,
         Dialogue,
         AlternateText,
-        Event,
+        GameEvent,
         EventTrigger,
         Item,
         ItemGroup,

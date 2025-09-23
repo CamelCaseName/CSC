@@ -249,10 +249,12 @@ namespace CSC
             // 
             // NodeContext
             // 
-            NodeContext.BackColor = SystemColors.ControlDarkDark;
+            NodeContext.BackColor = Color.FromArgb(64, 64, 64);
             NodeContext.Name = "contextMenuStrip1";
             NodeContext.Size = new Size(61, 4);
             NodeContext.Text = "Spawn new Node:";
+            NodeContext.ShowImageMargin = false;
+            NodeContext.ShowCheckMargin = false;
             // 
             // Main
             // 
