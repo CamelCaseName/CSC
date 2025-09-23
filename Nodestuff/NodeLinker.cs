@@ -26,6 +26,7 @@ namespace CSC.Nodestuff
             Criterion criterion;
             GameEvent gameEvent;
             EventTrigger trigger;
+            Response response;
             Values.Clear();
             Doors.Clear();
             try
@@ -37,10 +38,9 @@ namespace CSC.Nodestuff
                 for (int i = 0; i < count; i++)
                 {
                     //link all useful criteria and add influencing values as parents
-                    if (newList[i].Type == NodeType.Criterion && newList[i].Data is not null)
+                    if (newList[i].Type == NodeType.Criterion && (criterion = newList[i].Data<Criterion>()!) is not null)
                     {
                         //node is dialogue so data should contain the criteria itself!
-                        criterion = (Criterion)newList[i].Data!;
                         switch (criterion.CompareType)
                         {
                             case CompareTypes.Clothing:
@@ -370,9 +370,8 @@ namespace CSC.Nodestuff
                                 break;
                         }
                     }
-                    else if (newList[i].Type == NodeType.Event && newList[i].Data is not null)
+                    else if (newList[i].Type == NodeType.Event && (gameEvent = newList[i].Data<GameEvent>()!) is not null)
                     {
-                        gameEvent = (GameEvent)newList[i].Data!;
                         switch (gameEvent.EventType)
                         {
                             case GameEvents.Clothing:
@@ -749,9 +748,8 @@ namespace CSC.Nodestuff
                                 break;
                         }
                     }
-                    else if (newList[i].Type == NodeType.EventTrigger && newList[i].Data is not null)
+                    else if (newList[i].Type == NodeType.EventTrigger && (trigger = newList[i].Data<EventTrigger>()!) is not null)
                     {
-                        trigger = (EventTrigger)newList[i].Data!;
                         //link against events
                         foreach (GameEvent _event in trigger.Events!)
                         {
@@ -785,9 +783,8 @@ namespace CSC.Nodestuff
                             ? trigger.Name + " " + trigger.Type
                             : trigger.CharacterToReactTo + " " + trigger.Type + " " + trigger.UpdateIteration + " " + trigger.Name;
                     }
-                    else if (newList[i].Type == NodeType.Response && newList[i].Data is not null)
+                    else if (newList[i].Type == NodeType.Response && (response = newList[i].Data<Response>()!) is not null)
                     {
-                        var response = (Response)newList[i].Data!;
                         if (response.Next == 0)
                         {
                             continue;
@@ -946,9 +943,9 @@ namespace CSC.Nodestuff
             Node? result;
             foreach (Node node in CompareValuesToCheckAgain)
             {
-                if (node.DataType == typeof(Criterion))
+                Criterion criterion;
+                if ((criterion = node.Data<Criterion>()!) is not null)
                 {
-                    var criterion = (Criterion)node.Data!;
                     result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
                     if (result is not null)
                     {

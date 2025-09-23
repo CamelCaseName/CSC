@@ -1034,7 +1034,7 @@ public partial class Main : Form
             {
                 if (IsCtrlPressed
                     && node.Type is NodeType.Event or NodeType.Criterion
-                    && (node.Data != null && node.Data?.GetType() != typeof(MissingReferenceInfo)))
+                    && node.Data<MissingReferenceInfo>() != null)
                 {
                     nodeToLinkToNext = node;
                     if (highlightNode == node)
@@ -1070,7 +1070,7 @@ public partial class Main : Form
 
     private void AddNodeToNextClicked(Node addToThis)
     {
-        if (addToThis.Data is null || addToThis.Data?.GetType() == typeof(MissingReferenceInfo))
+        if (addToThis.Data<MissingReferenceInfo>() is null)
         {
             return;
         }
@@ -1081,52 +1081,52 @@ public partial class Main : Form
         {
             if (addToThis.DataType == typeof(ItemAction))
             {
-                ((ItemAction)addToThis.Data!).Criteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<ItemAction>()!.Criteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(UseWith))
             {
-                ((UseWith)addToThis.Data!).Criteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<UseWith>()!.Criteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(CriteriaList1))
             {
-                ((CriteriaList1)addToThis.Data!).CriteriaList!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<CriteriaList1>()!.CriteriaList!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(GameEvent))
             {
-                ((GameEvent)addToThis.Data!).Criteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<GameEvent>()!.Criteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(EventTrigger))
             {
-                ((EventTrigger)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<EventTrigger>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(AlternateText))
             {
-                ((AlternateText)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<AlternateText>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(Response))
             {
-                ((Response)addToThis.Data!).ResponseCriteria!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<Response>()!.ResponseCriteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(BackgroundChatter))
             {
-                ((BackgroundChatter)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<BackgroundChatter>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemInteraction))
             {
-                ((ItemInteraction)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<ItemInteraction>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemGroupInteraction))
             {
-                ((ItemGroupInteraction)addToThis.Data!).Critera!.Add((Criterion)nodeToLinkToNext.Data!);
+                addToThis.Data<ItemGroupInteraction>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
                 linked = true;
             }
 
@@ -1139,27 +1139,27 @@ public partial class Main : Form
         {
             if (addToThis.DataType == typeof(ItemAction))
             {
-                ((ItemAction)addToThis.Data!).OnTakeActionEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                addToThis.Data<ItemAction>()!.OnTakeActionEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(UseWith))
             {
-                ((UseWith)addToThis.Data!).OnSuccessEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                addToThis.Data<UseWith>()!.OnSuccessEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(EventTrigger))
             {
-                ((EventTrigger)addToThis.Data!).Events!.Add((GameEvent)nodeToLinkToNext.Data!);
+                addToThis.Data<EventTrigger>()!.Events!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(MainStory))
             {
-                ((MainStory)addToThis.Data!).GameStartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                addToThis.Data<MainStory>()!.GameStartEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(Response))
             {
-                ((Response)addToThis.Data!).ResponseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                addToThis.Data<Response>()!.ResponseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(Dialogue))
@@ -1168,18 +1168,18 @@ public partial class Main : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    ((Dialogue)addToThis.Data!).StartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    addToThis.Data<Dialogue>()!.StartEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    ((Dialogue)addToThis.Data!).CloseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    addToThis.Data<Dialogue>()!.CloseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                     linked = true;
                 }
             }
             else if (addToThis.DataType == typeof(BackgroundChatter))
             {
-                ((BackgroundChatter)addToThis.Data!).StartEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                addToThis.Data<BackgroundChatter>()!.StartEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemInteraction))
@@ -1188,12 +1188,12 @@ public partial class Main : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    ((ItemInteraction)addToThis.Data!).OnAcceptEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    addToThis.Data<ItemInteraction>()!.OnAcceptEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    ((ItemInteraction)addToThis.Data!).OnRefuseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    addToThis.Data<ItemInteraction>()!.OnRefuseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                     linked = true;
                 }
             }
@@ -1203,12 +1203,12 @@ public partial class Main : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    ((ItemGroupInteraction)addToThis.Data!).OnAcceptEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    addToThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    ((ItemGroupInteraction)addToThis.Data!).OnRefuseEvents!.Add((GameEvent)nodeToLinkToNext.Data!);
+                    addToThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
                     linked = true;
                 }
             }
@@ -1225,7 +1225,7 @@ public partial class Main : Form
     }
 
     //todo implement updating of node references on changing values!!!
-    //todo implement drag/drop setting of node data like item name or sth
+    //todo implement drag/drop setting of node.Data<>() like item name or sth
     private void ShowProperties(Node node)
     {
         PropertyInspector.Controls.Clear();
@@ -1243,7 +1243,7 @@ public partial class Main : Form
             {
                 PropertyInspector.RowCount = 1;
                 PropertyInspector.ColumnCount = 2;
-                Criterion criterion = (Criterion)node.Data!;
+                Criterion criterion = node.Data<Criterion>()!;
 
                 Label label = new()
                 {
@@ -1917,7 +1917,7 @@ public partial class Main : Form
                     AutoSize = true,
                 };
                 PropertyInspector.Controls.Add(label);
-                BackgroundChatter dialogue = ((BackgroundChatter)node.Data!);
+                BackgroundChatter dialogue = node.Data<BackgroundChatter>()!;
 
                 ComboBox talkingTo = GetComboBox();
                 talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.AnybodyCharacters)));
@@ -2027,7 +2027,7 @@ public partial class Main : Form
                     AutoSize = true,
                 };
                 PropertyInspector.Controls.Add(label);
-                if (node.Data?.GetType() != typeof(Dialogue))
+                if (node.Data<Dialogue>()is null)
                 {
                     Label label2 = new()
                     {
@@ -2040,7 +2040,7 @@ public partial class Main : Form
                     break;
                 }
                 PropertyInspector.RowCount = 2;
-                Dialogue dialogue = ((Dialogue)node.Data!);
+                Dialogue dialogue = node.Data<Dialogue>()!;
 
                 ComboBox talkingTo = GetComboBox();
                 talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
@@ -2135,7 +2135,7 @@ public partial class Main : Form
                     AutoSize = true,
                 };
                 PropertyInspector.Controls.Add(label);
-                AlternateText alternate = ((AlternateText)node.Data!);
+                AlternateText alternate = node.Data<AlternateText>()!;
 
                 NumericUpDown sortOrder = new()
                 {
@@ -2168,7 +2168,7 @@ public partial class Main : Form
             }
             case NodeType.Event:
             {
-                if (node.Data?.GetType() != typeof(GameEvent))
+                if (node.Data<GameEvent>()is  null)
                 {
                     Label label2 = new()
                     {
@@ -2185,7 +2185,7 @@ public partial class Main : Form
                 PropertyInspector.RowCount = 2;
                 PropertyInspector.ColumnCount = 5;
 
-                GameEvent gevent = (GameEvent)node.Data;
+                GameEvent gevent = node.Data<GameEvent>()!;
 
                 Label label = new()
                 {
@@ -2347,7 +2347,7 @@ public partial class Main : Form
             }
             case NodeType.EventTrigger:
             {
-                if (node.Data?.GetType() != typeof(EventTrigger))
+                if (node.Data<EventTrigger>() is  null)
                 {
                     Label label2 = new()
                     {
@@ -2360,7 +2360,7 @@ public partial class Main : Form
                     PropertyInspector.Controls.Add(label2);
                     break;
                 }
-                EventTrigger eventTrigger = ((EventTrigger)node.Data!);
+                EventTrigger eventTrigger = node.Data<EventTrigger>()!;
 
                 PropertyInspector.RowCount = 2;
 
@@ -2667,7 +2667,7 @@ public partial class Main : Form
             case NodeType.Response:
             {
                 PropertyInspector.RowCount = 2;
-                if (node.Data?.GetType() != typeof(Response))
+                if (node.Data<Response>() is  null)
                 {
                     Label label2 = new()
                     {
@@ -2680,7 +2680,7 @@ public partial class Main : Form
                     PropertyInspector.Controls.Add(label2);
                     break;
                 }
-                Response response = ((Response)node.Data!);
+                Response response = node.Data<Response>()!;
 
                 PropertyInspector.ColumnCount = 6;
 
@@ -2791,17 +2791,17 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                if (node.Data?.GetType() == typeof(Value))
+                if (node.Data<Value>() is  null)
                 {
                     TextBox obj2 = new()
                     {
                         Dock = DockStyle.Fill,
                         TextAlign = HorizontalAlignment.Center,
                         ForeColor = Color.LightGray,
-                        Text = ((Value)node.Data).value,
+                        Text = node.Data<Value>()!.value,
                         AutoSize = true,
                     };
-                    obj2.TextChanged += (_, args) => ((Value)node.Data).value = obj2.Text;
+                    obj2.TextChanged += (_, args) => node.Data<Value>()!.value = obj2.Text;
                     PropertyInspector.Controls.Add(obj2);
                 }
                 else
@@ -2830,7 +2830,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                if (node.Data?.GetType() == typeof(Trait))
+                if (node.Data<Trait>() is  null)
                 {
                     NumericUpDown option = new()
                     {
@@ -2838,13 +2838,13 @@ public partial class Main : Form
                         ForeColor = Color.LightGray,
                         Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
                         Location = new(0, PropertyInspector.Size.Height / 2),
-                        Value = ((Trait)(node.Data)).Value,
+                        Value = node.Data<Trait>()!.Value,
                         Maximum = 100,
                         Minimum = -100,
                         Width = 50
                     };
                     option.PerformLayout();
-                    option.ValueChanged += (_, _) => ((Trait)(node.Data)).Value = (int)option.Value;
+                    option.ValueChanged += (_, _) => node.Data<Trait>()!.Value = (int)option.Value;
                     PropertyInspector.Controls.Add(option);
                 }
                 else
@@ -3311,8 +3311,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.Criterion, string.Empty, nodes[character].Positions)
                 {
-                    Data = new Criterion() { Character = character },
-                    DataType = typeof(Criterion),
+                    rawData = new Criterion() { Character = character },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3321,57 +3320,57 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(ItemAction))
                     {
-                        ((ItemAction)clickedNode.Data!).Criteria.Add((Criterion)newNode.Data);
+                        clickedNode.Data<ItemAction>()!.Criteria.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(UseWith))
                     {
-                        ((UseWith)clickedNode.Data!).Criteria.Add((Criterion)newNode.Data);
+                        clickedNode.Data<UseWith>()!.Criteria.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(CriteriaList1))
                     {
-                        ((CriteriaList1)clickedNode.Data!).CriteriaList.Add((Criterion)newNode.Data);
+                        clickedNode.Data<CriteriaList1>()!.CriteriaList.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((GameEvent)clickedNode.Data!).Criteria.Add((Criterion)newNode.Data);
+                        clickedNode.Data<GameEvent>()!.Criteria.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(EventTrigger))
                     {
-                        ((EventTrigger)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
+                        clickedNode.Data<EventTrigger>()!.Critera.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(AlternateText))
                     {
-                        ((AlternateText)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
+                        clickedNode.Data<AlternateText>()!.Critera.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(Response))
                     {
-                        ((Response)clickedNode.Data!).ResponseCriteria.Add((Criterion)newNode.Data);
+                        clickedNode.Data<Response>()!.ResponseCriteria.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(Dialogue))
                     {
-                        ((Dialogue)clickedNode.Data!).DynamicDialogueCriteria.Add((Criterion)newNode.Data);
+                        clickedNode.Data<Dialogue>()!.DynamicDialogueCriteria.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(BackgroundChatter))
                     {
-                        ((BackgroundChatter)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
+                        clickedNode.Data<BackgroundChatter>()!.Critera.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemInteraction))
                     {
-                        ((ItemInteraction)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
+                        clickedNode.Data<ItemInteraction>()!.Critera.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemGroupInteraction))
                     {
-                        ((ItemGroupInteraction)clickedNode.Data!).Critera.Add((Criterion)newNode.Data);
+                        clickedNode.Data<ItemGroupInteraction>()!.Critera.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
                 }
@@ -3383,8 +3382,7 @@ public partial class Main : Form
                 string id = "action";
                 newNode = new Node(id, NodeType.ItemAction, string.Empty, nodes[character].Positions)
                 {
-                    Data = new ItemAction() { ActionName = id },
-                    DataType = typeof(ItemAction),
+                    rawData = new ItemAction() { ActionName = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3393,22 +3391,22 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((ItemAction)newNode.Data!).Criteria.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<ItemAction>()!.Criteria.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((ItemAction)newNode.Data!).OnTakeActionEvents.Add((GameEvent)clickedNode.Data!);
+                        newNode.Data<ItemAction>()!.OnTakeActionEvents.Add(clickedNode.Data<GameEvent>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemOverride))
                     {
-                        ((ItemOverride)clickedNode.Data!).ItemActions.Add((ItemAction)newNode.Data!);
+                        clickedNode.Data<ItemOverride>()!.ItemActions.Add(newNode.Data<ItemAction>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemGroupBehavior))
                     {
-                        ((ItemGroupBehavior)clickedNode.Data!).ItemActions.Add((ItemAction)newNode.Data!);
+                        clickedNode.Data<ItemGroupBehavior>()!.ItemActions.Add(newNode.Data<ItemAction>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
@@ -3420,8 +3418,7 @@ public partial class Main : Form
                 var guid = Guid.NewGuid().ToString();
                 newNode = new Node(guid, NodeType.Achievement, string.Empty, nodes[character].Positions)
                 {
-                    Data = new Achievement() { Id = guid },
-                    DataType = typeof(Achievement),
+                    rawData = new Achievement() { Id = guid },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3430,8 +3427,8 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        GameEvent gameEvent = ((GameEvent)clickedNode.Data!);
-                        gameEvent.Value = ((Achievement)newNode.Data!).Id;
+                        GameEvent gameEvent = clickedNode.Data<GameEvent>()!;
+                        gameEvent.Value = newNode.Data<Achievement>()!.Id;
                         gameEvent.EventType = GameEvents.UnlockAchievement;
                         nodes[character].AddParent(newNode, clickedNode);
                     }
@@ -3443,8 +3440,7 @@ public partial class Main : Form
             {
                 newNode = new Node("BGC" + (characterStories[character].BackgroundChatter!.Count + 1).ToString(), NodeType.BGC, string.Empty, nodes[character].Positions)
                 {
-                    Data = new BackgroundChatter() { Id = characterStories[character].BackgroundChatter!.Count + 1 },
-                    DataType = typeof(BackgroundChatter),
+                    rawData = new BackgroundChatter() { Id = characterStories[character].BackgroundChatter!.Count + 1 },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3453,17 +3449,17 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((BackgroundChatter)newNode.Data!).Critera.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<BackgroundChatter>()!.Critera.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((BackgroundChatter)newNode.Data!).StartEvents.Add((GameEvent)clickedNode.Data!);
+                        newNode.Data<BackgroundChatter>()!.StartEvents.Add(clickedNode.Data<GameEvent>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(BackgroundChatterResponse))
                     {
-                        ((BackgroundChatter)newNode.Data!).Responses.Add((BackgroundChatterResponse)clickedNode.Data!);
+                        newNode.Data<BackgroundChatter>()!.Responses.Add(clickedNode.Data<BackgroundChatterResponse>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
@@ -3474,8 +3470,7 @@ public partial class Main : Form
             {
                 newNode = new Node(Guid.NewGuid().ToString(), NodeType.BGCResponse, string.Empty, nodes[character].Positions)
                 {
-                    Data = new BackgroundChatterResponse() { Label = "response:" },
-                    DataType = typeof(BackgroundChatterResponse),
+                    rawData = new BackgroundChatterResponse() { Label = "response:" },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3484,7 +3479,7 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(BackgroundChatter))
                     {
-                        ((BackgroundChatter)clickedNode.Data!).Responses.Add((BackgroundChatterResponse)clickedNode.Data!);
+                        clickedNode.Data<BackgroundChatter>()!.Responses.Add(clickedNode.Data<BackgroundChatterResponse>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3496,8 +3491,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.CriteriaGroup, string.Empty, nodes[character].Positions)
                 {
-                    Data = new CriteriaGroup() { Name = id },
-                    DataType = typeof(CriteriaGroup),
+                    rawData = new CriteriaGroup() { Name = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3506,7 +3500,7 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((CriteriaGroup)newNode.Data!).CriteriaList[0].CriteriaList.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<CriteriaGroup>()!.CriteriaList[0].CriteriaList.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
@@ -3518,28 +3512,27 @@ public partial class Main : Form
                 int id = (characterStories[character].Dialogues!.Count + 1);
                 newNode = new Node(id.ToString(), NodeType.Dialogue, string.Empty, nodes[character].Positions)
                 {
-                    Data = new Dialogue() { ID = id },
-                    DataType = typeof(Dialogue),
+                    rawData = new Dialogue() { ID = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
-                characterStories[character].Dialogues!.Add((Dialogue)newNode.Data!);
+                characterStories[character].Dialogues!.Add(newNode.Data<Dialogue>()!);
 
                 if (clickedNode != Node.NullNode)
                 {
                     if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((Dialogue)newNode.Data!).DynamicDialogueCriteria.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<Dialogue>()!.DynamicDialogueCriteria.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((Dialogue)newNode.Data!).StartEvents.Add((GameEvent)clickedNode.Data!);
+                        newNode.Data<Dialogue>()!.StartEvents.Add(clickedNode.Data<GameEvent>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Response))
                     {
-                        ((Response)clickedNode.Data!).Next = ((Dialogue)newNode.Data!).ID;
+                        clickedNode.Data<Response>()!.Next = newNode.Data<Dialogue>()!.ID;
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3551,8 +3544,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.AlternateText, string.Empty, nodes[character].Positions)
                 {
-                    Data = new AlternateText() { },
-                    DataType = typeof(AlternateText),
+                    rawData = new AlternateText() { },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3561,12 +3553,12 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Dialogue))
                     {
-                        ((Dialogue)clickedNode.Data!).AlternateTexts.Add((AlternateText)newNode.Data!);
+                        clickedNode.Data<Dialogue>()!.AlternateTexts.Add(newNode.Data<AlternateText>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((AlternateText)newNode.Data!).Critera.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<AlternateText>()!.Critera.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3578,58 +3570,57 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.Event, string.Empty, nodes[character].Positions)
                 {
-                    Data = new GameEvent() { Character = character },
-                    DataType = typeof(GameEvent),
+                    rawData = new GameEvent() { Character = character },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
 
                 if (clickedNode != Node.NullNode)
                 {
-                    GameEvent gameEvent = ((GameEvent)newNode.Data!);
+                    GameEvent gameEvent = newNode.Data<GameEvent>()!;
                     if (clickedNode.DataType == typeof(Criterion))
                     {
-                        gameEvent.Criteria.Add((Criterion)clickedNode.Data!);
+                        gameEvent.Criteria.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemAction))
                     {
-                        ((ItemAction)clickedNode.Data!).OnTakeActionEvents.Add(gameEvent);
+                        clickedNode.Data<ItemAction>()!.OnTakeActionEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(UseWith))
                     {
-                        ((UseWith)clickedNode.Data!).OnSuccessEvents.Add(gameEvent);
+                        clickedNode.Data<UseWith>()!.OnSuccessEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(EventTrigger))
                     {
-                        ((EventTrigger)clickedNode.Data!).Events.Add(gameEvent);
+                        clickedNode.Data<EventTrigger>()!.Events.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Response))
                     {
-                        ((Response)clickedNode.Data!).ResponseEvents.Add(gameEvent);
+                        clickedNode.Data<Response>()!.ResponseEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Dialogue))
                     {
-                        ((Dialogue)clickedNode.Data!).StartEvents.Add(gameEvent);
+                        clickedNode.Data<Dialogue>()!.StartEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(BackgroundChatter))
                     {
-                        ((BackgroundChatter)clickedNode.Data!).StartEvents.Add(gameEvent);
+                        clickedNode.Data<BackgroundChatter>()!.StartEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemInteraction))
                     {
-                        ((ItemInteraction)clickedNode.Data!).OnAcceptEvents.Add(gameEvent);
+                        clickedNode.Data<ItemInteraction>()!.OnAcceptEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemGroupInteraction))
                     {
-                        ((ItemGroupInteraction)clickedNode.Data!).OnAcceptEvents.Add(gameEvent);
+                        clickedNode.Data<ItemGroupInteraction>()!.OnAcceptEvents.Add(gameEvent);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3641,8 +3632,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.EventTrigger, string.Empty, nodes[character].Positions)
                 {
-                    Data = new EventTrigger() { Id = id },
-                    DataType = typeof(EventTrigger),
+                    rawData = new EventTrigger() { Id = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3651,17 +3641,17 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((EventTrigger)newNode.Data!).Events.Add((GameEvent)clickedNode.Data!);
+                        newNode.Data<EventTrigger>()!.Events.Add(clickedNode.Data<GameEvent>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(MainStory))
                     {
-                        ((MainStory)clickedNode.Data!).PlayerReactions.Add((EventTrigger)newNode.Data!);
+                        clickedNode.Data<MainStory>()!.PlayerReactions.Add(newNode.Data<EventTrigger>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(CharacterStory))
                     {
-                        ((CharacterStory)clickedNode.Data!).Reactions.Add((EventTrigger)newNode.Data!);
+                        clickedNode.Data<CharacterStory>()!.Reactions.Add(newNode.Data<EventTrigger>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3673,8 +3663,7 @@ public partial class Main : Form
                 string id = "item name";
                 newNode = new Node(id, NodeType.Item, string.Empty, nodes[character].Positions)
                 {
-                    Data = new ItemOverride() { ItemName = id },
-                    DataType = typeof(ItemOverride),
+                    rawData = new ItemOverride() { ItemName = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3683,12 +3672,12 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(ItemAction))
                     {
-                        ((ItemOverride)newNode.Data!).ItemActions.Add((ItemAction)clickedNode.Data!);
+                        newNode.Data<ItemOverride>()!.ItemActions.Add(clickedNode.Data<ItemAction>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(ItemGroup))
                     {
-                        ((ItemGroup)clickedNode.Data!).ItemsInGroup.Add(((ItemOverride)newNode.Data!).ItemName!);
+                        clickedNode.Data<ItemGroup>()!.ItemsInGroup.Add(newNode.Data<ItemOverride>()!.ItemName!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }
@@ -3700,8 +3689,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.ItemGroup, string.Empty, nodes[character].Positions)
                 {
-                    Data = new ItemGroup() { Id = id },
-                    DataType = typeof(ItemGroup),
+                    rawData = new ItemGroup() { Id = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3710,13 +3698,13 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(ItemOverride))
                     {
-                        ((ItemGroup)newNode.Data!).ItemsInGroup.Add(((ItemOverride)clickedNode.Data!).ItemName!);
+                        newNode.Data<ItemGroup>()!.ItemsInGroup.Add(clickedNode.Data<ItemOverride>()!.ItemName!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((GameEvent)clickedNode.Data!).EventType = GameEvents.ItemFromItemGroup;
-                        ((GameEvent)clickedNode.Data!).Value = ((ItemGroup)newNode.Data!).Id;
+                        clickedNode.Data<GameEvent>()!.EventType = GameEvents.ItemFromItemGroup;
+                        clickedNode.Data<GameEvent>()!.Value = newNode.Data<ItemGroup>()!.Id;
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
@@ -3728,8 +3716,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
                 {
-                    Data = new Quest() { CharacterName = character, ID = id },
-                    DataType = typeof(Quest),
+                    rawData = new Quest() { CharacterName = character, ID = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3738,14 +3725,14 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((GameEvent)clickedNode.Data!).EventType = GameEvents.Quest;
-                        ((GameEvent)clickedNode.Data!).Key = ((Quest)newNode.Data!).ID;
+                        clickedNode.Data<GameEvent>()!.EventType = GameEvents.Quest;
+                        clickedNode.Data<GameEvent>()!.Key = newNode.Data<Quest>()!.ID;
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((Criterion)clickedNode.Data!).CompareType = CompareTypes.Quest;
-                        ((Criterion)clickedNode.Data!).Key = ((Quest)newNode.Data!).ID;
+                        clickedNode.Data<Criterion>()!.CompareType = CompareTypes.Quest;
+                        clickedNode.Data<Criterion>()!.Key = newNode.Data<Quest>()!.ID;
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
@@ -3757,8 +3744,7 @@ public partial class Main : Form
                 string id = Guid.NewGuid().ToString();
                 newNode = new Node(id, NodeType.Response, string.Empty, nodes[character].Positions)
                 {
-                    Data = new Response() { Id = id },
-                    DataType = typeof(Response),
+                    rawData = new Response() { Id = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3767,17 +3753,17 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Dialogue))
                     {
-                        ((Dialogue)clickedNode.Data!).Responses.Add((Response)newNode.Data!);
+                        clickedNode.Data<Dialogue>()!.Responses.Add(newNode.Data<Response>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((Response)newNode.Data!).ResponseCriteria.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<Response>()!.ResponseCriteria.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((Response)newNode.Data!).ResponseEvents.Add((GameEvent)clickedNode.Data!);
+                        newNode.Data<Response>()!.ResponseEvents.Add(clickedNode.Data<GameEvent>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
@@ -3789,8 +3775,7 @@ public partial class Main : Form
                 string id = "ValueName";
                 newNode = new Node(id, NodeType.Value, string.Empty, nodes[character].Positions)
                 {
-                    Data = new Value() { value = id },
-                    DataType = typeof(Value),
+                    rawData = new Value() { value = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3799,14 +3784,14 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((Criterion)clickedNode.Data!).CompareType = CompareTypes.Value;
-                        ((Criterion)clickedNode.Data!).Key = ((Value)newNode.Data!).value;
+                        clickedNode.Data<Criterion>()!.CompareType = CompareTypes.Value;
+                        clickedNode.Data<Criterion>()!.Key = newNode.Data<Value>()!.value;
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        ((GameEvent)clickedNode.Data!).EventType = GameEvents.ModifyValue;
-                        ((GameEvent)clickedNode.Data!).Key = ((Value)newNode.Data!).value;
+                        clickedNode.Data<GameEvent>()!.EventType = GameEvents.ModifyValue;
+                        clickedNode.Data<GameEvent>()!.Key = newNode.Data<Value>()!.value;
                         nodes[character].AddChild(newNode, clickedNode);
                     }
                     else if (clickedNode.Type == NodeType.Value && clickedNode.DataType == typeof(MissingReferenceInfo))
@@ -3817,11 +3802,11 @@ public partial class Main : Form
                 }
                 if (character == Player)
                 {
-                    Story.PlayerValues.Add(((Value)newNode.Data!).value!);
+                    Story.PlayerValues.Add(newNode.Data<Value>()!.value!);
                 }
                 else
                 {
-                    characterStories[character].StoryValues.Add(((Value)newNode.Data!).value!);
+                    characterStories[character].StoryValues.Add(newNode.Data<Value>()!.value!);
                 }
                 break;
             }
@@ -3830,8 +3815,7 @@ public partial class Main : Form
                 string id = "use on item:";
                 newNode = new Node(id, NodeType.UseWith, string.Empty, nodes[character].Positions)
                 {
-                    Data = new UseWith() { ItemName = id },
-                    DataType = typeof(UseWith),
+                    rawData = new UseWith() { ItemName = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);
@@ -3840,12 +3824,12 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(ItemOverride))
                     {
-                        ((ItemOverride)clickedNode.Data!).UseWiths.Add((UseWith)newNode.Data!);
+                        clickedNode.Data<ItemOverride>()!.UseWiths.Add(newNode.Data<UseWith>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                     else if (clickedNode.DataType == typeof(Criterion))
                     {
-                        ((UseWith)newNode.Data!).Criteria.Add((Criterion)clickedNode.Data!);
+                        newNode.Data<UseWith>()!.Criteria.Add(clickedNode.Data<Criterion>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
                 }

@@ -99,7 +99,7 @@ namespace CSC.Nodestuff
         public string ID;
         public string Text;
         private string fileName = Main.NoCharacter;
-        public Type DataType = typeof(MissingReferenceInfo);
+        private Type dataType = typeof(MissingReferenceInfo);
         public NodePositionSorting CurrentPositionSorting
         {
             get
@@ -154,8 +154,7 @@ namespace CSC.Nodestuff
 
         public Rectangle RectangleNonF { get => new((int)Position.X, (int)Position.Y, (int)Size.Width, (int)Size.Height); }
 
-        //todo replace by generic type
-        public object? Data
+        public object? rawData
         {
             get
             {
@@ -165,6 +164,18 @@ namespace CSC.Nodestuff
             {
                 data = value;
                 DataType = value?.GetType() ?? typeof(object);
+            }
+        }
+
+        public T? Data<T>() where T : class, new()
+        {
+            if (typeof(T) == DataType && rawData is not null)
+            {
+                return (T)rawData;
+            }
+            else
+            {
+                return null;
             }
         }
 
@@ -192,6 +203,8 @@ namespace CSC.Nodestuff
             }
         }
 
+        public Type DataType { get => dataType; private set => dataType = value; }
+
         public Node(string iD, NodeType type, string text, NodePositionSorting sorting)
         {
             SortingList = new()
@@ -213,7 +226,7 @@ namespace CSC.Nodestuff
             ID = iD;
             Text = text;
             Type = type;
-            Data = data;
+            rawData = data;
             DataType = data.GetType();
             Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
         }
@@ -262,8 +275,7 @@ namespace CSC.Nodestuff
             foreach (Criterion criterion in criteria)
             {
                 Node tempNode = CreateCriteriaNode(criterion, this, nodes);
-                tempNode.Data = criterion;
-                tempNode.DataType = typeof(Criterion);
+                tempNode.rawData = criterion;
                 if (criterion.CompareType == CompareTypes.PlayerGender)
                 {
                     tempNode.Gender = criterion.Value == "Female" ? Gender.Female : criterion.Value == "Male" ? Gender.Male : Gender.None;
@@ -279,7 +291,7 @@ namespace CSC.Nodestuff
             {
                 var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", this, CurrentPositionSorting)
                 {
-                    Data = _event,
+                    rawData = _event,
                     DataType = typeof(GameEvent),
                     FileName = this.FileName
                 };
