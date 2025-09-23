@@ -15,6 +15,14 @@ namespace CSC
             graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixel;
             graphics.PixelOffsetMode = PixelOffsetMode.None;
         }
+
+        public static void ExtendToIndex<T>(this List<T> list, int newLastIndex, T item)
+        {
+            for (int i = list.Count; i <= newLastIndex; i++)
+            {
+                list.Add(item);
+            }
+        }
     }
 
     public class NodeParentComparer(NodeStore store) : IComparer<Node>

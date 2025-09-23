@@ -71,13 +71,13 @@ namespace CSC.Nodestuff
         Value
     }
 
-    public sealed class MissingreferenceInfo
+    public sealed class MissingReferenceInfo
     {
-        public MissingreferenceInfo()
+        public MissingReferenceInfo()
         {
             Text = string.Empty;
         }
-        public MissingreferenceInfo(string text)
+        public MissingReferenceInfo(string text)
         {
             Text = text;
         }
@@ -99,7 +99,7 @@ namespace CSC.Nodestuff
         public string ID;
         public string Text;
         private string fileName = Main.NoCharacter;
-        public Type DataType = typeof(object);
+        public Type DataType = typeof(MissingReferenceInfo);
         public NodePositionSorting CurrentPositionSorting
         {
             get
@@ -159,7 +159,7 @@ namespace CSC.Nodestuff
         {
             get
             {
-                return data ?? new MissingreferenceInfo(Text);
+                return data ?? new MissingReferenceInfo(Text);
             }
             set
             {

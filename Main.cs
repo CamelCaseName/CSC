@@ -43,13 +43,14 @@ public partial class Main : Form
     private readonly SolidBrush itemNodeBrush;
     private readonly List<int> maxYperX = [];
     private readonly Pen linePen;
+    private readonly Pen clickedLinePen;
     private readonly SolidBrush personalityNodeBrush;
     private readonly SolidBrush poseNodeBrush;
     private readonly SolidBrush propertyNodeBrush;
     private readonly SolidBrush questNodeBrush;
     private readonly SolidBrush responseNodeBrush;
-    private readonly int scaleX = NodeSizeX * 2;
-    private readonly int scaleY = NodeSizeY * 2;
+    private readonly int scaleX = (int)(NodeSizeX * 1.5f);
+    private readonly int scaleY = (int)(NodeSizeY * 1.5f);
     private readonly SolidBrush socialNodeBrush;
     private readonly SolidBrush stateNodeBrush;
     private readonly SolidBrush valueNodeBrush;
@@ -117,12 +118,17 @@ public partial class Main : Form
         StoryTree.ExpandAll();
         Application.AddMessageFilter(new MouseMessageFilter());
         MouseMessageFilter.MouseMove += HandleMouseEvents;
-        linePen = new Pen(Brushes.LightGray, 0.3f)
+        linePen = new Pen(Color.FromArgb(255, 75, 75, 75), 0.2f)
         {
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
         };
-        highlightPen = new Pen(Brushes.Green, 3)
+        clickedLinePen = new Pen(Brushes.LightGray, 3)
+        {
+            EndCap = LineCap.Triangle,
+            StartCap = LineCap.Round
+        };
+        highlightPen = new Pen(Brushes.DeepPink, 3)
         {
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
@@ -210,7 +216,7 @@ public partial class Main : Form
                 //response dialogue bgc item itemgroup
                 case NodeType.Criterion:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.Event, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup]);
+                    NodeSpawnBox.Items.AddRange([NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.Event, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup, NodeType.Value]);
                     break;
                 }
 
@@ -260,11 +266,15 @@ public partial class Main : Form
                     NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion, NodeType.Response]);
                     break;
                 }
+                case NodeType.Value:
+                {
+                    NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion, NodeType.Value]);
+                    break;
+                }
                 //event criterion
                 case NodeType.CharacterGroup:
                 case NodeType.AlternateText:
                 case NodeType.EventTrigger:
-                case NodeType.Value:
                 case NodeType.Clothing:
                 case NodeType.Personality:
                 case NodeType.Quest:
@@ -648,6 +658,11 @@ public partial class Main : Form
         scaledFont = GetScaledFont(g, DefaultFont, Scaling[SelectedCharacter]);
 
         //todo we need to cull here as well somehow
+        DrawAllNodes(e);
+    }
+
+    private void DrawAllNodes(PaintEventArgs e)
+    {
         foreach (var node in nodes[SelectedCharacter].Nodes)
         {
             var list = nodes[SelectedCharacter].Childs(node);
@@ -656,6 +671,26 @@ public partial class Main : Form
                 foreach (var item in list)
                 {
                     DrawEdge(e, node, item, linePen);
+                }
+            }
+        }
+
+
+        if (clickedNode != Node.NullNode)
+        {
+            var family = nodes[SelectedCharacter][clickedNode];
+            if (family.Childs.Count > 0)
+            {
+                foreach (var item in family.Childs)
+                {
+                    DrawEdge(e, clickedNode, item, clickedLinePen);
+                }
+            }
+            if (family.Parents.Count > 0)
+            {
+                foreach (var item in family.Parents)
+                {
+                    DrawEdge(e, item, clickedNode, clickedLinePen);
                 }
             }
         }
@@ -847,11 +882,13 @@ public partial class Main : Form
 
             NodeStore nodeStore = nodes[store];
             var nodeList = nodeStore.Nodes;
+            int ParentEdgeMaxStartValue = 1;
+
             nodeList.Sort(new NodeParentComparer(nodes[store]));
             foreach (var key in nodeList)
             {
                 Family family = nodeStore[key];
-                if (family.Parents.Count != 0)
+                if (family.Parents.Count > ParentEdgeMaxStartValue)
                 {
                     continue;
                 }
@@ -867,7 +904,7 @@ public partial class Main : Form
                 }
                 else
                 {
-                    intX += 1;
+                    intX += 1 + ParentEdgeMaxStartValue;
                 }
 
                 for (int i = maxYperX.Count; i <= intX; i++)
@@ -882,7 +919,7 @@ public partial class Main : Form
                 layerX.Enqueue(intX);
                 layerY.Enqueue(1);
 
-                Debug.WriteLine($"starting on {key.ID} at {intX}|{1}");
+                //Debug.WriteLine($"starting on {key.ID} at {intX}|{1}");
 
                 while (toExplore.Count > 0)
                 {
@@ -906,10 +943,7 @@ public partial class Main : Form
 
                     int newParentsX = intX - (parents.Count / 3) - 1;
                     int newChildX = intX + (childs.Count / 3) + 1;
-                    for (int i = maxYperX.Count; i <= newChildX; i++)
-                    {
-                        maxYperX.Add(1);
-                    }
+                    maxYperX.ExtendToIndex(newChildX, 1);
 
                     if (maxYperX[intX] < intY)
                     {
@@ -1000,7 +1034,7 @@ public partial class Main : Form
             {
                 if (IsCtrlPressed
                     && node.Type is NodeType.Event or NodeType.Criterion
-                    && (node.Data != null && node.Data?.GetType() != typeof(MissingreferenceInfo)))
+                    && (node.Data != null && node.Data?.GetType() != typeof(MissingReferenceInfo)))
                 {
                     nodeToLinkToNext = node;
                     if (highlightNode == node)
@@ -1036,7 +1070,7 @@ public partial class Main : Form
 
     private void AddNodeToNextClicked(Node addToThis)
     {
-        if (addToThis.Data is null || addToThis.Data?.GetType() == typeof(MissingreferenceInfo))
+        if (addToThis.Data is null || addToThis.Data?.GetType() == typeof(MissingReferenceInfo))
         {
             return;
         }
@@ -3775,8 +3809,20 @@ public partial class Main : Form
                         ((GameEvent)clickedNode.Data!).Key = ((Value)newNode.Data!).value;
                         nodes[character].AddChild(newNode, clickedNode);
                     }
+                    else if (clickedNode.Type == NodeType.Value && clickedNode.DataType == typeof(MissingReferenceInfo))
+                    {
+                        //this is the value root node
+                        nodes[character].AddChild(clickedNode, newNode);
+                    }
                 }
-
+                if (character == Player)
+                {
+                    Story.PlayerValues.Add(((Value)newNode.Data!).value!);
+                }
+                else
+                {
+                    characterStories[character].StoryValues.Add(((Value)newNode.Data!).value!);
+                }
                 break;
             }
             case SpawnableNodeType.UseWith:
@@ -3817,13 +3863,20 @@ public partial class Main : Form
             return;
         }
 
-        var pos = Graph.PointToClient(Cursor.Position);
-        ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
-        ScreenPosX -= NodeSizeX / 2;
-        ScreenPosY -= NodeSizeY / 2;
-        var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
+        if (clickedNode == Node.NullNode)
+        {
+            var pos = Graph.PointToClient(Cursor.Position);
+            ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+            ScreenPosX -= NodeSizeX / 2;
+            ScreenPosY -= NodeSizeY / 2;
+            var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
 
-        newNode.Position = ScreenPos;
+            newNode.Position = ScreenPos;
+        }
+        else
+        {
+            newNode.Position = clickedNode.Position + new Size(scaleX, 0);
+        }
 
         clickedNode = newNode;
         ShowProperties(newNode);
