@@ -9,12 +9,38 @@ namespace CSC;
 
 public partial class Main : Form
 {
-    public const int NodeSizeX = 200;
-    public const int NodeSizeY = 50;
-    private static readonly Dictionary<string, NodeStore> nodes = [];
-    public bool MovingChild = false;
-    public const string NoCharacter = "None";
-    public const string Player = "Player";
+    private bool CurrentlyInPan = false;
+    private bool IsCtrlPressed;
+    private bool IsShiftPressed;
+    private const TextFormatFlags TextFlags = TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak | TextFormatFlags.LeftAndRightPadding;
+    private float AfterZoomNodeX;
+    private float AfterZoomNodeY;
+    private float BeforeZoomNodeX;
+    private float BeforeZoomNodeY;
+    private float StartPanOffsetX = 0f;
+    private float StartPanOffsetY = 0f;
+    private Font scaledFont = new(DefaultFont.FontFamily, 8f);
+    private Node clickedNode = Node.NullNode;
+    private Node highlightNode = Node.NullNode;
+    private Node movedNode = Node.NullNode;
+    private Node nodeToLinkToNext = Node.NullNode;
+    private PointF end;
+    private PointF start;
+    private readonly Dictionary<string, float> OffsetX = [];
+    private readonly Dictionary<string, float> OffsetY = [];
+    private readonly Dictionary<string, float> Scaling = [];
+    private readonly HatchBrush InterlinkedNodeBrush;
+    private readonly int scaleX = (int)(NodeSizeX * 1.5f);
+    private readonly int scaleY = (int)(NodeSizeY * 1.5f);
+    private readonly List<int> maxYperX = [];
+    private readonly List<Node> visited = [];
+    private readonly Pen clickedLinePen;
+    private readonly Pen highlightPen;
+    private readonly Pen linePen;
+    private readonly SolidBrush ClickedNodeBrush;
+    private readonly SolidBrush HighlightNodeBrush;
+    private readonly SolidBrush NodeToLinkNextBrush;
+
     private readonly SolidBrush achievementNodeBrush;
     private readonly SolidBrush alternateTextNodeBrush;
     private readonly SolidBrush bgcNodeBrush;
@@ -29,57 +55,62 @@ public partial class Main : Form
     private readonly SolidBrush doorNodeBrush;
     private readonly SolidBrush eventNodeBrush;
     private readonly SolidBrush eventTriggerNodeBrush;
-    private readonly SolidBrush HighlightNodeBrush;
-    private readonly SolidBrush NodeToLinkNextBrush;
-    private readonly HatchBrush InterlinkedNodeBrush;
-    private readonly SolidBrush ClickedNodeBrush;
-    private readonly Pen highlightPen;
     private readonly SolidBrush inventoryNodeBrush;
     private readonly SolidBrush itemActionNodeBrush;
     private readonly SolidBrush itemGroupBehaviourNodeBrush;
     private readonly SolidBrush itemGroupInteractionNodeBrush;
     private readonly SolidBrush itemGroupNodeBrush;
     private readonly SolidBrush itemNodeBrush;
-    private readonly List<int> maxYperX = [];
-    private readonly Pen linePen;
-    private readonly Pen clickedLinePen;
     private readonly SolidBrush personalityNodeBrush;
     private readonly SolidBrush poseNodeBrush;
     private readonly SolidBrush propertyNodeBrush;
     private readonly SolidBrush questNodeBrush;
     private readonly SolidBrush responseNodeBrush;
-    private readonly int scaleX = (int)(NodeSizeX * 1.5f);
-    private readonly int scaleY = (int)(NodeSizeY * 1.5f);
     private readonly SolidBrush socialNodeBrush;
     private readonly SolidBrush stateNodeBrush;
     private readonly SolidBrush valueNodeBrush;
-    private readonly List<Node> visited = [];
-    private float AfterZoomNodeX;
-    private float AfterZoomNodeY;
-    private float BeforeZoomNodeX;
-    private float BeforeZoomNodeY;
-    private bool CurrentlyInPan = false;
-    private PointF end;
-    private Node highlightNode = Node.NullNode;
-    private bool IsCtrlPressed;
-    private bool IsShiftPressed;
-    private Node clickedNode = Node.NullNode;
-    private Node nodeToLinkToNext = Node.NullNode;
-    private Node movedNode = Node.NullNode;
-    private SizeF OffsetFromDragClick = SizeF.Empty;
-    private readonly Dictionary<string, float> OffsetX = [];
-    private readonly Dictionary<string, float> OffsetY = [];
-    private readonly Dictionary<string, float> Scaling = [];
-    private PointF start;
-    private float StartPanOffsetX = 0f;
-    private float StartPanOffsetY = 0f;
-    private Font scaledFont = DefaultFont;
-    RectangleF adjustedVisibleClipBounds = new();
+
+    private readonly SolidBrush darkachievementNodeBrush;
+    private readonly SolidBrush darkalternateTextNodeBrush;
+    private readonly SolidBrush darkbgcNodeBrush;
+    private readonly SolidBrush darkbgcResponseNodeBrush;
+    private readonly SolidBrush darkcharacterGroupNodeBrush;
+    private readonly SolidBrush darkclothingNodeBrush;
+    private readonly SolidBrush darkcriteriaGroupNodeBrush;
+    private readonly SolidBrush darkcriterionNodeBrush;
+    private readonly SolidBrush darkcutsceneNodeBrush;
+    private readonly SolidBrush darkdefaultNodeBrush;
+    private readonly SolidBrush darkdialogueNodeBrush;
+    private readonly SolidBrush darkdoorNodeBrush;
+    private readonly SolidBrush darkeventNodeBrush;
+    private readonly SolidBrush darkeventTriggerNodeBrush;
+    private readonly SolidBrush darkinventoryNodeBrush;
+    private readonly SolidBrush darkitemActionNodeBrush;
+    private readonly SolidBrush darkitemGroupBehaviourNodeBrush;
+    private readonly SolidBrush darkitemGroupInteractionNodeBrush;
+    private readonly SolidBrush darkitemGroupNodeBrush;
+    private readonly SolidBrush darkitemNodeBrush;
+    private readonly SolidBrush darkpersonalityNodeBrush;
+    private readonly SolidBrush darkposeNodeBrush;
+    private readonly SolidBrush darkpropertyNodeBrush;
+    private readonly SolidBrush darkquestNodeBrush;
+    private readonly SolidBrush darkresponseNodeBrush;
+    private readonly SolidBrush darksocialNodeBrush;
+    private readonly SolidBrush darkstateNodeBrush;
+    private readonly SolidBrush darkvalueNodeBrush;
     private RectangleF adjustedMouseClipBounds;
-    public static string StoryName { get; private set; } = NoCharacter;
-    private static string selectedCharacter = NoCharacter;
+    private SizeF OffsetFromDragClick = SizeF.Empty;
     private static MainStory Story = new();
     private static readonly Dictionary<string, CharacterStory> characterStories = [];
+    private static readonly Dictionary<string, NodeStore> nodes = [];
+    private static string selectedCharacter = NoCharacter;
+    public bool MovingChild = false;
+    public const int NodeSizeX = 200;
+    public const int NodeSizeY = 50;
+    public const string NoCharacter = "None";
+    public const string Player = "Player";
+    public static string StoryName { get; private set; } = NoCharacter;
+    RectangleF adjustedVisibleClipBounds = new();
 
     public static string SelectedCharacter
     {
@@ -160,6 +191,37 @@ public partial class Main : Form
         socialNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 160, 90));
         stateNodeBrush = new SolidBrush(Color.FromArgb(255, 40, 190, 50));
         valueNodeBrush = new SolidBrush(Color.FromArgb(255, 120, 0, 150));
+        //darker color variants
+        float darkening = 0.18f;
+        darkdefaultNodeBrush = new SolidBrush(defaultNodeBrush.Color.Times(darkening));
+        darkachievementNodeBrush = new SolidBrush(achievementNodeBrush.Color.Times(darkening));
+        darkalternateTextNodeBrush = new SolidBrush(alternateTextNodeBrush.Color.Times(darkening));
+        darkbgcNodeBrush = new SolidBrush(bgcNodeBrush.Color.Times(darkening));
+        darkbgcResponseNodeBrush = new SolidBrush(bgcResponseNodeBrush.Color.Times(darkening));
+        darkcharacterGroupNodeBrush = new SolidBrush(characterGroupNodeBrush.Color.Times(darkening));
+        darkclothingNodeBrush = new SolidBrush(clothingNodeBrush.Color.Times(darkening));
+        darkcriteriaGroupNodeBrush = new SolidBrush(criteriaGroupNodeBrush.Color.Times(darkening));
+        darkcriterionNodeBrush = new SolidBrush(criterionNodeBrush.Color.Times(darkening));
+        darkcutsceneNodeBrush = new SolidBrush(cutsceneNodeBrush.Color.Times(darkening));
+        darkdialogueNodeBrush = new SolidBrush(dialogueNodeBrush.Color.Times(darkening));
+        darkdoorNodeBrush = new SolidBrush(doorNodeBrush.Color.Times(darkening));
+        darkeventNodeBrush = new SolidBrush(eventNodeBrush.Color.Times(darkening));
+        darkeventTriggerNodeBrush = new SolidBrush(eventTriggerNodeBrush.Color.Times(darkening));
+        darkinventoryNodeBrush = new SolidBrush(inventoryNodeBrush.Color.Times(darkening));
+        darkitemActionNodeBrush = new SolidBrush(itemActionNodeBrush.Color.Times(darkening));
+        darkitemGroupBehaviourNodeBrush = new SolidBrush(itemGroupBehaviourNodeBrush.Color.Times(darkening));
+        darkitemGroupInteractionNodeBrush = new SolidBrush(itemGroupInteractionNodeBrush.Color.Times(darkening));
+        darkitemGroupNodeBrush = new SolidBrush(itemGroupNodeBrush.Color.Times(darkening));
+        darkitemNodeBrush = new SolidBrush(itemNodeBrush.Color.Times(darkening));
+        darkpersonalityNodeBrush = new SolidBrush(personalityNodeBrush.Color.Times(darkening));
+        darkposeNodeBrush = new SolidBrush(poseNodeBrush.Color.Times(darkening));
+        darkpropertyNodeBrush = new SolidBrush(propertyNodeBrush.Color.Times(darkening));
+        darkquestNodeBrush = new SolidBrush(questNodeBrush.Color.Times(darkening));
+        darkresponseNodeBrush = new SolidBrush(responseNodeBrush.Color.Times(darkening));
+        darksocialNodeBrush = new SolidBrush(socialNodeBrush.Color.Times(darkening));
+        darkstateNodeBrush = new SolidBrush(stateNodeBrush.Color.Times(darkening));
+        darkvalueNodeBrush = new SolidBrush(valueNodeBrush.Color.Times(darkening));
+
         HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
         InterlinkedNodeBrush = new HatchBrush(HatchStyle.LightUpwardDiagonal, Color.DeepPink, BackColor);
         ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
@@ -224,7 +286,7 @@ public partial class Main : Form
                 //response dialogue bgc item itemgroup
                 case NodeType.Criterion:
                 {
-                    return [NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.Event, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup, NodeType.Value];
+                    return [NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.GameEvent, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup, NodeType.Value];
                 }
 
                 //item and event and criterion
@@ -236,20 +298,20 @@ public partial class Main : Form
                 case NodeType.ItemGroup:
                 case NodeType.UseWith:
                 {
-                    return [NodeType.Item, NodeType.Event, NodeType.Criterion];
+                    return [NodeType.Item, NodeType.GameEvent, NodeType.Criterion];
                 }
 
                 //event
                 case NodeType.Pose:
                 case NodeType.Achievement:
                 {
-                    return [NodeType.Event];
+                    return [NodeType.GameEvent];
                 }
 
                 //event bgcresponse
                 case NodeType.BGC:
                 {
-                    return [NodeType.BGCResponse, NodeType.Event, NodeType.Criterion];
+                    return [NodeType.BGCResponse, NodeType.GameEvent, NodeType.Criterion];
                 }
 
                 //bgc
@@ -260,16 +322,16 @@ public partial class Main : Form
                 //criteria dialogue
                 case NodeType.Response:
                 {
-                    return [NodeType.Dialogue, NodeType.Event, NodeType.Criterion];
+                    return [NodeType.Dialogue, NodeType.GameEvent, NodeType.Criterion];
                 }
 
                 case NodeType.Dialogue:
                 {
-                    return [NodeType.Event, NodeType.Criterion, NodeType.Response];
+                    return [NodeType.GameEvent, NodeType.Criterion, NodeType.Response];
                 }
                 case NodeType.Value:
                 {
-                    return [NodeType.Event, NodeType.Criterion, NodeType.Value];
+                    return [NodeType.GameEvent, NodeType.Criterion, NodeType.Value];
                 }
                 //event criterion
                 case NodeType.CharacterGroup:
@@ -285,18 +347,18 @@ public partial class Main : Form
                 case NodeType.Door:
                 case NodeType.CriteriaGroup:
                 {
-                    return [NodeType.Event, NodeType.Criterion];
+                    return [NodeType.GameEvent, NodeType.Criterion];
                 }
-                case NodeType.Event:
+                case NodeType.GameEvent:
                 default:
                 {
-                    return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.Event, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
+                    return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.GameEvent, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
                 }
             }
         }
         else
         {
-            return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.Event, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
+            return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.GameEvent, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
         }
     }
 
@@ -528,12 +590,14 @@ public partial class Main : Form
         //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
     }
 
-    private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush)
+    private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush, bool lightText = false)
     {
         if (node == clickedNode)
         {
+            lightText = true;
             if (node.FileName != SelectedCharacter)
             {
+                lightText = true;
                 e.Graphics.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 25), 18f));
             }
             e.Graphics.FillPath(ClickedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
@@ -545,27 +609,24 @@ public partial class Main : Form
 
         e.Graphics.FillPath(brush, RoundedRect(node.Rectangle, 10f));
 
-        if (Scaling[SelectedCharacter] > 0.2f)
+        if (Scaling[SelectedCharacter] > 0.28f)
         {
-            int length = 32;
             var scaledRect = GetScaledRect(e.Graphics, node.RectangleNonF, Scaling[SelectedCharacter]);
-            while (TextRenderer.MeasureText(node.Text[..Math.Min(node.Text.Length, length)], scaledFont).Width > scaledRect.Size.Width)
-            {
-                length--;
-            }
+            scaledRect.Location += new Size(3, 3);
+            scaledRect.Size -= new Size(6, 6);
 
-            Color textColor = Color.White;
+            Color textColor = lightText ? Color.White : Color.DarkGray;
             if ((brush.Color.R * 0.299 + brush.Color.G * 0.587 + brush.Color.B * 0.114) > 150)
             {
                 textColor = Color.Black;
             }
 
             TextRenderer.DrawText(e.Graphics,
-                                  node.Text[..Math.Min(node.Text.Length, length)],
+                                  node.Text[..Math.Min(node.Text.Length, 100)],
                                   scaledFont,
                                   scaledRect,
                                   textColor,
-                                  TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                                  TextFlags);
         }
     }
 
@@ -613,38 +674,38 @@ public partial class Main : Form
         }
     }
 
-    private SolidBrush GetNodeColor(NodeType type)
+    private SolidBrush GetNodeColor(NodeType type, bool light)
     {
         return type switch
         {
-            NodeType.Null => defaultNodeBrush,
-            NodeType.CharacterGroup => characterGroupNodeBrush,
-            NodeType.Criterion => criterionNodeBrush,
-            NodeType.ItemAction => itemActionNodeBrush,
-            NodeType.ItemGroupBehaviour => itemGroupBehaviourNodeBrush,
-            NodeType.ItemGroupInteraction => itemGroupInteractionNodeBrush,
-            NodeType.Pose => poseNodeBrush,
-            NodeType.Achievement => achievementNodeBrush,
-            NodeType.BGC => bgcNodeBrush,
-            NodeType.BGCResponse => bgcResponseNodeBrush,
-            NodeType.Clothing => clothingNodeBrush,
-            NodeType.CriteriaGroup => criteriaGroupNodeBrush,
-            NodeType.Cutscene => cutsceneNodeBrush,
-            NodeType.Dialogue => dialogueNodeBrush,
-            NodeType.AlternateText => alternateTextNodeBrush,
-            NodeType.Door => doorNodeBrush,
-            NodeType.Event => eventNodeBrush,
-            NodeType.EventTrigger => eventTriggerNodeBrush,
-            NodeType.Inventory => inventoryNodeBrush,
-            NodeType.Item => itemNodeBrush,
-            NodeType.ItemGroup => itemGroupNodeBrush,
-            NodeType.Personality => personalityNodeBrush,
-            NodeType.Property => propertyNodeBrush,
-            NodeType.Quest => questNodeBrush,
-            NodeType.Response => responseNodeBrush,
-            NodeType.Social => socialNodeBrush,
-            NodeType.State => stateNodeBrush,
-            NodeType.Value => valueNodeBrush,
+            NodeType.Null => light ? defaultNodeBrush : darkdefaultNodeBrush,
+            NodeType.CharacterGroup => light ? characterGroupNodeBrush : darkcharacterGroupNodeBrush,
+            NodeType.Criterion => light ? criterionNodeBrush : darkcriterionNodeBrush,
+            NodeType.ItemAction => light ? itemActionNodeBrush : darkitemActionNodeBrush,
+            NodeType.ItemGroupBehaviour => light ? itemGroupBehaviourNodeBrush : darkitemGroupBehaviourNodeBrush,
+            NodeType.ItemGroupInteraction => light ? itemGroupInteractionNodeBrush : darkitemGroupInteractionNodeBrush,
+            NodeType.Pose => light ? poseNodeBrush : darkposeNodeBrush,
+            NodeType.Achievement => light ? achievementNodeBrush : darkachievementNodeBrush,
+            NodeType.BGC => light ? bgcNodeBrush : darkbgcNodeBrush,
+            NodeType.BGCResponse => light ? bgcResponseNodeBrush : darkbgcResponseNodeBrush,
+            NodeType.Clothing => light ? clothingNodeBrush : darkclothingNodeBrush,
+            NodeType.CriteriaGroup => light ? criteriaGroupNodeBrush : darkcriteriaGroupNodeBrush,
+            NodeType.Cutscene => light ? cutsceneNodeBrush : darkcutsceneNodeBrush,
+            NodeType.Dialogue => light ? dialogueNodeBrush : darkdialogueNodeBrush,
+            NodeType.AlternateText => light ? alternateTextNodeBrush : darkalternateTextNodeBrush,
+            NodeType.Door => light ? doorNodeBrush : darkdoorNodeBrush,
+            NodeType.GameEvent => light ? eventNodeBrush : darkeventNodeBrush,
+            NodeType.EventTrigger => light ? eventTriggerNodeBrush : darkeventTriggerNodeBrush,
+            NodeType.Inventory => light ? inventoryNodeBrush : darkinventoryNodeBrush,
+            NodeType.Item => light ? itemNodeBrush : darkitemNodeBrush,
+            NodeType.ItemGroup => light ? itemGroupNodeBrush : darkitemGroupNodeBrush,
+            NodeType.Personality => light ? personalityNodeBrush : darkpersonalityNodeBrush,
+            NodeType.Property => light ? propertyNodeBrush : darkpropertyNodeBrush,
+            NodeType.Quest => light ? questNodeBrush : darkquestNodeBrush,
+            NodeType.Response => light ? responseNodeBrush : darkresponseNodeBrush,
+            NodeType.Social => light ? socialNodeBrush : darksocialNodeBrush,
+            NodeType.State => light ? stateNodeBrush : darkstateNodeBrush,
+            NodeType.Value => light ? valueNodeBrush : darkvalueNodeBrush,
             _ => defaultNodeBrush,
         };
     }
@@ -672,7 +733,7 @@ public partial class Main : Form
         {
             Debugger.Break();
         }
-        scaledFont = GetScaledFont(g, DefaultFont, Scaling[SelectedCharacter]);
+        scaledFont = GetScaledFont(g, new(DefaultFont.FontFamily, 8f), Scaling[SelectedCharacter]);
 
         //todo we need to cull here as well somehow
         DrawAllNodes(e);
@@ -692,7 +753,6 @@ public partial class Main : Form
             }
         }
 
-
         if (clickedNode != Node.NullNode)
         {
             var family = nodes[SelectedCharacter][clickedNode];
@@ -710,13 +770,21 @@ public partial class Main : Form
                     DrawEdge(e, item, clickedNode, clickedLinePen);
                 }
             }
-        }
 
-        //int c = 0;
-        foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
+            foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
+            {
+                //c++;
+                bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || clickedNode == node;
+                DrawNode(e, node, GetNodeColor(node.Type, light), light);
+            }
+        }
+        else
         {
-            //c++;
-            DrawNode(e, node, GetNodeColor(node.Type));
+            foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
+            {
+                //c++;
+                DrawNode(e, node, GetNodeColor(node.Type, false));
+            }
         }
 
         if (highlightNode != Node.NullNode)
@@ -736,12 +804,12 @@ public partial class Main : Form
                     DrawEdge(e, item, highlightNode, highlightPen);
                 }
             }
-            DrawNode(e, highlightNode, HighlightNodeBrush);
+            DrawNode(e, highlightNode, HighlightNodeBrush, true);
         }
 
         if (nodeToLinkToNext != Node.NullNode)
         {
-            DrawNode(e, nodeToLinkToNext, NodeToLinkNextBrush);
+            DrawNode(e, nodeToLinkToNext, NodeToLinkNextBrush, true);
         }
     }
 
@@ -1022,7 +1090,7 @@ public partial class Main : Form
         if (node != Node.NullNode)
         {
             if (IsCtrlPressed
-                && node.Type is NodeType.Event or NodeType.Criterion
+                && node.Type is NodeType.GameEvent or NodeType.Criterion
                 && node.Data<MissingReferenceInfo>() != null)
             {
                 nodeToLinkToNext = node;
@@ -2174,7 +2242,7 @@ public partial class Main : Form
                 PropertyInspector.SetColumnSpan(text, 3);
                 break;
             }
-            case NodeType.Event:
+            case NodeType.GameEvent:
             {
                 if (node.Data<GameEvent>() is null)
                 {
@@ -2838,7 +2906,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                if (node.Data<Trait>() is null)
+                if (node.Data<Trait>() is not null)
                 {
                     NumericUpDown option = new()
                     {
@@ -3325,6 +3393,7 @@ public partial class Main : Form
     {
         if (ActiveForm is null)
         {
+            Debugger.Break();
             return;
         }
 
@@ -3626,7 +3695,7 @@ public partial class Main : Form
             case SpawnableNodeType.Event:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.Event, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.GameEvent, string.Empty, nodes[character].Positions)
                 {
                     rawData = new GameEvent() { Character = character },
                     FileName = character,

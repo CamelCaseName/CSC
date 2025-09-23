@@ -132,7 +132,7 @@ namespace CSC.Nodestuff
             var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents", nodes.Positions);
             foreach (GameEvent _event in story.GameStartEvents ?? [])
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", nodes.Positions) { rawData = _event };
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions) { rawData = _event };
 
                 nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);
 
@@ -293,7 +293,7 @@ namespace CSC.Nodestuff
 
         public static void GetPersonality(CharacterStory story, NodeStore nodes)
         {
-            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", nodes.Positions) { FileName = story.CharacterName! };
+            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", story.Personality!, nodes.Positions) { FileName = story.CharacterName! };
             nodes.Add(traitRoot);
             foreach (Trait valuee in story.Personality?.Values ?? [])
             {
@@ -379,7 +379,7 @@ namespace CSC.Nodestuff
                     continue;
                 }
                 //add items to list
-                var nodeValue = new Node(value!, NodeType.Value, value + ", referenced values: ", nodes.Positions) { rawData = new Value() { value = value }, FileName = story.CharacterName! };
+                var nodeValue = new Node(value!, NodeType.Value, ", referenced values: ", nodes.Positions) { rawData = new Value() { value = value }, FileName = story.CharacterName! };
                 nodes.AddChild(ValueStore, nodeValue);
             }
         }
@@ -389,7 +389,7 @@ namespace CSC.Nodestuff
             foreach (string value in story.PlayerValues ?? [])
             {
                 //add items to list
-                var nodeValue = new Node(value, NodeType.Value, "Player " + value + ", referenced values: ", nodes.Positions) { rawData = new Value() { value = value } };
+                var nodeValue = new Node(value, NodeType.Value, ", referenced values: ", nodes.Positions) { rawData = new Value() { value = value } };
                 nodes.Add(nodeValue);
             }
         }

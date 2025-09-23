@@ -32,8 +32,8 @@ namespace CSC
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            TreeNode treeNode5 = new TreeNode("Characters");
-            TreeNode treeNode6 = new TreeNode("Story Root", new TreeNode[] { treeNode5 });
+            TreeNode treeNode1 = new TreeNode("Characters");
+            TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -62,7 +62,7 @@ namespace CSC
             // 
             // Menu
             // 
-            Menu.BackColor = Color.DimGray;
+            Menu.BackColor = Color.FromArgb(50, 50, 50);
             Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, OpenButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
@@ -83,7 +83,7 @@ namespace CSC
             // 
             // ResetButton
             // 
-            ResetButton.BackColor = Color.DimGray;
+            ResetButton.BackColor = Color.FromArgb(50, 50, 50);
             ResetButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
             ResetButton.Enabled = false;
             ResetButton.ForeColor = Color.FromArgb(224, 224, 224);
@@ -143,19 +143,19 @@ namespace CSC
             // 
             // StoryTree
             // 
-            StoryTree.BackColor = Color.FromArgb(64, 64, 64);
+            StoryTree.BackColor = Color.FromArgb(50, 50, 50);
             StoryTree.Dock = DockStyle.Fill;
             StoryTree.ForeColor = Color.White;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
-            treeNode5.Name = "Characters";
-            treeNode5.Text = "Characters";
-            treeNode5.ToolTipText = "You'll find all your Characters here";
-            treeNode6.Checked = true;
-            treeNode6.Name = "Story Name";
-            treeNode6.Text = "Story Root";
-            treeNode6.ToolTipText = "The Story itself and the Characters are in here";
-            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode6 });
+            treeNode1.Name = "Characters";
+            treeNode1.Text = "Characters";
+            treeNode1.ToolTipText = "You'll find all your Characters here";
+            treeNode2.Checked = true;
+            treeNode2.Name = "Story Name";
+            treeNode2.Text = "Story Root";
+            treeNode2.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
             StoryTree.ShowNodeToolTips = true;
             StoryTree.Size = new Size(235, 537);
             StoryTree.TabIndex = 1;
@@ -214,7 +214,9 @@ namespace CSC
             NodeSpawnBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             NodeSpawnBox.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             NodeSpawnBox.AutoCompleteSource = AutoCompleteSource.ListItems;
+            NodeSpawnBox.BackColor = Color.FromArgb(64, 64, 64);
             NodeSpawnBox.Enabled = false;
+            NodeSpawnBox.ForeColor = SystemColors.ScrollBar;
             NodeSpawnBox.FormattingEnabled = true;
             NodeSpawnBox.Location = new Point(264, 62);
             NodeSpawnBox.MinimumSize = new Size(200, 0);
@@ -228,7 +230,7 @@ namespace CSC
             // 
             // PropertyInspector
             // 
-            PropertyInspector.BackColor = Color.FromArgb(64, 64, 64);
+            PropertyInspector.BackColor = Color.FromArgb(50, 50, 50);
             PropertyInspector.ColumnCount = 3;
             PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 142F));

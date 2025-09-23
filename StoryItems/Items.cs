@@ -404,7 +404,6 @@ namespace CSC.StoryItems
         public List<ItemInteraction> StoryItems { get; set; } = [];
         public List<string> StoryValues { get; set; } = [];
         public Personality? Personality { get; set; }
-
         public string? CharacterName { get; set; }
         public Dialogue? CurrentDialogue { get; set; }
         public Dialogue? CurrentDynamicDialogue { get; set; }

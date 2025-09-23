@@ -1,6 +1,7 @@
 using CSC.Nodestuff;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.Text;
 
 namespace CSC
 {
@@ -22,6 +23,25 @@ namespace CSC
             {
                 list.Add(item);
             }
+        }
+
+        public static string ListRepresentation(this List<string> list)
+        {
+            StringBuilder sb = new();
+            foreach (string item in list)
+            {
+                sb.Append(item);
+            }
+            return sb.ToString();
+        }
+
+        public static Color Times(this Color color, float f)
+        {
+            var r = color.R;
+            var g = color.G;
+            var b = color.B;
+            return Color.FromArgb(255, (int)(r * f), (int)(g * f), (int)(b * f));
+
         }
     }
 

@@ -201,7 +201,7 @@ namespace CSC.Nodestuff
                             }
                             case CompareTypes.ItemFromItemGroup:
                             {
-                                result = newList.Find((n) => n.Type == NodeType.ItemGroup && n.Text == criterion.Key);
+                                result = newList.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
                                 if (result is not null)
                                 {
                                     nodes.AddParent(newList[i], result);
@@ -329,7 +329,7 @@ namespace CSC.Nodestuff
                             }
                             case CompareTypes.State:
                             {
-                                result = States.Find((n) => n.Type == NodeType.State && n.FileName == criterion.Character && n.Text.AsSpan()[..2].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
+                                result = States.Find((n) => n.Type == NodeType.State && n.FileName == criterion.Character && n.StaticText.AsSpan()[..2].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
                                 if (result is not null)
                                 {
                                     nodes.AddParent(newList[i], result);
@@ -349,9 +349,9 @@ namespace CSC.Nodestuff
                                 result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key && n.FileName == criterion.Character);
                                 if (result is not null)
                                 {
-                                    if (!result.Text.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value))
+                                    if (!result.StaticText.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value))
                                     {
-                                        result.Text += GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ";
+                                        result.StaticText += GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ";
                                     }
 
                                     nodes.AddParent(newList[i], result);
@@ -370,7 +370,7 @@ namespace CSC.Nodestuff
                                 break;
                         }
                     }
-                    else if (newList[i].Type == NodeType.Event && (gameEvent = newList[i].Data<GameEvent>()!) is not null)
+                    else if (newList[i].Type == NodeType.GameEvent && (gameEvent = newList[i].Data<GameEvent>()!) is not null)
                     {
                         switch (gameEvent.EventType)
                         {
@@ -388,7 +388,7 @@ namespace CSC.Nodestuff
                                     Clothing.Add(clothing);
                                     nodes.AddChild(newList[i], clothing);
                                 }
-                                newList[i].Text = gameEvent.Character + " " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString()) + " " + (gameEvent.Option2 == 0 ? "Change" : "Assign default set") + " " + (gameEvent.Option3 == 0 ? "On" : "Off");
+                                newList[i].StaticText = gameEvent.Character + " " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString()) + " " + (gameEvent.Option2 == 0 ? "Change" : "Assign default set") + " " + (gameEvent.Option3 == 0 ? "On" : "Off");
                                 break;
                             }
                             case GameEvents.CombineValue:
@@ -417,7 +417,7 @@ namespace CSC.Nodestuff
                                     Values.Add(value);
                                     nodes.AddParent(newList[i], value);
                                 }
-                                newList[i].Text = "Add " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
+                                newList[i].StaticText = "Add " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.CutScene:
@@ -435,7 +435,7 @@ namespace CSC.Nodestuff
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
-                                newList[i].Text = ((CutsceneAction)gameEvent.Option).ToString() + " " + gameEvent.Key + " with " + gameEvent.Character + ", " + gameEvent.Value + ", " + gameEvent.Value2 + ", " + gameEvent.Character2 + " (location: " + gameEvent.Option2 + ")";
+                                newList[i].StaticText = ((CutsceneAction)gameEvent.Option).ToString() + " " + gameEvent.Key + " with " + gameEvent.Character + ", " + gameEvent.Value + ", " + gameEvent.Value2 + ", " + gameEvent.Character2 + " (location: " + gameEvent.Option2 + ")";
                                 break;
                             }
                             case GameEvents.Dialogue:
@@ -453,7 +453,7 @@ namespace CSC.Nodestuff
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
-                                newList[i].Text = ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value;
+                                newList[i].StaticText = ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.Door:
@@ -471,12 +471,12 @@ namespace CSC.Nodestuff
                                     Doors.Add(door);
                                     nodes.AddChild(newList[i], door);
                                 }
-                                newList[i].Text = ((DoorAction)gameEvent.Option).ToString() + " " + gameEvent.Key!.ToString();
+                                newList[i].StaticText = ((DoorAction)gameEvent.Option).ToString() + " " + gameEvent.Key!.ToString();
                                 break;
                             }
                             case GameEvents.EventTriggers:
                             {
-                                result = newList.Find((n) => n.Type == NodeType.Event && n.Text == gameEvent.Value);
+                                result = newList.Find((n) => n.Type == NodeType.GameEvent && n.StaticText == gameEvent.Value);
                                 if (result is not null)
                                 {
                                     //stop 0 step cyclic self reference as it is not allowed
@@ -488,11 +488,11 @@ namespace CSC.Nodestuff
                                 else
                                 {
                                     //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                    var _event = new Node("NA-" + gameEvent.Value, NodeType.Event, gameEvent.Value!, nodes.Positions);
+                                    var _event = new Node("NA-" + gameEvent.Value, NodeType.GameEvent, gameEvent.Value!, nodes.Positions);
                                     newList.Add(_event);
                                     nodes.AddChild(newList[i], _event);
                                 }
-                                newList[i].Text = gameEvent.Character + (gameEvent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gameEvent.Option2 == 0 ? "(False) " : "(True) ") + gameEvent.Value;
+                                newList[i].StaticText = gameEvent.Character + (gameEvent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gameEvent.Option2 == 0 ? "(False) " : "(True) ") + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.Item:
@@ -510,7 +510,7 @@ namespace CSC.Nodestuff
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
-                                newList[i].Text = gameEvent.Key!.ToString() + " " + ((ItemEventAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
+                                newList[i].StaticText = gameEvent.Key!.ToString() + " " + ((ItemEventAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
                                 break;
                             }
                             case GameEvents.ItemFromItemGroup:
@@ -528,7 +528,7 @@ namespace CSC.Nodestuff
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
-                                newList[i].Text = gameEvent.Key!.ToString() + " " + ((ItemGroupAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
+                                newList[i].StaticText = gameEvent.Key!.ToString() + " " + ((ItemGroupAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
                                 break;
                             }
                             case GameEvents.Personality:
@@ -545,7 +545,7 @@ namespace CSC.Nodestuff
                                     newList.Add(item);
                                     nodes.AddChild(newList[i], item);
                                 }
-                                newList[i].Text = gameEvent.Character + " " + ((PersonalityTraits)gameEvent.Option).ToString() + " " + ((PersonalityAction)gameEvent.Option2).ToString() + " " + gameEvent.Value;
+                                newList[i].StaticText = gameEvent.Character + " " + ((PersonalityTraits)gameEvent.Option).ToString() + " " + ((PersonalityAction)gameEvent.Option2).ToString() + " " + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.Property:
@@ -562,7 +562,7 @@ namespace CSC.Nodestuff
                                     Properties.Add(property);
                                     nodes.AddChild(newList[i], property);
                                 }
-                                newList[i].Text = gameEvent.Character + " " + Enum.Parse<InteractiveProperties>(gameEvent.Value!).ToString() + " " + (gameEvent.Option2 == 1 ? "True" : "False");
+                                newList[i].StaticText = gameEvent.Character + " " + Enum.Parse<InteractiveProperties>(gameEvent.Value!).ToString() + " " + (gameEvent.Option2 == 1 ? "True" : "False");
                                 break;
                             }
                             case GameEvents.MatchValue:
@@ -591,7 +591,7 @@ namespace CSC.Nodestuff
                                     Values.Add(value);
                                     nodes.AddParent(newList[i], value);
                                 }
-                                newList[i].Text = "set " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
+                                newList[i].StaticText = "set " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.ModifyValue:
@@ -608,7 +608,7 @@ namespace CSC.Nodestuff
                                     Values.Add(value);
                                     nodes.AddChild(newList[i], value);
                                 }
-                                newList[i].Text = (gameEvent.Option == 0 ? "Equals" : "Add") + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Value;
+                                newList[i].StaticText = (gameEvent.Option == 0 ? "Equals" : "Add") + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.Player:
@@ -633,7 +633,7 @@ namespace CSC.Nodestuff
                                     nodes.AddChild(newList[i], result);
                                 }
 
-                                newList[i].Text = ((PlayerActions)gameEvent.Option).ToString() + (gameEvent.Option == 0 ? gameEvent.Option2 == 0 ? " Add " : " Remove " : " ") + gameEvent.Value + "/" + gameEvent.Character;
+                                newList[i].StaticText = ((PlayerActions)gameEvent.Option).ToString() + (gameEvent.Option == 0 ? gameEvent.Option2 == 0 ? " Add " : " Remove " : " ") + gameEvent.Value + "/" + gameEvent.Character;
                                 break;
                             }
                             case GameEvents.Pose:
@@ -651,7 +651,7 @@ namespace CSC.Nodestuff
                                     Poses.Add(pose);
                                     nodes.AddChild(newList[i], pose);
                                 }
-                                newList[i].Text = "Set " + gameEvent.Character + " Pose no. " + gameEvent.Value + " " + (gameEvent.Option == 0 ? " False" : " True");
+                                newList[i].StaticText = "Set " + gameEvent.Character + " Pose no. " + gameEvent.Value + " " + (gameEvent.Option == 0 ? " False" : " True");
                                 break;
                             }
                             case GameEvents.Quest:
@@ -668,7 +668,7 @@ namespace CSC.Nodestuff
                                     newList.Add(quest);
                                     nodes.AddChild(newList[i], quest);
                                 }
-                                newList[i].Text = ((QuestActions)gameEvent.Option).ToString() + " the quest " + gameEvent.Value + " from " + gameEvent.Character;
+                                newList[i].StaticText = ((QuestActions)gameEvent.Option).ToString() + " the quest " + gameEvent.Value + " from " + gameEvent.Character;
                                 break;
                             }
                             case GameEvents.RandomizeIntValue:
@@ -685,12 +685,12 @@ namespace CSC.Nodestuff
                                     Values.Add(value);
                                     nodes.AddChild(newList[i], value);
                                 }
-                                newList[i].Text = "set " + gameEvent.Character + ":" + gameEvent.Key + " to a random value between " + gameEvent.Value + " and " + gameEvent.Value2;
+                                newList[i].StaticText = "set " + gameEvent.Character + ":" + gameEvent.Key + " to a random value between " + gameEvent.Value + " and " + gameEvent.Value2;
                                 break;
                             }
                             case GameEvents.SendEvent:
                             {
-                                newList[i].Text = gameEvent.Character + " " + ((SendEvents)gameEvent.Option).ToString();
+                                newList[i].StaticText = gameEvent.Character + " " + ((SendEvents)gameEvent.Option).ToString();
                                 break;
                             }
                             case GameEvents.Social:
@@ -707,12 +707,12 @@ namespace CSC.Nodestuff
                                     Socials.Add(social);
                                     nodes.AddChild(newList[i], social);
                                 }
-                                newList[i].Text = gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2 + (gameEvent.Option2 == 0 ? " Equals " : " Add ") + gameEvent.Value;
+                                newList[i].StaticText = gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2 + (gameEvent.Option2 == 0 ? " Equals " : " Add ") + gameEvent.Value;
                                 break;
                             }
                             case GameEvents.State:
                             {
-                                result = States.Find((n) => n.Type == NodeType.State && n.FileName == gameEvent.Character && n.Text.AsSpan()[..2].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
+                                result = States.Find((n) => n.Type == NodeType.State && n.FileName == gameEvent.Character && n.StaticText.AsSpan()[..2].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
                                 if (result is not null)
                                 {
                                     nodes.AddChild(newList[i], result);
@@ -724,7 +724,7 @@ namespace CSC.Nodestuff
                                     States.Add(state);
                                     nodes.AddChild(newList[i], state);
                                 }
-                                newList[i].Text = (gameEvent.Option == 0 ? "Add " : "Remove ") + gameEvent.Character + " State " + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString();
+                                newList[i].StaticText = (gameEvent.Option == 0 ? "Add " : "Remove ") + gameEvent.Character + " State " + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString();
                                 break;
                             }
                             case GameEvents.TriggerBGC:
@@ -741,7 +741,7 @@ namespace CSC.Nodestuff
                                     newList.Add(bgc);
                                     nodes.AddChild(newList[i], bgc);
                                 }
-                                newList[i].Text = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((ImportanceSpecified)gameEvent.Option).ToString();
+                                newList[i].StaticText = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((ImportanceSpecified)gameEvent.Option).ToString();
                                 break;
                             }
                             default:
@@ -753,7 +753,7 @@ namespace CSC.Nodestuff
                         //link against events
                         foreach (GameEvent _event in trigger.Events!)
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Event && n.ID == _event.Id);
+                            result = newList.Find((n) => n.Type == NodeType.GameEvent && n.ID == _event.Id);
                             if (result is not null)
                             {
                                 nodes.AddChild(newList[i], result);
@@ -761,7 +761,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var eventNode = new Node(_event.Id ?? "none", NodeType.Event, _event.Value ?? "none", nodes.Positions);
+                                var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions);
                                 newList.Add(eventNode);
                                 nodes.AddChild(newList[i], eventNode);
                             }
@@ -779,7 +779,7 @@ namespace CSC.Nodestuff
                                 newList.Add(Node.CreateCriteriaNode(_criterion, newList[i], nodes));
                             }
                         }
-                        newList[i].Text = trigger.Critera.Count == 0
+                        newList[i].StaticText = trigger.Critera.Count == 0
                             ? trigger.Name + " " + trigger.Type
                             : trigger.CharacterToReactTo + " " + trigger.Type + " " + trigger.UpdateIteration + " " + trigger.Name;
                     }
@@ -882,7 +882,7 @@ namespace CSC.Nodestuff
                                     break;
                                 case NodeType.Door:
                                     break;
-                                case NodeType.Event:
+                                case NodeType.GameEvent:
                                     break;
                                 case NodeType.EventTrigger:
                                     break;
