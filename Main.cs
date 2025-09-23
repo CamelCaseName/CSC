@@ -3,7 +3,6 @@ using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms.Design;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC;
@@ -67,7 +66,7 @@ public partial class Main : Form
     private Node clickedNode = Node.NullNode;
     private Node nodeToLinkToNext = Node.NullNode;
     private Node movedNode = Node.NullNode;
-    private Size OffsetFromDragClick = Size.Empty;
+    private SizeF OffsetFromDragClick = SizeF.Empty;
     private readonly Dictionary<string, float> OffsetX = [];
     private readonly Dictionary<string, float> OffsetY = [];
     private readonly Dictionary<string, float> Scaling = [];
@@ -110,7 +109,7 @@ public partial class Main : Form
         }
     }
 
-    public bool RightHasJustBeenClicked { get; private set; }
+    public int RightClickFrameCounter { get; private set; } = 0;
 
     public Main()
     {
@@ -208,6 +207,15 @@ public partial class Main : Form
     {
         //only allow node types that make sense depending on the selected node type
         NodeSpawnBox.Items.Clear();
+        NodeSpawnBox.Items.AddRange(GetSpawnableNodeTypes());
+
+        NodeSpawnBox.Enabled = true;
+        NodeSpawnBox.Visible = true;
+        NodeSpawnBox.Focus();
+    }
+
+    private object[] GetSpawnableNodeTypes()
+    {
         if (clickedNode != Node.NullNode)
         {
             switch (clickedNode.Type)
@@ -216,8 +224,7 @@ public partial class Main : Form
                 //response dialogue bgc item itemgroup
                 case NodeType.Criterion:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.Event, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup, NodeType.Value]);
-                    break;
+                    return [NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.Event, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup, NodeType.Value];
                 }
 
                 //item and event and criterion
@@ -229,47 +236,40 @@ public partial class Main : Form
                 case NodeType.ItemGroup:
                 case NodeType.UseWith:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.Item, NodeType.Event, NodeType.Criterion]);
-                    break;
+                    return [NodeType.Item, NodeType.Event, NodeType.Criterion];
                 }
 
                 //event
                 case NodeType.Pose:
                 case NodeType.Achievement:
                 {
-                    NodeSpawnBox.Items.Add(NodeType.Event);
-                    break;
+                    return [NodeType.Event];
                 }
 
                 //event bgcresponse
                 case NodeType.BGC:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.BGCResponse, NodeType.Event, NodeType.Criterion]);
-                    break;
+                    return [NodeType.BGCResponse, NodeType.Event, NodeType.Criterion];
                 }
 
                 //bgc
                 case NodeType.BGCResponse:
                 {
-                    NodeSpawnBox.Items.Add(NodeType.BGC);
-                    break;
+                    return [NodeType.BGC];
                 }
                 //criteria dialogue
                 case NodeType.Response:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.Dialogue, NodeType.Event, NodeType.Criterion]);
-                    break;
+                    return [NodeType.Dialogue, NodeType.Event, NodeType.Criterion];
                 }
 
                 case NodeType.Dialogue:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion, NodeType.Response]);
-                    break;
+                    return [NodeType.Event, NodeType.Criterion, NodeType.Response];
                 }
                 case NodeType.Value:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion, NodeType.Value]);
-                    break;
+                    return [NodeType.Event, NodeType.Criterion, NodeType.Value];
                 }
                 //event criterion
                 case NodeType.CharacterGroup:
@@ -285,25 +285,19 @@ public partial class Main : Form
                 case NodeType.Door:
                 case NodeType.CriteriaGroup:
                 {
-                    NodeSpawnBox.Items.AddRange([NodeType.Event, NodeType.Criterion]);
-                    break;
+                    return [NodeType.Event, NodeType.Criterion];
                 }
                 case NodeType.Event:
                 default:
                 {
-                    NodeSpawnBox.Items.AddRange(Enum.GetNames<SpawnableNodeType>());
-                    break;
+                    return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.Event, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
                 }
             }
         }
         else
         {
-            NodeSpawnBox.Items.AddRange(Enum.GetNames<SpawnableNodeType>());
+            return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.Event, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
         }
-
-        NodeSpawnBox.Enabled = true;
-        NodeSpawnBox.Visible = true;
-        NodeSpawnBox.Focus();
     }
 
     public void HandleMouseEvents(object? sender, MouseEventArgs e)
@@ -313,61 +307,12 @@ public partial class Main : Form
             return;
         }
         var pos = Graph.PointToClient(Cursor.Position);
-        ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
-        var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
-        //set old position for next frame/call
-        switch (e.Button)
-        {
-            case MouseButtons.Left:
-                if (e.Clicks > 1)
-                {
-                    //double click
-                    UpdateDoubleClickTransition(ScreenPos);
-                    Graph.Focus();
-                }
-                else
-                {
-                    _ = UpdateClickedNode(ScreenPos);
-                    Graph.Invalidate();
-                    if (adjustedMouseClipBounds.Contains(ScreenPos))
-                    {
-                        Graph.Focus();
-                    }
-                }
-                break;
-            case MouseButtons.None:
-            {
-                MovingChild = false;
-                EndPan();
-                UpdateHighlightNode(ScreenPos);
-            }
-            break;
-            case MouseButtons.Right:
-            {
-                _ = UpdateClickedNode(ScreenPos);
-                Graph.Focus();
-            }
-            break;
-            case MouseButtons.Middle:
-                UpdatePan(pos);
-                Graph.Focus();
-                break;
-            case MouseButtons.XButton1:
-                break;
-            case MouseButtons.XButton2:
-                break;
-            default:
-            {
-                MovingChild = false;
-                EndPan();
-                UpdateHighlightNode(ScreenPos);
-            }
-            break;
-        }
+        ScreenToGraph(pos.X, pos.Y, out float GraphPosX, out float GraphPosY);
+        var graphPos = new PointF(GraphPosX, GraphPosY);
 
         if (MovingChild && movedNode != Node.NullNode)
         {
-            movedNode.Position = ScreenPos + OffsetFromDragClick;
+            movedNode.Position = graphPos + OffsetFromDragClick;
             Cursor = Cursors.SizeAll;
             Graph.Invalidate();
         }
@@ -382,6 +327,78 @@ public partial class Main : Form
         else
         {
             Cursor = Cursors.Arrow;
+        }
+
+        //set old position for next frame/call
+        switch (e.Button)
+        {
+            case MouseButtons.Left:
+                RightClickFrameCounter = 0;
+                if (e.Clicks > 1)
+                {
+                    //double click
+                    UpdateDoubleClickTransition(graphPos);
+                    Graph.Focus();
+                }
+                else
+                {
+                    _ = UpdateClickedNode(graphPos);
+                    Graph.Invalidate();
+                    if (adjustedMouseClipBounds.Contains(graphPos))
+                    {
+                        Graph.Focus();
+                    }
+                }
+                break;
+            case MouseButtons.None:
+            {
+                if (!MovingChild && RightClickFrameCounter > 0)
+                {
+                    _ = UpdateClickedNode(graphPos);
+                    //right click only no move, spawn context
+                    SpawnContextMenu(graphPos);
+                }
+                RightClickFrameCounter = 0;
+                MovingChild = false;
+                EndPan();
+                UpdateHighlightNode(graphPos);
+            }
+            break;
+            case MouseButtons.Right:
+            {
+                RightClickFrameCounter++;
+                if (!MovingChild && RightClickFrameCounter > 1)
+                {
+                    Node node = UpdateClickedNode(graphPos);
+                    movedNode = node;
+                    MovingChild = true;
+                    OffsetFromDragClick = new SizeF((movedNode.Position.X - graphPos.X), (movedNode.Position.Y - graphPos.Y));
+                }
+                Graph.Focus();
+            }
+            break;
+            case MouseButtons.Middle:
+                UpdatePan(pos);
+                Graph.Focus();
+                break;
+            case MouseButtons.XButton1:
+                break;
+            case MouseButtons.XButton2:
+                break;
+            default:
+            {
+                if (!MovingChild && RightClickFrameCounter > 0)
+                {
+                    _ = UpdateClickedNode(graphPos);
+                    //right click only no move, spawn context
+                    SpawnContextMenu(graphPos);
+                }
+                RightClickFrameCounter = 0;
+                MovingChild = false;
+                EndPan();
+                UpdateHighlightNode(graphPos);
+            }
+            break;
         }
 
         //everything else, scrolling for example
@@ -997,75 +1014,66 @@ public partial class Main : Form
 
     }
 
-    private Node UpdateClickedNode(PointF ScreenPos)
+    private Node UpdateClickedNode(PointF graphPos)
     {
-        Node node = GetNodeAtPoint(ScreenPos);
+        Node node = GetNodeAtPoint(graphPos);
 
-        //todo only on drag move, right click alone spawns context menu with options to add criteria, event, alternate text depending on what you need
-        //todo long term also do on button press/combination add the respective node
-        if (MouseButtons == MouseButtons.Right)
+        MovingChild = false;
+        if (node != Node.NullNode)
         {
-            if (node == Node.NullNode)
+            if (IsCtrlPressed
+                && node.Type is NodeType.Event or NodeType.Criterion
+                && node.Data<MissingReferenceInfo>() != null)
             {
-                return node;
+                nodeToLinkToNext = node;
+                if (highlightNode == node)
+                {
+                    highlightNode = Node.NullNode;
+                }
             }
-
-            if (RightHasJustBeenClicked && !MovingChild)
+            else if (!IsCtrlPressed && nodeToLinkToNext != Node.NullNode)
             {
-                movedNode = node;
-                MovingChild = true;
-                OffsetFromDragClick = new Size((int)(movedNode.Position.X - ScreenPos.X), (int)(movedNode.Position.Y - ScreenPos.Y));
+                AddNodeToNextClicked(node);
+                ShowProperties(node);
             }
-            else if (!RightHasJustBeenClicked)
+            else if (clickedNode != node)
             {
-                RightHasJustBeenClicked = true;
+                ShowProperties(node);
             }
         }
         else
         {
-            if (RightHasJustBeenClicked && !MovingChild)
-            {
-                //right click only no move, spawn context
-                SpawnContextMenu(node, ScreenPos);
-            }
-
-            MovingChild = false;
-            if (node != Node.NullNode)
-            {
-                if (IsCtrlPressed
-                    && node.Type is NodeType.Event or NodeType.Criterion
-                    && node.Data<MissingReferenceInfo>() != null)
-                {
-                    nodeToLinkToNext = node;
-                    if (highlightNode == node)
-                    {
-                        highlightNode = Node.NullNode;
-                    }
-                }
-                else if (!IsCtrlPressed && nodeToLinkToNext != Node.NullNode)
-                {
-                    AddNodeToNextClicked(node);
-                    ShowProperties(node);
-                }
-                else if (clickedNode != node)
-                {
-                    ShowProperties(node);
-                }
-            }
-            else
-            {
-                nodeToLinkToNext = Node.NullNode;
-            }
-
-            clickedNode = node;
+            nodeToLinkToNext = Node.NullNode;
         }
+
+        clickedNode = node;
         return node;
     }
 
-    private void SpawnContextMenu(Node node, PointF screenPos)
+    private void SpawnContextMenu(PointF graphPos)
     {
+        GraphToScreen(graphPos.X, graphPos.Y, out float screenPosX, out float screenPosY);
+        Point ScreenPos = new((int)screenPosX, (int)screenPosY);
 
-        //todo
+        NodeContext.Items.Clear();
+
+        foreach (var item in GetSpawnableNodeTypes())
+        {
+            NodeContext.Items.Add(new ToolStripButton(item.ToString(), null, onClick: (_, _) =>
+            {
+                string character = GetProbableCharacter();
+                var newNode = GetNodeFromSpawnableType((Enum.Parse<SpawnableNodeType>(item.ToString()!)), character);
+                SetUpNewlySpawnedNode(newNode, graphPos);
+            })
+            {
+                DisplayStyle = ToolStripItemDisplayStyle.Text,
+                AutoSize = true,
+                BackColor = Color.DarkGray,
+
+            });
+        }
+
+        NodeContext.Show(Graph, ScreenPos);
     }
 
     private void AddNodeToNextClicked(Node addToThis)
@@ -2027,7 +2035,7 @@ public partial class Main : Form
                     AutoSize = true,
                 };
                 PropertyInspector.Controls.Add(label);
-                if (node.Data<Dialogue>()is null)
+                if (node.Data<Dialogue>() is null)
                 {
                     Label label2 = new()
                     {
@@ -2168,7 +2176,7 @@ public partial class Main : Form
             }
             case NodeType.Event:
             {
-                if (node.Data<GameEvent>()is  null)
+                if (node.Data<GameEvent>() is null)
                 {
                     Label label2 = new()
                     {
@@ -2347,7 +2355,7 @@ public partial class Main : Form
             }
             case NodeType.EventTrigger:
             {
-                if (node.Data<EventTrigger>() is  null)
+                if (node.Data<EventTrigger>() is null)
                 {
                     Label label2 = new()
                     {
@@ -2667,7 +2675,7 @@ public partial class Main : Form
             case NodeType.Response:
             {
                 PropertyInspector.RowCount = 2;
-                if (node.Data<Response>() is  null)
+                if (node.Data<Response>() is null)
                 {
                     Label label2 = new()
                     {
@@ -2791,7 +2799,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                if (node.Data<Value>() is  null)
+                if (node.Data<Value>() is not null)
                 {
                     TextBox obj2 = new()
                     {
@@ -2830,7 +2838,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                if (node.Data<Trait>() is  null)
+                if (node.Data<Trait>() is null)
                 {
                     NumericUpDown option = new()
                     {
@@ -3284,6 +3292,7 @@ public partial class Main : Form
         }
     }
 
+    //todo probably needs some more work for some events and criteria to populate defaults
     private void SpawnNodeFromSpaceSpawner(object sender, EventArgs e)
     {
         SpawnableNodeType selectedType = Enum.Parse<SpawnableNodeType>(NodeSpawnBox.SelectedItem?.ToString()!);
@@ -3295,8 +3304,13 @@ public partial class Main : Form
         NodeSpawnBox.Enabled = false;
         NodeSpawnBox.Visible = false;
 
-        Node newNode = Node.NullNode;
+        string character = GetProbableCharacter();
+        var newNode = GetNodeFromSpawnableType(selectedType, character);
+        SetUpNewlySpawnedNode(newNode);
+    }
 
+    private string GetProbableCharacter()
+    {
         string character = SelectedCharacter;
 
         if (clickedNode != Node.NullNode)
@@ -3304,6 +3318,50 @@ public partial class Main : Form
             character = clickedNode.FileName;
         }
 
+        return character;
+    }
+
+    private void SetUpNewlySpawnedNode(Node newNode, PointF? oldPoint = null)
+    {
+        if (ActiveForm is null)
+        {
+            return;
+        }
+
+        if (clickedNode == Node.NullNode)
+        {
+            PointF ScreenPos;
+            if (oldPoint is null)
+            {
+                var pos = Graph.PointToClient(Cursor.Position);
+                ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
+                ScreenPosX -= NodeSizeX / 2;
+                ScreenPosY -= NodeSizeY / 2;
+                ScreenPos = new PointF(ScreenPosX, ScreenPosY);
+            }
+            else
+            {
+                ScreenPos = oldPoint.Value;
+                ScreenPos -= new SizeF(NodeSizeX / 2, NodeSizeY / 2);
+            }
+
+            newNode.Position = ScreenPos;
+        }
+        else
+        {
+            newNode.Position = clickedNode.Position + new Size(scaleX, 0);
+        }
+
+        clickedNode = newNode;
+        ShowProperties(newNode);
+
+        Graph.Invalidate();
+        Graph.Focus();
+    }
+
+    private Node GetNodeFromSpawnableType(SpawnableNodeType selectedType, string character)
+    {
+        Node newNode = Node.NullNode;
         switch (selectedType)
         {
             case SpawnableNodeType.Criterion:
@@ -3842,30 +3900,6 @@ public partial class Main : Form
             }
         }
 
-        if (ActiveForm is null)
-        {
-            return;
-        }
-
-        if (clickedNode == Node.NullNode)
-        {
-            var pos = Graph.PointToClient(Cursor.Position);
-            ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
-            ScreenPosX -= NodeSizeX / 2;
-            ScreenPosY -= NodeSizeY / 2;
-            var ScreenPos = new PointF(ScreenPosX, ScreenPosY);
-
-            newNode.Position = ScreenPos;
-        }
-        else
-        {
-            newNode.Position = clickedNode.Position + new Size(scaleX, 0);
-        }
-
-        clickedNode = newNode;
-        ShowProperties(newNode);
-
-        Graph.Invalidate();
-        Graph.Focus();
+        return newNode;
     }
 }

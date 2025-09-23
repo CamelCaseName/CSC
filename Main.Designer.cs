@@ -30,9 +30,10 @@ namespace CSC
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            TreeNode treeNode3 = new TreeNode("Characters");
-            TreeNode treeNode4 = new TreeNode("Story Root", new TreeNode[] { treeNode3 });
+            TreeNode treeNode5 = new TreeNode("Characters");
+            TreeNode treeNode6 = new TreeNode("Story Root", new TreeNode[] { treeNode5 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -46,6 +47,7 @@ namespace CSC
             Graph = new DoubleBufferedPanel();
             NodeSpawnBox = new ComboBox();
             PropertyInspector = new TableLayoutPanel();
+            NodeContext = new ContextMenuStrip(components);
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
             HierarchyAndRest.Panel1.SuspendLayout();
@@ -146,14 +148,14 @@ namespace CSC
             StoryTree.ForeColor = Color.White;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
-            treeNode3.Name = "Characters";
-            treeNode3.Text = "Characters";
-            treeNode3.ToolTipText = "You'll find all your Characters here";
-            treeNode4.Checked = true;
-            treeNode4.Name = "Story Name";
-            treeNode4.Text = "Story Root";
-            treeNode4.ToolTipText = "The Story itself and the Characters are in here";
-            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode4 });
+            treeNode5.Name = "Characters";
+            treeNode5.Text = "Characters";
+            treeNode5.ToolTipText = "You'll find all your Characters here";
+            treeNode6.Checked = true;
+            treeNode6.Name = "Story Name";
+            treeNode6.Text = "Story Root";
+            treeNode6.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode6 });
             StoryTree.ShowNodeToolTips = true;
             StoryTree.Size = new Size(235, 537);
             StoryTree.TabIndex = 1;
@@ -220,9 +222,9 @@ namespace CSC
             NodeSpawnBox.Size = new Size(674, 23);
             NodeSpawnBox.TabIndex = 0;
             NodeSpawnBox.Visible = false;
+            NodeSpawnBox.SelectedIndexChanged += SpawnNodeFromSpaceSpawner;
             NodeSpawnBox.SelectionChangeCommitted += SpawnNodeFromSpaceSpawner;
             NodeSpawnBox.SelectedValueChanged += SpawnNodeFromSpaceSpawner;
-            NodeSpawnBox.SelectedIndexChanged += SpawnNodeFromSpaceSpawner;
             // 
             // PropertyInspector
             // 
@@ -242,6 +244,13 @@ namespace CSC
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
             PropertyInspector.Size = new Size(1192, 149);
             PropertyInspector.TabIndex = 0;
+            // 
+            // NodeContext
+            // 
+            NodeContext.BackColor = SystemColors.ControlDarkDark;
+            NodeContext.Name = "contextMenuStrip1";
+            NodeContext.Size = new Size(61, 4);
+            NodeContext.Text = "Spawn new Node:";
             // 
             // Main
             // 
@@ -289,5 +298,6 @@ namespace CSC
         private DoubleBufferedPanel Graph;
         private TableLayoutPanel PropertyInspector;
         private ComboBox NodeSpawnBox;
+        private ContextMenuStrip NodeContext;
     }
 }
