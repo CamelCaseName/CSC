@@ -880,8 +880,6 @@ namespace CSC.Nodestuff
                         }
                     }
                 }
-
-                return $"{fileName} | {Type} | {ID}";
             }
         }
         private string fileName = Main.NoCharacter;
@@ -951,6 +949,11 @@ namespace CSC.Nodestuff
             {
                 data = value;
                 DataType = value?.GetType() ?? typeof(object);
+
+                if (DataType == typeof(Dialogue) || DataType == typeof(ItemInteraction) || DataType == typeof(ItemGroupInteraction))
+                {
+                    Size.Height *= 2;
+                }
             }
         }
 

@@ -553,9 +553,30 @@ public partial class Main : Form
 
     }
 
+    //todo make objects with two different events (dialogues, items, etc) bigger and have the
+    //start or stop events paths come out of a different spor lower or higher on the node, maybe even with label
     private void DrawEdge(PaintEventArgs e, Node parent, Node child, Pen pen)
     {
-        start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 2);
+        int third = 0;
+
+        third = GetEdgeStartHeight(parent, child, third);
+        if (third == 0)
+        {
+            third = GetEdgeStartHeight(child, parent, third);
+        }
+
+        if (third == 0)
+        {
+            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 2);
+        }
+        else if (third == 1)
+        {
+            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 5);
+        }
+        else if (third == 2)
+        {
+            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 5 * 4);
+        }
         end = child.Position + new SizeF(0, child.Size.Height / 2);
 
         PointF controlStart;
@@ -588,6 +609,45 @@ public partial class Main : Form
         e.Graphics.DrawBezier(pen, start, controlStart, controlEnd, end);
         //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
         //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
+    }
+
+    private static int GetEdgeStartHeight(Node parent, Node child, int third)
+    {
+        if (parent.DataType == typeof(Dialogue) && child.DataType == typeof(GameEvent))
+        {
+            if (parent.Data<Dialogue>()!.StartEvents.Contains(child.Data<GameEvent>()!))
+            {
+                third = 1;
+            }
+            else if (parent.Data<Dialogue>()!.CloseEvents.Contains(child.Data<GameEvent>()!))
+            {
+                third = 2;
+            }
+        }
+        else if (parent.DataType == typeof(ItemInteraction) && child.DataType == typeof(GameEvent))
+        {
+            if (parent.Data<ItemInteraction>()!.OnAcceptEvents.Contains(child.Data<GameEvent>()!))
+            {
+                third = 1;
+            }
+            else if (parent.Data<ItemInteraction>()!.OnRefuseEvents.Contains(child.Data<GameEvent>()!))
+            {
+                third = 2;
+            }
+        }
+        else if (parent.DataType == typeof(ItemGroupInteraction) && child.DataType == typeof(GameEvent))
+        {
+            if (parent.Data<ItemGroupInteraction>()!.OnAcceptEvents.Contains(child.Data<GameEvent>()!))
+            {
+                third = 1;
+            }
+            else if (parent.Data<ItemGroupInteraction>()!.OnRefuseEvents.Contains(child.Data<GameEvent>()!))
+            {
+                third = 2;
+            }
+        }
+
+        return third;
     }
 
     private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush, bool lightText = false)
@@ -710,8 +770,6 @@ public partial class Main : Form
         };
     }
 
-    //todo make objects with two different events (dialogues, items, etc) bigger and have the
-    //start or stop events paths come out of a different spor lower or higher on the node, maybe even with label
     private void Main_Paint(object sender, PaintEventArgs e)
     {
         var g = e.Graphics;
@@ -953,11 +1011,7 @@ public partial class Main : Form
 
             maxYperX.Clear();
             var intX = 30;
-            var intY = 1;
-            for (int i = 0; i < intX; i++)
-            {
-                maxYperX.Add(1);
-            }
+            maxYperX.ExtendToIndex(intX, 1);
 
             visited.Clear();
             for (int i = 0; i < maxYperX.Count; i++)
@@ -973,12 +1027,7 @@ public partial class Main : Form
             foreach (var key in nodeList)
             {
                 Family family = nodeStore[key];
-                if (family.Parents.Count > ParentEdgeMaxStartValue)
-                {
-                    continue;
-                }
-
-                if (visited.Contains(key))
+                if (family.Parents.Count > ParentEdgeMaxStartValue || visited.Contains(key))
                 {
                     continue;
                 }
@@ -991,18 +1040,12 @@ public partial class Main : Form
                 {
                     intX += 1 + ParentEdgeMaxStartValue;
                 }
-
-                for (int i = maxYperX.Count; i <= intX; i++)
-                {
-                    maxYperX.Add(1);
-                }
+                maxYperX.ExtendToIndex(intX, 1);
 
                 Queue<Node> toExplore = [];
                 Queue<int> layerX = [];
-                Queue<int> layerY = [];
                 toExplore.Enqueue(key);
                 layerX.Enqueue(intX);
-                layerY.Enqueue(1);
 
                 //Debug.WriteLine($"starting on {key.ID} at {intX}|{1}");
 
@@ -1010,7 +1053,6 @@ public partial class Main : Form
                 {
                     var node = toExplore.Dequeue();
                     intX = layerX.Dequeue();
-                    intY = layerY.Dequeue();
 
                     if (visited.Contains(node))
                     {
@@ -1028,21 +1070,22 @@ public partial class Main : Form
 
                     int newParentsX = intX - (parents.Count / 3) - 1;
                     int newChildX = intX + (childs.Count / 3) + 1;
-                    maxYperX.ExtendToIndex(newChildX, 1);
+                    maxYperX.ExtendToIndex(newChildX, maxYperX[intX]);
 
-                    if (maxYperX[intX] < intY)
-                    {
-                        maxYperX[intX] = intY;
-                    }
-                    else
-                    {
-                        maxYperX[intX]++;
-                    }
+                    int rest = (int)float.Round(node.Size.Height / NodeSizeY);
+                    rest = rest < 0 ? 1 : rest;
 
-                    node.Position = new PointF(intX * scaleX, Math.Max(intY, maxYperX[intX]) * scaleY);
+                    node.Position = new PointF(intX * scaleX, maxYperX[intX] * scaleY);
+
+                    maxYperX[intX] += rest;
 
                     if (parents.Count > 0)
                     {
+                        if (maxYperX[newParentsX] < maxYperX[intX] - rest)
+                        {
+                            maxYperX[newParentsX] = maxYperX[intX] - rest;
+                        }
+
                         foreach (var item in parents)
                         {
                             if (visited.Contains(item))
@@ -1051,7 +1094,6 @@ public partial class Main : Form
                             }
 
                             layerX.Enqueue(newParentsX);
-                            layerY.Enqueue(Math.Max(intY++, maxYperX[newParentsX]));
                             toExplore.Enqueue(item);
                         }
                     }
@@ -1066,7 +1108,6 @@ public partial class Main : Form
                             }
 
                             layerX.Enqueue(newChildX);
-                            layerY.Enqueue(Math.Max(intY++, maxYperX[newChildX]));
                             toExplore.Enqueue(item);
                         }
                     }
@@ -3236,7 +3277,6 @@ public partial class Main : Form
 
     private void PutEquals(Criterion criterion)
     {
-        //todo make one single and shared new constructor for getting this type of combobox...
         ComboBox equals = GetComboBox();
         equals.Items.AddRange(Enum.GetNames(typeof(EqualsValues)));
         equals.SelectedIndex = (int)criterion.EqualsValue!;

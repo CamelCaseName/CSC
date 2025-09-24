@@ -2,6 +2,7 @@
 
 namespace CSC.StoryItems
 {
+    //todo fill all with default values!
     public sealed class Criterion
     {
         public BoolCritera? BoolValue { get; set; }
