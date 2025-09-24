@@ -128,6 +128,21 @@ namespace CSC.Nodestuff
             EventTrigger trigger;
             Response response;
             Dialogue dialogue;
+            ItemAction itemAction;
+            ItemGroupBehavior itemGroupBehavior;
+            ItemGroupInteraction itemGroupInteraction;
+            Achievement achievement;
+            BackgroundChatter chatter;
+            BackgroundChatterResponse chatterResponse;
+            CriteriaGroup criteriaGroup;
+            AlternateText alternateText;
+            ItemOverride itemOverride;
+            ItemGroup itemGroup;
+            Trait trait;
+            Quest quest1;
+            Value value1;
+            UseWith useWith;
+
             switch (node.Type)
             {
                 case NodeType.Criterion when (criterion = node.Data<Criterion>()!) is not null:
@@ -782,7 +797,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Quest:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Key);
+                            result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -790,7 +805,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var quest = new Node(gameEvent.Value!, NodeType.Social, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files", nodes.Positions) { FileName = gameEvent.Character! };
+                                var quest = new Node(gameEvent.Value!, NodeType.Quest, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files", nodes.Positions) { FileName = gameEvent.Character! };
                                 newList.Add(quest);
                                 nodes.AddChild(node, quest);
                             }
@@ -874,6 +889,11 @@ namespace CSC.Nodestuff
                             break;
                     }
 
+                    foreach (var _criterion in gameEvent.Criteria)
+                    {
+                        result = HandleCrierion(nodes, node, newList, _criterion);
+                    }
+
                     break;
                 }
 
@@ -882,31 +902,12 @@ namespace CSC.Nodestuff
                     //link against events
                     foreach (GameEvent _event in trigger.Events!)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.GameEvent && n.ID == _event.Id);
-                        if (result is not null)
-                        {
-                            nodes.AddChild(node, result);
-                        }
-                        else
-                        {
-                            //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions);
-                            newList.Add(eventNode);
-                            nodes.AddChild(node, eventNode);
-                        }
+                        result = HandleEvents(nodes, node, newList, _event);
                     }
                     //link against criteria
                     foreach (Criterion _criterion in trigger.Critera!)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
-                        if (result is not null)
-                        {
-                            nodes.AddParent(node, result);
-                        }
-                        else
-                        {
-                            newList.Add(Node.CreateCriteriaNode(_criterion, node, nodes));
-                        }
+                        result = HandleCrierion(nodes, node, newList, _criterion);
                     }
                     node.StaticText = trigger.Critera.Count == 0
                         ? trigger.Name + " " + trigger.Type
@@ -916,6 +917,16 @@ namespace CSC.Nodestuff
 
                 case NodeType.Response when (response = node.Data<Response>()!) is not null:
                 {
+                    foreach (GameEvent _event in response.ResponseEvents!)
+                    {
+                        result = HandleEvents(nodes, node, newList, _event);
+                    }
+
+                    foreach (Criterion _criterion in response.ResponseCriteria!)
+                    {
+                        result = HandleCrierion(nodes, node, newList, _criterion);
+                    }
+
                     if (response.Next == 0)
                     {
                         return;
@@ -930,7 +941,7 @@ namespace CSC.Nodestuff
                     else
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                        var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}", nodes.Positions);
+                        var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
                         newList.Add(dialogueNode);
                         nodes.AddChild(node, dialogueNode);
                     }
@@ -940,48 +951,101 @@ namespace CSC.Nodestuff
 
                 case NodeType.Dialogue when (dialogue = node.Data<Dialogue>()!) is not null:
                 {
-                    if (dialogue.Responses.Count == 0)
+                    if (dialogue.Responses.Count > 0)
                     {
-                        return;
+                        foreach (var resp in dialogue.Responses)
+                        {
+                            result = newList.Find((n) => n.Type == NodeType.Response && n.ID == resp.Id!);
+
+                            if (result is not null)
+                            {
+                                nodes.AddChild(node, result);
+                            }
+                            else
+                            {
+                                //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                                var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
+                                newList.Add(respNode);
+                                nodes.AddChild(node, respNode);
+                            }
+                        }
                     }
-                    foreach (var resp in dialogue.Responses)
+
+                    if (dialogue.AlternateTexts.Count > 0)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.Response && n.ID == resp.Id!);
+                        foreach (var alternate in dialogue.AlternateTexts)
+                        {
+                            result = newList.Find((n) => n.Type == NodeType.AlternateText && n.ID == $"{dialogue.ID}.{alternate.Order!}");
 
-                        if (result is not null)
-                        {
-                            nodes.AddChild(node, result);
+                            if (result is not null)
+                            {
+                                nodes.AddChild(node, result);
+                            }
+                            else
+                            {
+                                //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                                var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
+                                newList.Add(_node);
+                                nodes.AddChild(node, _node);
+                            }
                         }
-                        else
+                    }
+
+                    if (dialogue.StartEvents.Count > 0)
+                    {
+                        foreach (var _event in dialogue.StartEvents)
                         {
-                            //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}", nodes.Positions);
-                            newList.Add(respNode);
-                            nodes.AddChild(node, respNode);
+                            result = HandleEvents(nodes, node, newList, _event);
+                        }
+                    }
+
+                    if (dialogue.CloseEvents.Count > 0)
+                    {
+                        foreach (var _event in dialogue.CloseEvents)
+                        {
+                            result = HandleEvents(nodes, node, newList, _event);
                         }
                     }
 
                     break;
                 }
 
-                case NodeType.ItemAction:
+                case NodeType.ItemAction when (itemAction = node.Data<ItemAction>()!) is not null:
+                {
+                    foreach (GameEvent _event in itemAction.OnTakeActionEvents!)
+                    {
+                        result = HandleEvents(nodes, node, newList, _event);
+                    }
+
+                    foreach (Criterion _criterion in itemAction.Criteria!)
+                    {
+                        result = HandleCrierion(nodes, node, newList, _criterion);
+                    }
+
+                    break;
+                }
+                case NodeType.ItemGroupBehaviour when (itemGroupBehavior = node.Data<ItemGroupBehavior>()!) is not null:
                 {
                     //todo
                     break;
                 }
-                case NodeType.ItemGroupBehaviour:
+                case NodeType.ItemGroupInteraction when (itemGroupInteraction = node.Data<ItemGroupInteraction>()!) is not null:
                 {
-                    //todo
-                    break;
-                }
-                case NodeType.ItemGroupInteraction:
-                {
-                    //todo
-                    break;
-                }
-                case NodeType.Achievement:
-                {
-                    //todo
+                    foreach (GameEvent _event in itemGroupInteraction.OnAcceptEvents!)
+                    {
+                        result = HandleEvents(nodes, node, newList, _event);
+                    }
+
+                    foreach (GameEvent _event in itemGroupInteraction.OnRefuseEvents!)
+                    {
+                        result = HandleEvents(nodes, node, newList, _event);
+                    }
+
+                    foreach (Criterion _criterion in itemGroupInteraction.Critera!)
+                    {
+                        result = HandleCrierion(nodes, node, newList, _criterion);
+                    }
+
                     break;
                 }
                 case NodeType.BGC:
@@ -1024,17 +1088,45 @@ namespace CSC.Nodestuff
                     //todo
                     break;
                 }
-                case NodeType.Value:
-                {
-                    //todo
-                    break;
-                }
                 case NodeType.UseWith:
                 {
                     //todo
                     break;
                 }
             }
+        }
+
+        private static Node? HandleCrierion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion)
+        {
+            Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
+            if (result is not null)
+            {
+                nodes.AddParent(node, result);
+            }
+            else
+            {
+                newList.Add(Node.CreateCriteriaNode(_criterion, node, nodes));
+            }
+
+            return result;
+        }
+
+        private static Node? HandleEvents(NodeStore nodes, Node node, List<Node> newList, GameEvent _event)
+        {
+            Node? result = newList.Find((n) => n.Type == NodeType.GameEvent && n.ID == _event.Id);
+            if (result is not null)
+            {
+                nodes.AddChild(node, result);
+            }
+            else
+            {
+                //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions) { FileName = NodeLinker.FileName };
+                newList.Add(eventNode);
+                nodes.AddChild(node, eventNode);
+            }
+
+            return result;
         }
 
         public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores)

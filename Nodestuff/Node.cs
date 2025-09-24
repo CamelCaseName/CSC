@@ -845,7 +845,7 @@ namespace CSC.Nodestuff
                     }
                     case NodeType.Quest:
                     {
-                        return $"{Data<Quest>()?.ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on success: [{Data<Quest>()?.CompletedDetails}] on success: [{Data<Quest>()?.FailedDetails}] ";
+                        return $"{Data<Quest>()?.ID ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
                     }
                     case NodeType.Response:
                     {

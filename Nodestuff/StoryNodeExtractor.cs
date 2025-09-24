@@ -73,7 +73,7 @@ namespace CSC.Nodestuff
                 //add all alternate texts to teh dialogue
                 foreach (AlternateText alternateText in dialogue.AlternateTexts ?? [])
                 {
-                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue, nodes.Positions) { rawData = alternateText, FileName = story.CharacterName! };
+                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateText.Order}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue, nodes.Positions) { rawData = alternateText, FileName = story.CharacterName! };
 
                     //increasse counter to ensure valid id
                     alternateTextCounter++;
