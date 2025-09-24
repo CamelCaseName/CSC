@@ -553,8 +553,6 @@ public partial class Main : Form
 
     }
 
-    //todo make objects with two different events (dialogues, items, etc) bigger and have the
-    //start or stop events paths come out of a different spor lower or higher on the node, maybe even with label
     private void DrawEdge(PaintEventArgs e, Node parent, Node child, Pen pen)
     {
         int third = 0;
@@ -946,7 +944,7 @@ public partial class Main : Form
         }
 
         //even link for single file, should be able to link most suff so it stays readable
-        NodeLinker.Interlinknodes(tempStore);
+        NodeLinker.Interlinknodes(tempStore, FileName);
 
         if (!nodes.TryAdd(FileName, tempStore))
         {
@@ -1010,7 +1008,7 @@ public partial class Main : Form
             int sideLengthY = (int)(Math.Sqrt(nodes[store].Count) + 0.5);
 
             maxYperX.Clear();
-            var intX = 30;
+            var intX = 100;
             maxYperX.ExtendToIndex(intX, 1);
 
             visited.Clear();
@@ -1069,6 +1067,7 @@ public partial class Main : Form
                     parents.Sort(new NodeParentComparer(nodeStore));
 
                     int newParentsX = intX - (parents.Count / 3) - 1;
+                    newParentsX = Math.Max(0, newParentsX);
                     int newChildX = intX + (childs.Count / 3) + 1;
                     maxYperX.ExtendToIndex(newChildX, maxYperX[intX]);
 

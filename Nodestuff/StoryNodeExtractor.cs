@@ -132,7 +132,7 @@ namespace CSC.Nodestuff
             var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents", nodes.Positions);
             foreach (GameEvent _event in story.GameStartEvents ?? [])
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions) { rawData = _event };
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions) { rawData = _event, FileName = Main.Player };
 
                 nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);
 
