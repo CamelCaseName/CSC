@@ -16,7 +16,7 @@ namespace CSC
                 }
 
                 var mousePosition = new Point(0,0);
-                MouseMove(null, new MouseEventArgs(Control.MouseButtons, 0, mousePosition.X, mousePosition.Y, 0));
+                MouseMove(null, new MouseEventArgs(MouseButtons.None, 0, mousePosition.X, mousePosition.Y, 0));
             }
             return false;
         }

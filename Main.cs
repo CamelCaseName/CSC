@@ -3,6 +3,7 @@ using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Windows.Forms;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC;
@@ -391,6 +392,33 @@ public partial class Main : Form
             Cursor = Cursors.Arrow;
         }
 
+        if (!adjustedMouseClipBounds.Contains(graphPos))
+        {
+            return;
+        }
+        else if (e.Button != MouseButtons.None)
+        {
+            Graph.Focus();
+        }
+        else if (e.Button == MouseButtons.None && MouseButtons == MouseButtons.Middle)
+        {
+            UpdatePan(pos);
+            return;
+        }
+        else if (e.Button == MouseButtons.None && MouseButtons == MouseButtons.Right)
+        {
+            UpdateRightClick(graphPos);
+            return;
+        }
+
+        //everything else, scrolling for example
+        if (e.Delta != 0)
+        {
+            UpdateScaling(e);
+            //redraw
+            Graph.Invalidate();
+        }
+
         //set old position for next frame/call
         switch (e.Button)
         {
@@ -402,14 +430,10 @@ public partial class Main : Form
                     UpdateDoubleClickTransition(graphPos);
                     Graph.Focus();
                 }
-                else
+                else if (e.Clicks == 1)
                 {
                     _ = UpdateClickedNode(graphPos);
                     Graph.Invalidate();
-                    if (adjustedMouseClipBounds.Contains(graphPos))
-                    {
-                        Graph.Focus();
-                    }
                 }
                 break;
             case MouseButtons.None:
@@ -420,29 +444,33 @@ public partial class Main : Form
                     //right click only no move, spawn context
                     SpawnContextMenu(graphPos);
                 }
-                RightClickFrameCounter = 0;
-                MovingChild = false;
+                if (MouseButtons != MouseButtons.Right)
+                {
+                    RightClickFrameCounter = 0;
+                    MovingChild = false;
+                }
+
                 EndPan();
                 UpdateHighlightNode(graphPos);
             }
             break;
             case MouseButtons.Right:
             {
-                RightClickFrameCounter++;
-                if (!MovingChild && RightClickFrameCounter > 1)
+                if (e.Clicks > 0)
                 {
-                    Node node = UpdateClickedNode(graphPos);
-                    movedNode = node;
-                    MovingChild = true;
-                    OffsetFromDragClick = new SizeF((movedNode.Position.X - graphPos.X), (movedNode.Position.Y - graphPos.Y));
+                    UpdateRightClick(graphPos);
                 }
-                Graph.Focus();
             }
             break;
             case MouseButtons.Middle:
-                UpdatePan(pos);
-                Graph.Focus();
+            {
+                if (e.Clicks > 0)
+                {
+                    UpdatePan(pos);
+                    Graph.Focus();
+                }
                 break;
+            }
             case MouseButtons.XButton1:
                 break;
             case MouseButtons.XButton2:
@@ -455,20 +483,30 @@ public partial class Main : Form
                     //right click only no move, spawn context
                     SpawnContextMenu(graphPos);
                 }
-                RightClickFrameCounter = 0;
-                MovingChild = false;
+                if (MouseButtons != MouseButtons.Right)
+                {
+                    RightClickFrameCounter = 0;
+                    MovingChild = false;
+                }
                 EndPan();
                 UpdateHighlightNode(graphPos);
             }
             break;
         }
 
-        //everything else, scrolling for example
-        if (e.Delta != 0)
+        void UpdateRightClick(PointF graphPos)
         {
-            UpdateScaling(e);
-            //redraw
-            Graph.Invalidate();
+            RightClickFrameCounter++;
+            Debug.WriteLine(RightClickFrameCounter);
+            if (!MovingChild && RightClickFrameCounter > 1)
+            {
+                Node node = UpdateClickedNode(graphPos);
+                movedNode = node;
+                MovingChild = true;
+                OffsetFromDragClick = new SizeF((movedNode.Position.X - graphPos.X), (movedNode.Position.Y - graphPos.Y));
+                Debug.WriteLine(MovingChild);
+            }
+            Graph.Focus();
         }
     }
 
@@ -905,6 +943,10 @@ public partial class Main : Form
         NodeLinker.InterlinkBetweenFiles(nodes);
 
         SetupStartPositions();
+
+        Graph.Invalidate();
+
+        StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[1].Nodes[characterStories.Count - 1];
     }
 
     private void LoadFileIntoStore(string FilePath)
@@ -1386,6 +1428,7 @@ public partial class Main : Form
                 };
                 sortOrder.PerformLayout();
                 sortOrder.ValueChanged += (_, _) => criterion.Order = (int)sortOrder.Value;
+                sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder);
 
                 switch (criterion.CompareType)
@@ -1397,10 +1440,10 @@ public partial class Main : Form
                     }
                     case CompareTypes.Clothing:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox clothing = GetComboBox();
+                        ComboBox clothing = GetComboBox(node);
                         clothing.Items.AddRange(Enum.GetNames(typeof(Clothes)));
                         if (int.TryParse(criterion.Value!, out int res))
                         {
@@ -1415,7 +1458,7 @@ public partial class Main : Form
                         clothing.SelectedIndexChanged += (_, _) => criterion.Value = clothing.SelectedIndex!.ToString();
                         PropertyInspector.Controls.Add(clothing);
 
-                        ComboBox set = GetComboBox();
+                        ComboBox set = GetComboBox(node);
                         set.Items.AddRange(Enum.GetNames(typeof(ClothingSet)));
                         set.SelectedIndex = criterion.Option!;
                         set.Select(set.SelectedItem?.ToString()?.Length ?? 0, 0);
@@ -1423,21 +1466,21 @@ public partial class Main : Form
                         set.SelectedIndexChanged += (_, _) => criterion.Option = set.SelectedIndex!;
                         PropertyInspector.Controls.Add(set);
 
-                        PutBoolValue(criterion);
+                        PutBoolValue(node, criterion);
 
                         break;
                     }
                     case CompareTypes.CoinFlip:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
                         break;
                     }
                     case CompareTypes.CompareValues:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox valueChar1 = GetComboBox();
+                        ComboBox valueChar1 = GetComboBox(node);
                         if (criterion.Key == Player)
                         {
                             valueChar1.Items.AddRange([.. Story.PlayerValues!]);
@@ -1452,7 +1495,7 @@ public partial class Main : Form
                         valueChar1.SelectedIndexChanged += (_, _) => criterion.Key = valueChar1.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(valueChar1);
 
-                        ComboBox formula = GetComboBox();
+                        ComboBox formula = GetComboBox(node);
                         formula.Items.AddRange(Enum.GetNames(typeof(ValueSpecificFormulas)));
                         formula.SelectedIndex = (int)criterion.ValueFormula!;
                         formula.Select(formula.SelectedItem?.ToString()?.Length ?? 0, 0);
@@ -1460,9 +1503,9 @@ public partial class Main : Form
                         formula.SelectedIndexChanged += (_, _) => criterion.ValueFormula = (ValueSpecificFormulas)formula.SelectedIndex!;
                         PropertyInspector.Controls.Add(formula);
 
-                        PutCharacter2(criterion);
+                        PutCharacter2(node, criterion);
 
-                        ComboBox valueChar2 = GetComboBox();
+                        ComboBox valueChar2 = GetComboBox(node);
                         if (criterion.Key2 == Player)
                         {
                             valueChar2.Items.AddRange([.. Story.PlayerValues!]);
@@ -1481,9 +1524,9 @@ public partial class Main : Form
                     }
                     case CompareTypes.CriteriaGroup:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox group = GetComboBox();
+                        ComboBox group = GetComboBox(node);
                         for (int i = 0; i < Story.CriteriaGroups!.Count; i++)
                         {
                             group.Items.Add(Story.CriteriaGroups[i].Name!);
@@ -1495,14 +1538,14 @@ public partial class Main : Form
                         group.SelectedIndexChanged += (_, _) => criterion.Value = group.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(group);
 
-                        PutBoolValue(criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.CutScene:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox cutscene = GetComboBox();
+                        ComboBox cutscene = GetComboBox(node);
                         cutscene.Items.AddRange(Enum.GetNames(typeof(CutscenePlaying)));
                         if (int.TryParse(criterion.Value!, out int res))
                         {
@@ -1516,15 +1559,15 @@ public partial class Main : Form
                         cutscene.SelectedIndexChanged += (_, _) => criterion.Value = (cutscene.SelectedIndex! + 1).ToString();
                         PropertyInspector.Controls.Add(cutscene);
 
-                        PutBoolValue(criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.Dialogue:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox dialogue = GetComboBox();
+                        ComboBox dialogue = GetComboBox(node);
                         for (int i = 0; i < characterStories[criterion.Character!].Dialogues!.Count; i++)
                         {
                             dialogue.Items.Add(characterStories[criterion.Character!].Dialogues![i].ID.ToString());
@@ -1534,7 +1577,7 @@ public partial class Main : Form
                         dialogue.SelectedIndexChanged += (_, _) => criterion.Value = dialogue.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(dialogue);
 
-                        ComboBox status = GetComboBox();
+                        ComboBox status = GetComboBox(node);
                         status.Items.AddRange(Enum.GetNames(typeof(DialogueStatuses)));
                         status.SelectedItem = ((DialogueStatuses)criterion.Option!).ToString();
                         status.PerformLayout();
@@ -1544,7 +1587,7 @@ public partial class Main : Form
                     }
                     case CompareTypes.Distance:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
                         TextBox obj1 = new()
                         {
@@ -1553,6 +1596,7 @@ public partial class Main : Form
                             Text = criterion.Key
                         };
                         obj1.TextChanged += (_, args) => criterion.Key = obj1.Text;
+                        obj1.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(obj1);
 
                         TextBox obj2 = new()
@@ -1562,27 +1606,28 @@ public partial class Main : Form
                             Text = criterion.Key2
                         };
                         obj2.TextChanged += (_, args) => criterion.Key2 = obj2.Text;
+                        obj2.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(obj2);
 
-                        PutComparison(criterion);
+                        PutComparison(node, criterion);
 
-                        PutNumericOption(criterion);
+                        PutNumericOption(node, criterion);
 
                         break;
                     }
                     case CompareTypes.Door:
                     {
 
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox door = GetComboBox();
+                        ComboBox door = GetComboBox(node);
                         door.Items.AddRange(Enum.GetNames(typeof(Doors)));
                         door.SelectedItem = criterion.Key?.Replace(" ", "");
                         door.PerformLayout();
                         door.SelectedIndexChanged += (_, _) => criterion.Key = door.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(door);
 
-                        ComboBox doorstate = GetComboBox();
+                        ComboBox doorstate = GetComboBox(node);
                         doorstate.Items.AddRange(Enum.GetNames(typeof(DoorOptionValues)));
                         doorstate.SelectedIndex = criterion.Option!;
                         doorstate.PerformLayout();
@@ -1597,12 +1642,12 @@ public partial class Main : Form
                     }
                     case CompareTypes.IntimacyPartner:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        PutEquals(criterion);
+                        PutEquals(node, criterion);
 
-                        ComboBox character = GetComboBox();
+                        ComboBox character = GetComboBox(node);
                         character.Items.AddRange(Enum.GetNames(typeof(IntimateCharacters)));
                         character.SelectedItem = criterion.Value;
                         character.SelectionLength = 0;
@@ -1615,12 +1660,12 @@ public partial class Main : Form
                     }
                     case CompareTypes.IntimacyState:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        PutEquals(criterion);
+                        PutEquals(node, criterion);
 
-                        ComboBox state = GetComboBox();
+                        ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(SexualActs)));
                         state.SelectedItem = criterion.Value;
                         state.SelectionLength = 0;
@@ -1633,10 +1678,10 @@ public partial class Main : Form
                     }
                     case CompareTypes.InZone:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
-                        PutZone(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
+                        PutZone(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.InVicinity:
@@ -1645,19 +1690,19 @@ public partial class Main : Form
                     case CompareTypes.IsOnlyInVisionOf:
                     case CompareTypes.IsOnlyInVicinityAndVisionOf:
                     {
-                        PutCharacter1(criterion);
-                        PutCompareType(criterion, node);
-                        PutCharacter2(criterion);
-                        PutBoolValue(criterion);
+                        PutCharacter1(node, criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter2(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.Item:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        PutItem(criterion);
+                        PutItem(node, criterion);
 
-                        ComboBox state = GetComboBox();
+                        ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(ItemComparisonTypes)));
                         state.SelectedItem = criterion.ItemComparison.ToString();
                         state.SelectionLength = 0;
@@ -1670,16 +1715,16 @@ public partial class Main : Form
                     }
                     case CompareTypes.IsBeingSpokenTo:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsAloneWithPlayer:
                     {
-                        PutCharacter1(criterion);
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCharacter1(node, criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsDLCActive:
@@ -1689,36 +1734,36 @@ public partial class Main : Form
                     }
                     case CompareTypes.IsCharacterEnabled:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsCurrentlyBeingUsed:
                     {
-                        PutCompareType(criterion, node);
-                        PutItem(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutItem(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsCurrentlyUsing:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
-                        PutItem(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
+                        PutItem(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsExplicitGameVersion:
                     {
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsGameUncensored:
                     {
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsPackageInstalled:
@@ -1728,30 +1773,30 @@ public partial class Main : Form
                     }
                     case CompareTypes.IsInFrontOf:
                     {
-                        PutCharacter1(criterion);
-                        PutCompareType(criterion, node);
-                        PutCharacter2(criterion);
-                        PutBoolValue(criterion);
+                        PutCharacter1(node, criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter2(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsInHouse:
                     {
-                        PutCharacter1(criterion);
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCharacter1(node, criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsNewGame:
                     {
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.IsZoneEmpty:
                     {
-                        PutCompareType(criterion, node);
-                        PutZone(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutZone(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.ItemFromItemGroup:
@@ -1761,17 +1806,17 @@ public partial class Main : Form
                     }
                     case CompareTypes.MetByPlayer:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.Personality:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox trait = GetComboBox();
+                        ComboBox trait = GetComboBox(node);
                         trait.Items.AddRange(Enum.GetNames(typeof(PersonalityTraits)));
                         if (int.TryParse(criterion.Key!, out int res))
                         {
@@ -1785,16 +1830,16 @@ public partial class Main : Form
                         trait.SelectedIndexChanged += (_, _) => criterion.Key = trait.SelectedIndex.ToString();
                         PropertyInspector.Controls.Add(trait);
 
-                        PutComparison(criterion);
-                        PutNumericValue(criterion);
+                        PutComparison(node, criterion);
+                        PutNumericValue(node, criterion);
 
                         break;
                     }
                     case CompareTypes.PlayerGender:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox gender = GetComboBox();
+                        ComboBox gender = GetComboBox(node);
                         gender.Items.AddRange(Enum.GetNames(typeof(Gender)));
                         gender.SelectedItem = criterion.Value;
                         gender.PerformLayout();
@@ -1805,41 +1850,41 @@ public partial class Main : Form
                     }
                     case CompareTypes.PlayerInventory:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox state = GetComboBox();
+                        ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(PlayerInventoryOptions)));
                         state.SelectedItem = criterion.PlayerInventoryOption.ToString();
                         state.PerformLayout();
                         state.SelectedIndexChanged += (_, _) => criterion.PlayerInventoryOption = Enum.Parse<PlayerInventoryOptions>(state.SelectedItem!.ToString()!);
                         PropertyInspector.Controls.Add(state);
 
-                        PutItem(criterion);
-                        PutBoolValue(criterion);
+                        PutItem(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.PlayerPrefs:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox pref = GetComboBox();
+                        ComboBox pref = GetComboBox(node);
                         pref.Items.AddRange(Enum.GetNames(typeof(PlayerPrefs)));
                         pref.SelectedItem = criterion.Key;
                         pref.PerformLayout();
                         pref.SelectedIndexChanged += (_, _) => criterion.Key = pref.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(pref);
 
-                        PutComparison(criterion);
-                        PutTextValue(criterion);
+                        PutComparison(node, criterion);
+                        PutTextValue(node, criterion);
 
                         break;
                     }
                     case CompareTypes.Posing:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox option = GetComboBox();
+                        ComboBox option = GetComboBox(node);
                         option.Items.AddRange(Enum.GetNames(typeof(PoseOptions)));
                         option.SelectedItem = criterion.PoseOption.ToString();
                         option.PerformLayout();
@@ -1849,9 +1894,9 @@ public partial class Main : Form
 
                         if (criterion.PoseOption == PoseOptions.CurrentPose)
                         {
-                            PutEquals(criterion);
+                            PutEquals(node, criterion);
 
-                            ComboBox pose = GetComboBox();
+                            ComboBox pose = GetComboBox(node);
                             pose.Items.AddRange(Enum.GetNames(typeof(Poses)));
                             pose.SelectedItem = Enum.Parse<Poses>(criterion.Value!).ToString();
                             pose.PerformLayout();
@@ -1860,31 +1905,31 @@ public partial class Main : Form
                         }
                         else
                         {
-                            PutBoolValue(criterion);
+                            PutBoolValue(node, criterion);
                         }
                         break;
                     }
                     case CompareTypes.Property:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox property = GetComboBox();
+                        ComboBox property = GetComboBox(node);
                         property.Items.AddRange(Enum.GetNames(typeof(InteractiveProperties)));
                         property.SelectedItem = Enum.Parse<InteractiveProperties>(criterion.Value!).ToString();
                         property.PerformLayout();
                         property.SelectedIndexChanged += (sender, values) => criterion.Value = ((int)Enum.Parse<InteractiveProperties>(property.SelectedItem!.ToString()!)).ToString();
                         PropertyInspector.Controls.Add(property);
 
-                        PutBoolValue(criterion);
+                        PutBoolValue(node, criterion);
 
                         break;
                     }
                     case CompareTypes.Quest:
                     {
-                        PutCompareType(criterion, node);
+                        PutCompareType(node, criterion);
 
-                        ComboBox quest = GetComboBox();
+                        ComboBox quest = GetComboBox(node);
                         foreach (string key in characterStories.Keys)
                         {
                             for (int i = 0; i < characterStories[key].Quests!.Count; i++)
@@ -1911,9 +1956,9 @@ public partial class Main : Form
                         };
                         PropertyInspector.Controls.Add(quest);
 
-                        PutEquals(criterion);
+                        PutEquals(node, criterion);
 
-                        ComboBox obtained = GetComboBox();
+                        ComboBox obtained = GetComboBox(node);
                         obtained.Items.AddRange(Enum.GetNames(typeof(QuestStatus)));
                         obtained.SelectedItem = Enum.Parse<QuestStatus>(criterion.Value!).ToString();
                         obtained.PerformLayout();
@@ -1923,56 +1968,56 @@ public partial class Main : Form
                     }
                     case CompareTypes.SameZoneAs:
                     {
-                        PutCharacter1(criterion);
-                        PutCompareType(criterion, node);
-                        PutCharacter2(criterion);
-                        PutBoolValue(criterion);
+                        PutCharacter1(node, criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter2(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.ScreenFadeVisible:
                     {
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.Social:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox social = GetComboBox();
+                        ComboBox social = GetComboBox(node);
                         social.Items.AddRange(Enum.GetNames(typeof(SocialStatuses)));
                         social.SelectedItem = criterion.SocialStatus!.ToString();
                         social.PerformLayout();
                         social.SelectedIndexChanged += (sender, values) => criterion.SocialStatus = Enum.Parse<SocialStatuses>(social.SelectedItem!.ToString()!);
                         PropertyInspector.Controls.Add(social);
 
-                        PutComparison(criterion);
-                        PutNumericValue(criterion);
+                        PutComparison(node, criterion);
+                        PutNumericValue(node, criterion);
 
                         break;
                     }
                     case CompareTypes.State:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion);
 
-                        ComboBox state = GetComboBox();
+                        ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(InteractiveStates)));
                         state.SelectedItem = Enum.Parse<InteractiveStates>(criterion.Value!).ToString();
                         state.PerformLayout();
                         state.SelectedIndexChanged += (sender, values) => criterion.Value = ((int)Enum.Parse<InteractiveStates>(state.SelectedItem!.ToString()!)).ToString();
                         PropertyInspector.Controls.Add(state);
 
-                        PutBoolValue(criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.Value:
                     {
-                        PutCompareType(criterion, node);
-                        PutCharacter1(criterion).SelectedIndexChanged += (_, _) => ShowProperties(node);
+                        PutCompareType(node, criterion);
+                        PutCharacter1(node, criterion).SelectedIndexChanged += (_, _) => ShowProperties(node);
 
-                        ComboBox value = GetComboBox();
+                        ComboBox value = GetComboBox(node);
                         if (criterion.Character == Player)
                         {
                             for (int i = 0; i < Story.PlayerValues!.Count; i++)
@@ -1992,7 +2037,7 @@ public partial class Main : Form
                         value.SelectedIndexChanged += (sender, values) => criterion.Key = value.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(value);
 
-                        PutComparison(criterion);
+                        PutComparison(node, criterion);
 
                         TextBox obj2 = new()
                         {
@@ -2001,26 +2046,33 @@ public partial class Main : Form
                             Text = criterion.Value
                         };
                         obj2.TextChanged += (_, args) => criterion.Value = obj2.Text;
+                        obj2.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(obj2);
 
                         break;
                     }
                     case CompareTypes.Vision:
                     {
-                        PutCharacter1(criterion);
-                        PutCompareType(criterion, node);
-                        PutCharacter2(criterion);
-                        PutBoolValue(criterion);
+                        PutCharacter1(node, criterion);
+                        PutCompareType(node, criterion);
+                        PutCharacter2(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
                     case CompareTypes.UseLegacyIntimacy:
                     {
-                        PutCompareType(criterion, node);
-                        PutBoolValue(criterion);
+                        PutCompareType(node, criterion);
+                        PutBoolValue(node, criterion);
                         break;
                     }
+
+                    case CompareTypes.Never:
+                    case CompareTypes.None:
                     default:
+                    {
+                        PutCompareType(node, criterion);
                         break;
+                    }
                 }
                 break;
             }
@@ -2039,7 +2091,7 @@ public partial class Main : Form
                 PropertyInspector.Controls.Add(label);
                 BackgroundChatter dialogue = node.Data<BackgroundChatter>()!;
 
-                ComboBox talkingTo = GetComboBox();
+                ComboBox talkingTo = GetComboBox(node);
                 talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.AnybodyCharacters)));
                 talkingTo.SelectedItem = dialogue.SpeakingTo;
                 talkingTo.SelectedIndexChanged += (_, _) => dialogue.SpeakingTo = talkingTo.SelectedItem!.ToString();
@@ -2055,7 +2107,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                ComboBox importance = GetComboBox();
+                ComboBox importance = GetComboBox(node);
                 importance.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Importance)));
                 importance.SelectedItem = dialogue.SpeakingTo;
                 importance.SelectedIndexChanged += (_, _) => dialogue.SpeakingTo = importance.SelectedItem!.ToString();
@@ -2110,7 +2162,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                ComboBox pairedEmote = GetComboBox();
+                ComboBox pairedEmote = GetComboBox(node);
                 pairedEmote.Items.AddRange(Enum.GetNames(typeof(StoryEnums.BGCEmotes)));
                 pairedEmote.SelectedItem = dialogue.PairedEmote;
                 pairedEmote.SelectedIndexChanged += (_, _) => dialogue.PairedEmote = pairedEmote.SelectedItem!.ToString();
@@ -2127,6 +2179,7 @@ public partial class Main : Form
                     BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => dialogue.Text = text.Text;
+                text.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 text.Select();
                 PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                 PropertyInspector.RowStyles[0].Height = 55;
@@ -2162,7 +2215,7 @@ public partial class Main : Form
                 PropertyInspector.RowCount = 2;
                 Dialogue dialogue = node.Data<Dialogue>()!;
 
-                ComboBox talkingTo = GetComboBox();
+                ComboBox talkingTo = GetComboBox(node);
                 talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
                 talkingTo.SelectedItem = dialogue.SpeakingToCharacterName;
                 talkingTo.SelectedText = string.Empty;
@@ -2234,6 +2287,7 @@ public partial class Main : Form
                     BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => dialogue.Text = text.Text;
+                text.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 text.Select();
                 PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                 PropertyInspector.RowStyles[0].Height = 35;
@@ -2267,6 +2321,7 @@ public partial class Main : Form
                     Width = 50
                 };
                 sortOrder.ValueChanged += (_, _) => alternate.Order = (int)sortOrder.Value;
+                sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder);
                 TextBox text = new()
                 {
@@ -2279,6 +2334,7 @@ public partial class Main : Form
                     BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => alternate.Text = text.Text;
+                text.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 text.Select();
                 PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                 PropertyInspector.RowStyles[0].Height = 35;
@@ -2326,9 +2382,10 @@ public partial class Main : Form
                     Width = 50
                 };
                 sortOrder.ValueChanged += (_, _) => gevent.SortOrder = (int)sortOrder.Value;
+                sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder, 1, 0);
 
-                ComboBox type = GetComboBox();
+                ComboBox type = GetComboBox(node);
                 type.Items.AddRange(Enum.GetNames(typeof(GameEvents)));
                 type.SelectedItem = gevent.EventType.ToString();
                 type.SelectedIndexChanged += (_, _) => gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
@@ -2353,114 +2410,252 @@ public partial class Main : Form
                     DecimalPlaces = 2,
                 };
                 delay.ValueChanged += (_, _) => gevent.Delay = (double)delay.Value;
+                delay.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(delay, 4, 0);
 
                 switch (gevent.EventType)
                 {
                     case GameEvents.AddForce:
                     {
-                        ComboBox characters = GetComboBox();
+                        ComboBox characters = GetComboBox(node);
                         characters.Items.AddRange(Enum.GetNames(typeof(Characters)));
                         characters.SelectedItem = gevent.Value!;
                         characters.SelectedIndexChanged += (_, _) => gevent.Value = characters.SelectedItem.ToString()!;
                         PropertyInspector.Controls.Add(characters);
 
-                        //todo fill other event types
+                        //todo
                         break;
                     }
                     case GameEvents.AllowPlayerSave:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.ChangeBodyScale:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.CharacterFromCharacterGroup:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.CharacterFunction:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Clothing:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Combat:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.CombineValue:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.CutScene:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Dialogue:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.DisableNPC:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.DisplayGameMessage:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Door:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Emote:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.EnableNPC:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.EventTriggers:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.FadeIn:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.FadeOut:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.IKReach:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Intimacy:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Item:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.ItemFromItemGroup:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.LookAt:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Personality:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Property:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.MatchValue:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.ModifyValue:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Player:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.PlaySoundboardClip:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Pose:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Quest:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.RandomizeIntValue:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.ResetReactionCooldown:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Roaming:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.SendEvent:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.SetPlayerPref:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Social:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.State:
-
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.TriggerBGC:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.Turn:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.TurnInstantly:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.UnlockAchievement:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.WalkTo:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.WarpOverTime:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.WarpTo:
+                    {
+                        //todo
                         break;
+                    }
                     case GameEvents.None:
+                    {
+                        //todo
                         break;
+                    }
                     default:
+                    {
+                        //todo
                         break;
+                    }
                 }
 
                 break;
@@ -2505,6 +2700,7 @@ public partial class Main : Form
                     BackColor = Color.FromArgb(50, 50, 50),
                 };
                 customName.TextChanged += (_, _) => eventTrigger.Name = customName.Text;
+                customName.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(customName, 1, 0);
                 PropertyInspector.SetColumnSpan(customName, 4);
 
@@ -2543,16 +2739,16 @@ public partial class Main : Form
                     case EventTypes.OnAnyItemAcceptFallback:
                     case EventTypes.OnAnyItemRefuseFallback:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
                         break;
                     }
                     case EventTypes.EntersZone:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
 
-                        ComboBox zone = GetComboBox();
+                        ComboBox zone = GetComboBox(node);
                         zone.Items.AddRange(Enum.GetNames(typeof(ZoneEnums)));
                         zone.SelectedItem = eventTrigger.Value;
                         zone.PerformLayout();
@@ -2563,10 +2759,10 @@ public partial class Main : Form
                     }
                     case EventTypes.ReachesTarget:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
 
-                        ComboBox targetType = GetComboBox();
+                        ComboBox targetType = GetComboBox(node);
                         targetType.Items.AddRange(Enum.GetNames(typeof(LocationTargetOption)));
                         targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
                         targetType.PerformLayout();
@@ -2578,7 +2774,7 @@ public partial class Main : Form
                         {
                             case LocationTargetOption.MoveTarget:
                             {
-                                ComboBox target = GetComboBox();
+                                ComboBox target = GetComboBox(node);
                                 target.Items.AddRange(Enum.GetNames(typeof(MoveTargets)));
                                 target.SelectedItem = eventTrigger.Value!.Replace(" ", "");
                                 target.PerformLayout();
@@ -2588,12 +2784,12 @@ public partial class Main : Form
                             }
                             case LocationTargetOption.Character:
                             {
-                                PutCharacterValue(eventTrigger);
+                                PutCharacterValue(node, eventTrigger);
                                 break;
                             }
                             case LocationTargetOption.Item:
                             {
-                                PutItemValue(eventTrigger);
+                                PutItemValue(node, eventTrigger);
                                 break;
                             }
                             default:
@@ -2604,7 +2800,7 @@ public partial class Main : Form
                     }
                     case EventTypes.IsBlockedByLockedDoor:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
 
                         TextBox door = new()
@@ -2618,22 +2814,23 @@ public partial class Main : Form
                             BackColor = Color.FromArgb(50, 50, 50),
                         };
                         door.TextChanged += (_, _) => eventTrigger.Value = door.Text;
+                        door.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(door);
 
                         break;
                     }
                     case EventTypes.IsAttacked:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
-                        PutCharacterValue(eventTrigger);
+                        PutCharacterValue(node, eventTrigger);
                         break;
                     }
                     case EventTypes.GetsHitWithProjectile:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
-                        PutItemKey(eventTrigger);
+                        PutItemkey(node, eventTrigger);
 
                         Label inlabel = new()
                         {
@@ -2645,7 +2842,7 @@ public partial class Main : Form
                         };
                         PropertyInspector.Controls.Add(inlabel);
 
-                        ComboBox zone = GetComboBox();
+                        ComboBox zone = GetComboBox(node);
                         zone.Items.AddRange(Enum.GetNames(typeof(BodyRegion)));
                         zone.SelectedItem = ((BodyRegion)int.Parse(eventTrigger.Value!)).ToString();
                         zone.PerformLayout();
@@ -2694,6 +2891,7 @@ public partial class Main : Form
                         };
                         option.PerformLayout();
                         option.ValueChanged += (_, _) => eventTrigger.UpdateIteration = (double)option.Value;
+                        option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(option);
 
                         Label seconds = new()
@@ -2719,16 +2917,16 @@ public partial class Main : Form
                     }
                     case EventTypes.PeesOnItem:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
-                        PutItemValue(eventTrigger);
+                        PutItemValue(node, eventTrigger);
                         break;
                     }
                     case EventTypes.PlayerThrowsItem:
                     {
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         PutStartCondition(node, eventTrigger);
-                        PutItemValue(eventTrigger);
+                        PutItemValue(node, eventTrigger);
                         break;
                     }
                     case EventTypes.StartedUsingActionItem:
@@ -2744,7 +2942,7 @@ public partial class Main : Form
                     case EventTypes.PlayerInteractsWithCharacter:
                     {
                         PutStartCondition(node, eventTrigger);
-                        PutCharacter(eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         break;
                     }
                     case EventTypes.PlayerInteractsWithItem:
@@ -2756,7 +2954,7 @@ public partial class Main : Form
                     {
                         PutStartCondition(node, eventTrigger);
 
-                        ComboBox cutscene = GetComboBox();
+                        ComboBox cutscene = GetComboBox(node);
                         cutscene.Items.AddRange(Enum.GetNames(typeof(Cutscenes)));
                         cutscene.SelectedItem = eventTrigger.Value;
                         cutscene.PerformLayout();
@@ -2815,7 +3013,7 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(label);
 
-                ComboBox dialogue = GetComboBox();
+                ComboBox dialogue = GetComboBox(node);
                 dialogue.Items.Add("Do not trigger new dialogue");
                 for (int i = 0; i < characterStories[node.FileName].Dialogues!.Count; i++)
                 {
@@ -2866,6 +3064,7 @@ public partial class Main : Form
                 };
                 option.PerformLayout();
                 option.ValueChanged += (_, _) => response.Order = (int)option.Value;
+                option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(option);
 
                 CheckBox checkBox = new()
@@ -2892,6 +3091,7 @@ public partial class Main : Form
                     BackColor = Color.FromArgb(50, 50, 50),
                 };
                 text.TextChanged += (_, _) => response.Text = text.Text;
+                text.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 text.Select();
                 PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                 PropertyInspector.RowStyles[0].Height = 50;
@@ -2922,6 +3122,7 @@ public partial class Main : Form
                         AutoSize = true,
                     };
                     obj2.TextChanged += (_, args) => node.Data<Value>()!.value = obj2.Text;
+                    obj2.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                     PropertyInspector.Controls.Add(obj2);
                 }
                 else
@@ -2965,6 +3166,7 @@ public partial class Main : Form
                     };
                     option.PerformLayout();
                     option.ValueChanged += (_, _) => node.Data<Trait>()!.Value = (int)option.Value;
+                    option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                     PropertyInspector.Controls.Add(option);
                 }
                 else
@@ -3059,9 +3261,9 @@ public partial class Main : Form
         }
     }
 
-    private void PutItemValue(EventTrigger eventTrigger)
+    private void PutItemValue(Node node, EventTrigger eventTrigger)
     {
-        ComboBox item = GetComboBox();
+        ComboBox item = GetComboBox(node);
         item.Items.AddRange(Enum.GetNames(typeof(Items)));
         item.SelectedItem = eventTrigger.Value;
         item.PerformLayout();
@@ -3069,9 +3271,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(item);
     }
 
-    private void PutItemKey(EventTrigger eventTrigger)
+    private void PutItemkey(Node node, EventTrigger eventTrigger)
     {
-        ComboBox item = GetComboBox();
+        ComboBox item = GetComboBox(node);
         item.Items.AddRange(Enum.GetNames(typeof(Items)));
         item.SelectedItem = eventTrigger.Key;
         item.PerformLayout();
@@ -3079,9 +3281,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(item);
     }
 
-    private void PutCharacterValue(EventTrigger eventTrigger)
+    private void PutCharacterValue(Node node, EventTrigger eventTrigger)
     {
-        ComboBox character = GetComboBox();
+        ComboBox character = GetComboBox(node);
         character.Items.AddRange(Enum.GetNames(typeof(AnybodyCharacters)));
         character.SelectedItem = eventTrigger.Value;
         character.PerformLayout();
@@ -3089,9 +3291,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(character);
     }
 
-    private ComboBox PutCharacter(EventTrigger eventTrigger)
+    private ComboBox PutCharacter(Node node, EventTrigger eventTrigger)
     {
-        ComboBox character = GetComboBox();
+        ComboBox character = GetComboBox(node);
         character.Items.AddRange(Enum.GetNames(typeof(AnybodyCharacters)));
         character.SelectedItem = eventTrigger.CharacterToReactTo;
         character.PerformLayout();
@@ -3112,7 +3314,7 @@ public partial class Main : Form
         };
         PropertyInspector.Controls.Add(label3);
 
-        ComboBox startCondition = GetComboBox();
+        ComboBox startCondition = GetComboBox(node);
         startCondition.Items.AddRange(Enum.GetNames<EventTypes>());
         startCondition.SelectedItem = eventTrigger.Type.ToString()!;
         startCondition.PerformLayout();
@@ -3131,7 +3333,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(startCondition);
     }
 
-    private void PutTextValue(Criterion criterion)
+    private void PutTextValue(Node node, Criterion criterion)
     {
         TextBox obj2 = new()
         {
@@ -3143,7 +3345,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(obj2);
     }
 
-    private void PutNumericOption(Criterion criterion)
+    private void PutNumericOption(Node node, Criterion criterion)
     {
         NumericUpDown option = new()
         {
@@ -3156,10 +3358,11 @@ public partial class Main : Form
         };
         option.PerformLayout();
         option.ValueChanged += (_, _) => criterion.Option = (int)option.Value;
+        option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
         PropertyInspector.Controls.Add(option);
     }
 
-    private void PutNumericValue(Criterion criterion)
+    private void PutNumericValue(Node node, Criterion criterion)
     {
         NumericUpDown option = new()
         {
@@ -3182,9 +3385,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(option);
     }
 
-    private void PutComparison(Criterion criterion)
+    private void PutComparison(Node node, Criterion criterion)
     {
-        ComboBox equ = GetComboBox();
+        ComboBox equ = GetComboBox(node);
         equ.Items.AddRange(Enum.GetNames(typeof(ComparisonEquations)));
         if (int.TryParse(criterion.Value!, out int res))
         {
@@ -3200,9 +3403,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(equ);
     }
 
-    private void PutZone(Criterion criterion)
+    private void PutZone(Node node, Criterion criterion)
     {
-        ComboBox zone = GetComboBox();
+        ComboBox zone = GetComboBox(node);
         zone.Items.AddRange(Enum.GetNames(typeof(ZoneEnums)));
         zone.SelectedItem = criterion.Key;
         zone.SelectionLength = 0;
@@ -3212,9 +3415,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(zone);
     }
 
-    private void PutCompareType(Criterion criterion, Node node)
+    private void PutCompareType(Node node, Criterion criterion)
     {
-        ComboBox compareType = GetComboBox();
+        ComboBox compareType = GetComboBox(node);
         compareType.Items.AddRange(Enum.GetNames(typeof(CompareTypes)));
         compareType.SelectedItem = criterion.CompareType.ToString();
         compareType.SelectedText = string.Empty;
@@ -3226,9 +3429,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(compareType);
     }
 
-    private ComboBox PutCharacter1(Criterion criterion)
+    private ComboBox PutCharacter1(Node node, Criterion criterion)
     {
-        ComboBox compareType = GetComboBox();
+        ComboBox compareType = GetComboBox(node);
         compareType.Items.AddRange(Enum.GetNames(typeof(Characters)));
         compareType.SelectedItem = criterion.Character;
         compareType.SelectionLength = 0;
@@ -3239,9 +3442,9 @@ public partial class Main : Form
         return compareType;
     }
 
-    private void PutCharacter2(Criterion criterion)
+    private void PutCharacter2(Node node, Criterion criterion)
     {
-        ComboBox compareType = GetComboBox();
+        ComboBox compareType = GetComboBox(node);
         compareType.Items.AddRange(Enum.GetNames(typeof(Characters)));
         compareType.SelectedItem = criterion.Character2;
         compareType.SelectedText = string.Empty;
@@ -3252,9 +3455,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(compareType);
     }
 
-    private void PutBoolValue(Criterion criterion)
+    private void PutBoolValue(Node node, Criterion criterion)
     {
-        ComboBox boolValue = GetComboBox();
+        ComboBox boolValue = GetComboBox(node);
         boolValue.Items.AddRange(Enum.GetNames(typeof(BoolCritera)));
         boolValue.SelectedItem = criterion.BoolValue!.ToString();
         boolValue.SelectionLength = 0;
@@ -3264,9 +3467,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(boolValue);
     }
 
-    private void PutItem(Criterion criterion)
+    private void PutItem(Node node, Criterion criterion)
     {
-        ComboBox item = GetComboBox();
+        ComboBox item = GetComboBox(node);
         item.Items.AddRange(Enum.GetNames<Items>());
         item.SelectedItem = criterion.Key!.Replace(" ", "");
         item.PerformLayout();
@@ -3274,9 +3477,9 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(item);
     }
 
-    private void PutEquals(Criterion criterion)
+    private void PutEquals(Node node, Criterion criterion)
     {
-        ComboBox equals = GetComboBox();
+        ComboBox equals = GetComboBox(node);
         equals.Items.AddRange(Enum.GetNames(typeof(EqualsValues)));
         equals.SelectedIndex = (int)criterion.EqualsValue!;
         equals.PerformLayout();
@@ -3284,13 +3487,19 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(equals);
     }
 
-    private static ComboBox GetComboBox() => new()
+    private ComboBox GetComboBox(Node node)
     {
-        Dock = DockStyle.Fill,
-        AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-        AutoCompleteSource = AutoCompleteSource.ListItems,
-        DropDownStyle = ComboBoxStyle.DropDownList,
-    };
+        var box = new ComboBox()
+        {
+            Dock = DockStyle.Fill,
+            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+            AutoCompleteSource = AutoCompleteSource.ListItems,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+        };
+        box.SelectedIndexChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
+
+        return box;
+    }
 
     private void UpdateHighlightNode(PointF ScreenPos)
     {
