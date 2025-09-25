@@ -1,5 +1,6 @@
 ﻿using CSC.StoryItems;
 using System.Diagnostics;
+using System.Security.Policy;
 using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 
@@ -121,26 +122,21 @@ namespace CSC.Nodestuff
 
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> newList)
         {
-            //todo we also have to add the checks here again we do automatically in the storynode extractor getting the associatd events of nodes
-            Node? result;
+            AlternateText alternateText;
+            BackgroundChatter chatter;
+            CriteriaGroup criteriaGroup;
             Criterion criterion;
-            GameEvent gameEvent;
-            EventTrigger trigger;
-            Response response;
             Dialogue dialogue;
+            EventTrigger trigger;
+            GameEvent gameEvent;
             ItemAction itemAction;
+            ItemGroup itemGroup;
             ItemGroupBehavior itemGroupBehavior;
             ItemGroupInteraction itemGroupInteraction;
-            Achievement achievement;
-            BackgroundChatter chatter;
-            BackgroundChatterResponse chatterResponse;
-            CriteriaGroup criteriaGroup;
-            AlternateText alternateText;
             ItemOverride itemOverride;
-            ItemGroup itemGroup;
-            Trait trait;
+            Node? result;
             Quest quest1;
-            Value value1;
+            Response response;
             UseWith useWith;
 
             switch (node.Type)
@@ -258,7 +254,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.Item:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -267,7 +263,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
                                 {
                                     FileName = FileName!
                                 };
@@ -278,7 +274,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.IsCurrentlyBeingUsed:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -287,7 +283,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
                                 {
                                     FileName = FileName!
                                 };
@@ -298,7 +294,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.IsCurrentlyUsing:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -307,7 +303,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
                                 {
                                     FileName = FileName!
                                 };
@@ -327,7 +323,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.Item, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
                                 {
                                     FileName = FileName!
                                 };
@@ -373,7 +369,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, item);
                             }
                             //find normal item if it exists
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == criterion.Key);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -495,7 +491,6 @@ namespace CSC.Nodestuff
 
                     break;
                 }
-
                 case NodeType.GameEvent when (gameEvent = node.Data<GameEvent>()!) is not null:
                 {
                     switch (gameEvent.EventType)
@@ -630,7 +625,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Item:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == gameEvent.Key);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -638,7 +633,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(gameEvent.Key!, NodeType.Item, gameEvent.Key!, nodes.Positions)
+                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!, nodes.Positions)
                                 {
                                     FileName = FileName!
                                 };
@@ -650,7 +645,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.ItemFromItemGroup:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == gameEvent.Key);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -658,7 +653,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(gameEvent.Key!, NodeType.Item, gameEvent.Key!, nodes.Positions)
+                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!, nodes.Positions)
                                 {
                                     FileName = FileName!
                                 };
@@ -766,7 +761,7 @@ namespace CSC.Nodestuff
                                 InventoryItems.Add(item);
                                 nodes.AddParent(node, item);
                             }
-                            result = newList.Find((n) => n.Type == NodeType.Item && n.ID == gameEvent.Value);
+                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -891,40 +886,38 @@ namespace CSC.Nodestuff
 
                     foreach (var _criterion in gameEvent.Criteria)
                     {
-                        result = HandleCrierion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, newList, _criterion);
                     }
 
                     break;
                 }
-
                 case NodeType.EventTrigger when (trigger = node.Data<EventTrigger>()!) is not null:
                 {
                     //link against events
                     foreach (GameEvent _event in trigger.Events!)
                     {
-                        result = HandleEvents(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, newList, _event);
                     }
                     //link against criteria
                     foreach (Criterion _criterion in trigger.Critera!)
                     {
-                        result = HandleCrierion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, newList, _criterion);
                     }
                     node.StaticText = trigger.Critera.Count == 0
                         ? trigger.Name + " " + trigger.Type
                         : trigger.CharacterToReactTo + " " + trigger.Type + " " + trigger.UpdateIteration + " " + trigger.Name;
                     break;
                 }
-
                 case NodeType.Response when (response = node.Data<Response>()!) is not null:
                 {
                     foreach (GameEvent _event in response.ResponseEvents!)
                     {
-                        result = HandleEvents(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, newList, _event);
                     }
 
                     foreach (Criterion _criterion in response.ResponseCriteria!)
                     {
-                        result = HandleCrierion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, newList, _criterion);
                     }
 
                     if (response.Next == 0)
@@ -948,7 +941,6 @@ namespace CSC.Nodestuff
 
                     break;
                 }
-
                 case NodeType.Dialogue when (dialogue = node.Data<Dialogue>()!) is not null:
                 {
                     if (dialogue.Responses.Count > 0)
@@ -995,7 +987,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _event in dialogue.StartEvents)
                         {
-                            result = HandleEvents(nodes, node, newList, _event);
+                            HandleEvent(nodes, node, newList, _event);
                         }
                     }
 
@@ -1003,100 +995,236 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _event in dialogue.CloseEvents)
                         {
-                            result = HandleEvents(nodes, node, newList, _event);
+                            HandleEvent(nodes, node, newList, _event);
                         }
                     }
 
                     break;
                 }
-
                 case NodeType.ItemAction when (itemAction = node.Data<ItemAction>()!) is not null:
                 {
                     foreach (GameEvent _event in itemAction.OnTakeActionEvents!)
                     {
-                        result = HandleEvents(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, newList, _event);
                     }
 
                     foreach (Criterion _criterion in itemAction.Criteria!)
                     {
-                        result = HandleCrierion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, newList, _criterion);
                     }
 
                     break;
                 }
                 case NodeType.ItemGroupBehaviour when (itemGroupBehavior = node.Data<ItemGroupBehavior>()!) is not null:
                 {
-                    //todo
+                    foreach (var _action in itemGroupBehavior.ItemActions)
+                    {
+                        HandleItemAction(nodes, node, newList, _action);
+                    }
+
+                    foreach (var _usewith in itemGroupBehavior.UseWiths)
+                    {
+                        HandleUseWith(nodes, node, newList, _usewith);
+                    }
                     break;
                 }
                 case NodeType.ItemGroupInteraction when (itemGroupInteraction = node.Data<ItemGroupInteraction>()!) is not null:
                 {
                     foreach (GameEvent _event in itemGroupInteraction.OnAcceptEvents!)
                     {
-                        result = HandleEvents(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, newList, _event);
                     }
 
                     foreach (GameEvent _event in itemGroupInteraction.OnRefuseEvents!)
                     {
-                        result = HandleEvents(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, newList, _event);
                     }
 
                     foreach (Criterion _criterion in itemGroupInteraction.Critera!)
                     {
-                        result = HandleCrierion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, newList, _criterion);
                     }
 
                     break;
                 }
-                case NodeType.BGC:
+                case NodeType.BGC when (chatter = node.Data<BackgroundChatter>()!) is not null:
                 {
-                    //todo
+                    foreach (var _response in chatter.Responses)
+                    {
+                        result = newList.Find((n) => n.Type == NodeType.BGCResponse && n.ID == $"{_response.CharacterName}{_response.ChatterId}");
+
+                        if (result is not null)
+                        {
+                            nodes.AddChild(node, result);
+                        }
+                        else
+                        {
+                            //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                            var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}", nodes.Positions) { FileName = NodeLinker.FileName };
+                            newList.Add(newNode);
+                            nodes.AddChild(node, newNode);
+                        }
+                    }
+
+                    foreach (var _event in chatter.StartEvents)
+                    {
+                        HandleEvent(nodes, node, newList, _event);
+                    }
+
+                    foreach (var _criterion in chatter.Critera)
+                    {
+                        HandleCriterion(nodes, node, newList, _criterion);
+                    }
+
                     break;
                 }
-                case NodeType.BGCResponse:
+                case NodeType.CriteriaGroup when (criteriaGroup = node.Data<CriteriaGroup>()!) is not null:
                 {
-                    //todo
+                    //todo criterialists arent handled correctly currently with their multiple lists
+                    foreach (var list in criteriaGroup.CriteriaList)
+                    {
+                        foreach (var _criterion in list.CriteriaList)
+                        {
+                            HandleCriterion(nodes, node, newList, _criterion);
+                        }
+                    }
                     break;
                 }
-                case NodeType.CriteriaGroup:
+                case NodeType.AlternateText when (alternateText = node.Data<AlternateText>()!) is not null:
                 {
-                    //todo
+                    foreach (var _criterion in alternateText.Critera)
+                    {
+                        HandleCriterion(nodes, node, newList, _criterion);
+                    }
                     break;
                 }
-                case NodeType.AlternateText:
+                case NodeType.StoryItem when (itemOverride = node.Data<ItemOverride>()!) is not null:
                 {
-                    //todo
+                    foreach (var _action in itemOverride.ItemActions)
+                    {
+                        HandleItemAction(nodes, node, newList, _action);
+                    }
+
+                    foreach (var _usewith in itemOverride.UseWiths)
+                    {
+                        HandleUseWith(nodes, node, newList, _usewith);
+                    }
                     break;
                 }
-                case NodeType.Item:
+                case NodeType.ItemGroup when (itemGroup = node.Data<ItemGroup>()!) is not null:
                 {
-                    //todo
+                    foreach (var item in itemGroup.ItemsInGroup)
+                    {
+                        result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == item);
+
+                        if (result is not null)
+                        {
+                            nodes.AddChild(node, result);
+                        }
+                        else
+                        {
+                            //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                            var newNode = new Node(item, NodeType.StoryItem, item, nodes.Positions) { FileName = NodeLinker.FileName };
+                            newList.Add(newNode);
+                            nodes.AddChild(node, newNode);
+                        }
+                    }
                     break;
                 }
-                case NodeType.ItemGroup:
+                case NodeType.Quest when (quest1 = node.Data<Quest>()!) is not null:
                 {
-                    //todo
+                    //Add details
+                    if (quest1.Details?.Length > 0)
+                    {
+                        result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}Description" && n.FileName == quest1.CharacterName);
+
+                        if (result is not null)
+                        {
+                            nodes.AddChild(node, result);
+                        }
+                    }
+                    //Add completed details
+                    if (quest1.CompletedDetails?.Length > 0)
+                    {
+                        result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}CompletedDetails" && n.FileName == quest1.CharacterName);
+
+                        if (result is not null)
+                        {
+                            nodes.AddChild(node, result);
+                        }
+                    }
+                    //Add failed details
+                    if (quest1.FailedDetails?.Length > 0)
+                    {
+                        result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}FailedDetails" && n.FileName == quest1.CharacterName);
+
+                        if (result is not null)
+                        {
+                            nodes.AddChild(node, result);
+                        }
+
+                        //Add extended details
+                        foreach (ExtendedDetail detail in quest1.ExtendedDetails ?? [])
+                        {
+                            result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}Description{detail.Value}" && n.FileName == quest1.CharacterName);
+
+                            if (result is not null)
+                            {
+                                nodes.AddChild(node, result);
+                            }
+                        }
+                    }
                     break;
                 }
-                case NodeType.Personality:
+                case NodeType.UseWith when (useWith = node.Data<UseWith>()!) is not null:
                 {
-                    //todo
-                    break;
-                }
-                case NodeType.Quest:
-                {
-                    //todo
-                    break;
-                }
-                case NodeType.UseWith:
-                {
-                    //todo
+                    foreach (var _event in useWith.OnSuccessEvents)
+                    {
+                        HandleEvent(nodes, node, newList, _event);
+                    }
+
+                    foreach (var _criterion in useWith.Criteria)
+                    {
+                        HandleCriterion(nodes, node, newList, _criterion);
+                    }
                     break;
                 }
             }
         }
 
-        private static Node? HandleCrierion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion)
+        private static void HandleUseWith(NodeStore nodes, Node node, List<Node> newList, UseWith _usewith)
+        {
+            Node? result = newList.Find((n) => n.Type == NodeType.UseWith && n.ID == _usewith.ItemName!);
+            if (result is not null)
+            {
+                nodes.AddChild(node, result);
+            }
+            else
+            {
+                //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                var newNode = new Node(_usewith.ItemName ?? string.Empty, NodeType.UseWith, _usewith.CustomCantDoThatMessage ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
+                newList.Add(newNode);
+                nodes.AddChild(node, newNode);
+            }
+        }
+
+        private static void HandleItemAction(NodeStore nodes, Node node, List<Node> newList, ItemAction _action)
+        {
+            Node? result = newList.Find((n) => n.Type == NodeType.ItemAction && n.ID == _action.ActionName!);
+            if (result is not null)
+            {
+                nodes.AddChild(node, result);
+            }
+            else
+            {
+                //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                var newNode = new Node(_action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
+                newList.Add(newNode);
+                nodes.AddChild(node, newNode);
+            }
+        }
+
+        private static void HandleCriterion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion)
         {
             Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
             if (result is not null)
@@ -1107,11 +1235,9 @@ namespace CSC.Nodestuff
             {
                 newList.Add(Node.CreateCriteriaNode(_criterion, node, nodes));
             }
-
-            return result;
         }
 
-        private static Node? HandleEvents(NodeStore nodes, Node node, List<Node> newList, GameEvent _event)
+        private static void HandleEvent(NodeStore nodes, Node node, List<Node> newList, GameEvent _event)
         {
             Node? result = newList.Find((n) => n.Type == NodeType.GameEvent && n.ID == _event.Id);
             if (result is not null)
@@ -1125,8 +1251,6 @@ namespace CSC.Nodestuff
                 newList.Add(eventNode);
                 nodes.AddChild(node, eventNode);
             }
-
-            return result;
         }
 
         public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores)
@@ -1199,7 +1323,7 @@ namespace CSC.Nodestuff
                                     break;
                                 case NodeType.Inventory:
                                     break;
-                                case NodeType.Item:
+                                case NodeType.StoryItem:
                                     break;
                                 case NodeType.ItemGroup:
                                     break;
@@ -1276,9 +1400,9 @@ namespace CSC.Nodestuff
         {
             if (story is not null && nodes is not null)
             {
-                FileName = story.CharacterName;
+                FileName = story.CharacterName!;
                 //get all relevant items from the json
-                StoryNodeExtractor.GetItems(story, nodes);
+                StoryNodeExtractor.GetItemInteractions(story, nodes);
                 StoryNodeExtractor.GetValues(story, nodes);
                 StoryNodeExtractor.GetPersonality(story, nodes);
                 StoryNodeExtractor.GetDialogues(story, nodes);

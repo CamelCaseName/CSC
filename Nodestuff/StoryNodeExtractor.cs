@@ -5,6 +5,7 @@ namespace CSC.Nodestuff
 {
     public static class StoryNodeExtractor
     {
+        //todo make all node creations the same for each type
         public static void GetAchievements(MainStory story, NodeStore nodes)
         {
             //list to collect all achievement Main.nodes
@@ -219,7 +220,7 @@ namespace CSC.Nodestuff
                 foreach (string item in itemGroup.ItemsInGroup ?? [])
                 {
                     //node to addevents to
-                    var nodeItem = new Node(item ?? string.Empty, NodeType.Item, item ?? string.Empty, nodeGroup, nodes.Positions) { rawData = item };
+                    var nodeItem = new Node(item ?? string.Empty, NodeType.StoryItem, item ?? string.Empty, nodeGroup, nodes.Positions) { rawData = item };
 
                     //add item to item group
                     nodes.AddChild(nodeGroup, nodeItem);
@@ -236,7 +237,7 @@ namespace CSC.Nodestuff
             foreach (ItemOverride itemOverride in story.ItemOverrides ?? [])
             {
                 //add items to list
-                var nodeItem = new Node(itemOverride.Id ?? string.Empty, NodeType.Item, itemOverride.DisplayName ?? string.Empty, nodes.Positions) { rawData = itemOverride };
+                var nodeItem = new Node(itemOverride.Id ?? string.Empty, NodeType.StoryItem, itemOverride.DisplayName ?? string.Empty, nodes.Positions) { rawData = itemOverride };
                 //get actions for item
                 foreach (ItemAction itemAction in itemOverride.ItemActions ?? [])
                 {
@@ -277,12 +278,12 @@ namespace CSC.Nodestuff
             }
         }
 
-        public static void GetItems(CharacterStory story, NodeStore nodes)
+        public static void GetItemInteractions(CharacterStory story, NodeStore nodes)
         {
             foreach (ItemInteraction item in story.StoryItems ?? [])
             {
                 //add items to list
-                var nodeItem = new Node(item.ItemName!, NodeType.Item, item.ItemName!, nodes.Positions) { rawData = item };
+                var nodeItem = new Node(item.ItemName!, NodeType.ItemInteraction, item.ItemName!, nodes.Positions) { rawData = item };
                 nodeItem.FileName = story.CharacterName!;
                 nodeItem.AddCriteria(item.Critera ?? [], nodes);
                 nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);

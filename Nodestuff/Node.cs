@@ -25,6 +25,7 @@ namespace CSC.Nodestuff
         CharacterGroup,
         Criterion,
         ItemAction,
+        ItemInteraction,
         ItemGroupBehaviour,
         ItemGroupInteraction,
         Pose,
@@ -40,7 +41,7 @@ namespace CSC.Nodestuff
         GameEvent,
         EventTrigger,
         Inventory,
-        Item,
+        StoryItem,
         ItemGroup,
         Personality,
         Property,
@@ -54,21 +55,23 @@ namespace CSC.Nodestuff
 
     public enum SpawnableNodeType
     {
-        Criterion,
-        ItemAction,
         Achievement,
+        AlternateText,
         BGC,
         BGCResponse,
         CriteriaGroup,
+        Criterion,
         Dialogue,
-        AlternateText,
-        GameEvent,
         EventTrigger,
-        Item,
+        GameEvent,
+        ItemAction,
         ItemGroup,
+        ItemGroupInteraction,
+        ItemInteraction,
         Quest,
-        UseWith,
         Response,
+        StoryItem,
+        UseWith,
         Value
     }
 
@@ -860,7 +863,8 @@ namespace CSC.Nodestuff
                         return $"{Data<UseWith>()?.ItemName} -> {Data<UseWith>()?.CustomCantDoThatMessage}";
                     }
                     case NodeType.Inventory:
-                    case NodeType.Item:
+                    case NodeType.StoryItem:
+                    case NodeType.ItemInteraction:
                     case NodeType.Property:
                     case NodeType.Social:
                     case NodeType.State:

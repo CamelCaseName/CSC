@@ -263,6 +263,8 @@ public partial class Main : Form
         {
             NodeSpawnBox.Enabled = false;
             NodeSpawnBox.Visible = false;
+            Graph.Focus();
+            Graph.Invalidate();
         }
     }
 
@@ -287,7 +289,7 @@ public partial class Main : Form
                 //response dialogue bgc item itemgroup
                 case NodeType.Criterion:
                 {
-                    return [NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.GameEvent, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.Item, NodeType.ItemGroup, NodeType.Value];
+                    return [NodeType.ItemAction, NodeType.UseWith, NodeType.CriteriaGroup, NodeType.GameEvent, NodeType.EventTrigger, NodeType.AlternateText, NodeType.Response, NodeType.Dialogue, NodeType.BGC, NodeType.StoryItem, NodeType.ItemGroup, NodeType.Value];
                 }
 
                 //item and event and criterion
@@ -295,11 +297,11 @@ public partial class Main : Form
                 case NodeType.ItemGroupBehaviour:
                 case NodeType.ItemGroupInteraction:
                 case NodeType.Inventory:
-                case NodeType.Item:
+                case NodeType.StoryItem:
                 case NodeType.ItemGroup:
                 case NodeType.UseWith:
                 {
-                    return [NodeType.Item, NodeType.GameEvent, NodeType.Criterion];
+                    return [NodeType.StoryItem, NodeType.GameEvent, NodeType.Criterion];
                 }
 
                 //event
@@ -353,13 +355,13 @@ public partial class Main : Form
                 case NodeType.GameEvent:
                 default:
                 {
-                    return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.GameEvent, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
+                    return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.GameEvent, NodeType.EventTrigger, NodeType.StoryItem, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
                 }
             }
         }
         else
         {
-            return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.GameEvent, NodeType.EventTrigger, NodeType.Item, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
+            return [NodeType.Criterion, NodeType.ItemAction, NodeType.Achievement, NodeType.BGC, NodeType.BGCResponse, NodeType.CriteriaGroup, NodeType.Dialogue, NodeType.AlternateText, NodeType.GameEvent, NodeType.EventTrigger, NodeType.StoryItem, NodeType.ItemGroup, NodeType.Quest, NodeType.UseWith, NodeType.Response, NodeType.Value];
         }
     }
 
@@ -423,6 +425,8 @@ public partial class Main : Form
         switch (e.Button)
         {
             case MouseButtons.Left:
+            {
+                Graph.Focus();
                 RightClickFrameCounter = 0;
                 if (e.Clicks > 1)
                 {
@@ -436,6 +440,7 @@ public partial class Main : Form
                     Graph.Invalidate();
                 }
                 break;
+            }
             case MouseButtons.None:
             {
                 if (!MovingChild && RightClickFrameCounter > 0)
@@ -793,7 +798,7 @@ public partial class Main : Form
             NodeType.GameEvent => light ? eventNodeBrush : darkeventNodeBrush,
             NodeType.EventTrigger => light ? eventTriggerNodeBrush : darkeventTriggerNodeBrush,
             NodeType.Inventory => light ? inventoryNodeBrush : darkinventoryNodeBrush,
-            NodeType.Item => light ? itemNodeBrush : darkitemNodeBrush,
+            NodeType.StoryItem => light ? itemNodeBrush : darkitemNodeBrush,
             NodeType.ItemGroup => light ? itemGroupNodeBrush : darkitemGroupNodeBrush,
             NodeType.Personality => light ? personalityNodeBrush : darkpersonalityNodeBrush,
             NodeType.Property => light ? propertyNodeBrush : darkpropertyNodeBrush,
@@ -1386,7 +1391,6 @@ public partial class Main : Form
         nodeToLinkToNext = Node.NullNode;
     }
 
-    //todo implement updating of node references on changing values!!!
     //todo implement drag/drop setting of node.Data<>() like item name or sth
     private void ShowProperties(Node node)
     {
@@ -1549,7 +1553,14 @@ public partial class Main : Form
                         cutscene.Items.AddRange(Enum.GetNames(typeof(CutscenePlaying)));
                         if (int.TryParse(criterion.Value!, out int res))
                         {
-                            cutscene.SelectedIndex = res - 1;
+                            if (res < cutscene.Items.Count)
+                            {
+                                cutscene.SelectedIndex = res - 1;
+                            }
+                            else
+                            {
+                                cutscene.SelectedIndex = 0;
+                            }
                         }
                         else
                         {
@@ -3194,7 +3205,7 @@ public partial class Main : Form
             case NodeType.Cutscene:
             case NodeType.Door:
             case NodeType.Inventory:
-            case NodeType.Item:
+            case NodeType.StoryItem:
             case NodeType.ItemAction:
             case NodeType.ItemGroup:
             case NodeType.ItemGroupBehaviour:
@@ -3906,6 +3917,7 @@ public partial class Main : Form
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
+                        //todo we need to seperate between start and end like when linking
                         newNode.Data<Dialogue>()!.StartEvents.Add(clickedNode.Data<GameEvent>()!);
                         nodes[character].AddChild(newNode, clickedNode);
                     }
@@ -4037,10 +4049,10 @@ public partial class Main : Form
 
                 break;
             }
-            case SpawnableNodeType.Item:
+            case SpawnableNodeType.StoryItem:
             {
                 string id = "item name";
-                newNode = new Node(id, NodeType.Item, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.StoryItem, string.Empty, nodes[character].Positions)
                 {
                     rawData = new ItemOverride() { ItemName = id },
                     FileName = character,
@@ -4058,6 +4070,70 @@ public partial class Main : Form
                     {
                         clickedNode.Data<ItemGroup>()!.ItemsInGroup.Add(newNode.Data<ItemOverride>()!.ItemName!);
                         nodes[character].AddParent(newNode, clickedNode);
+                    }
+                }
+
+                break;
+            }
+            case SpawnableNodeType.ItemInteraction:
+            {
+                string id = "interaction name";
+                newNode = new Node(id, NodeType.ItemInteraction, string.Empty, nodes[character].Positions)
+                {
+                    rawData = new ItemInteraction() { ItemName = id },
+                    FileName = character,
+                };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        newNode.Data<ItemInteraction>()!.Critera.Add(clickedNode.Data<Criterion>()!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    if (clickedNode.DataType == typeof(ItemOverride))
+                    {
+                        newNode.Data<ItemInteraction>()!.ItemName = clickedNode.Data<ItemOverride>()!.ItemName;
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        //todo we need to decide between the two event lists here
+                        newNode.Data<ItemInteraction>()!.OnAcceptEvents.Add(clickedNode.Data<GameEvent>()!);
+                        nodes[character].AddChild(newNode, clickedNode);
+                    }
+                }
+
+                break;
+            }
+            case SpawnableNodeType.ItemGroupInteraction:
+            {
+                string id = "interaction name";
+                newNode = new Node(id, NodeType.ItemInteraction, string.Empty, nodes[character].Positions)
+                {
+                    rawData = new ItemGroupInteraction() { Name = id },
+                    FileName = character,
+                };
+                nodes[character].Add(newNode);
+
+                if (clickedNode != Node.NullNode)
+                {
+                    if (clickedNode.DataType == typeof(Criterion))
+                    {
+                        newNode.Data<ItemGroupInteraction>()!.Critera.Add(clickedNode.Data<Criterion>()!);
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    if (clickedNode.DataType == typeof(ItemGroup))
+                    {
+                        newNode.Data<ItemGroupInteraction>()!.GroupName = clickedNode.Data<ItemGroup>()!.Name;
+                        nodes[character].AddParent(newNode, clickedNode);
+                    }
+                    else if (clickedNode.DataType == typeof(GameEvent))
+                    {
+                        //todo we need to decide between the two event lists here
+                        newNode.Data<ItemGroupInteraction>()!.OnAcceptEvents.Add(clickedNode.Data<GameEvent>()!);
+                        nodes[character].AddChild(newNode, clickedNode);
                     }
                 }
 
