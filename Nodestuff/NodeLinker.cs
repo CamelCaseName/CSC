@@ -29,6 +29,7 @@ namespace CSC.Nodestuff
         private static List<Node> CompareValuesToCheckAgain => AllCompareValuesToCheckAgain[FileName];
         public static string FileName { get; private set; } = Main.Player;
 
+        //this doesnt remove the old nodes correctly it feels
         public static void Interlinknodes(NodeStore store, string filename)
         {
             FileName = filename;
@@ -120,6 +121,7 @@ namespace CSC.Nodestuff
             }
         }
 
+        //doubles some connections
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> newList)
         {
             AlternateText alternateText;

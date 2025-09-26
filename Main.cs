@@ -5,8 +5,10 @@ using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace CSC;
 
@@ -114,6 +116,7 @@ public partial class Main : Form
     public const string Player = "Player";
     public static string StoryName { get; private set; } = NoCharacter;
     RectangleF adjustedVisibleClipBounds = new();
+    Point oldMousePosBeforeSpawnWindow = Point.Empty;
 
     public static string SelectedCharacter
     {
@@ -247,6 +250,8 @@ public partial class Main : Form
         OffsetY.Add(NoCharacter, 0);
     }
 
+    //todo add deletion and line removal :)
+
     public void HandleKeyBoard(object? sender, KeyEventArgs e)
     {
         //get the shift key state so we can determine later if we want to redraw the tree on node selection or not
@@ -270,6 +275,7 @@ public partial class Main : Form
         {
             NodeSpawnBox.Enabled = false;
             NodeSpawnBox.Visible = false;
+            nodeToLinkNext = Node.NullNode;
             Graph.Focus();
             Graph.Invalidate();
         }
@@ -277,6 +283,9 @@ public partial class Main : Form
 
     private void ShowNodeSpawnBox()
     {
+
+        oldMousePosBeforeSpawnWindow = Graph.PointToClient(Cursor.Position);
+
         //only allow node types that make sense depending on the selected node type
         NodeSpawnBox.Items.Clear();
         NodeSpawnBox.Items.AddRange(GetSpawnableNodeTypes());
@@ -905,7 +914,16 @@ public partial class Main : Form
 
     private void DrawLinkToNextEdge(Graphics g)
     {
-        var pos = Graph.PointToClient(Cursor.Position);
+        Point pos;
+        if (oldMousePosBeforeSpawnWindow != Point.Empty)
+        {
+            pos = oldMousePosBeforeSpawnWindow;
+        }
+        else
+        {
+            pos = Graph.PointToClient(Cursor.Position);
+        }
+
         GraphToScreen(nodeToLinkNext.Position.X, nodeToLinkNext.Position.Y, out float screenX, out float ScreenY);
         var screenPos = new PointF(screenX, ScreenY);
 
@@ -1266,7 +1284,6 @@ public partial class Main : Form
             {
                 AddNodeToNextClicked(node);
                 ShowProperties(node);
-                nodeToLinkNext = Node.NullNode;
                 ClearOverlayBitmap();
             }
             else if (clickedNode != node)
@@ -1276,7 +1293,10 @@ public partial class Main : Form
         }
         else
         {
-            nodeToLinkNext = Node.NullNode;
+            if (nodeToLinkNext != Node.NullNode)
+            {
+                ShowNodeSpawnBox();
+            }
         }
 
         clickedNode = node;
@@ -1600,17 +1620,17 @@ public partial class Main : Form
             }
             else if (addToThis.DataType == typeof(Dialogue))
             {
-                var result = MessageBox.Show("Add as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                var result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to add the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == DialogResult.Yes)
                 {
-                    addToThis.Data<Dialogue>()!.Responses.Add(nodeToLinkNext.Data<Response>()!);
-                    nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+                    nodeToLinkNext.Data<Response>()!.Next = addToThis.Data<Dialogue>()!.ID;
+                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
                 }
                 else if (result == DialogResult.No)
                 {
-                    nodeToLinkNext.Data<Response>()!.Next = addToThis.Data<Dialogue>()!.ID;
-                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+                    addToThis.Data<Dialogue>()!.Responses.Add(nodeToLinkNext.Data<Response>()!);
+                    nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
                 }
             }
         }
@@ -1754,11 +1774,20 @@ public partial class Main : Form
                         clothing.Items.AddRange(Enum.GetNames(typeof(Clothes)));
                         if (int.TryParse(criterion.Value!, out int res))
                         {
-                            clothing.SelectedIndex = res;
+                            if (res < clothing.Items.Count && res >= 1)
+                            {
+                                clothing.SelectedIndex = res - 1;
+                            }
+                            else
+                            {
+                                clothing.SelectedIndex = 0;
+                                criterion.Value = 0.ToString();
+                            }
                         }
                         else
                         {
                             clothing.SelectedIndex = 0;
+                            criterion.Value = 0.ToString();
                         }
                         clothing.SelectedIndexChanged += (_, _) => criterion.Value = clothing.SelectedIndex!.ToString();
                         PropertyInspector.Controls.Add(clothing);
@@ -1844,18 +1873,20 @@ public partial class Main : Form
                         cutscene.Items.AddRange(Enum.GetNames(typeof(CutscenePlaying)));
                         if (int.TryParse(criterion.Value!, out int res))
                         {
-                            if (res < cutscene.Items.Count)
+                            if (res < cutscene.Items.Count && res >= 1)
                             {
                                 cutscene.SelectedIndex = res - 1;
                             }
                             else
                             {
                                 cutscene.SelectedIndex = 0;
+                                criterion.Value = 0.ToString();
                             }
                         }
                         else
                         {
                             cutscene.SelectedIndex = 0;
+                            criterion.Value = 0.ToString();
                         }
                         cutscene.SelectedIndexChanged += (_, _) => criterion.Value = (cutscene.SelectedIndex! + 1).ToString();
                         PropertyInspector.Controls.Add(cutscene);
@@ -2108,11 +2139,20 @@ public partial class Main : Form
                         trait.Items.AddRange(Enum.GetNames(typeof(PersonalityTraits)));
                         if (int.TryParse(criterion.Key!, out int res))
                         {
-                            trait.SelectedIndex = res;
+                            if (res < trait.Items.Count && res >= 1)
+                            {
+                                trait.SelectedIndex = res - 1;
+                            }
+                            else
+                            {
+                                trait.SelectedIndex = 0;
+                                criterion.Key = 0.ToString();
+                            }
                         }
                         else
                         {
                             trait.SelectedIndex = 0;
+                            criterion.Key = 0.ToString();
                         }
                         trait.SelectedIndexChanged += (_, _) => criterion.Key = trait.SelectedIndex.ToString();
                         PropertyInspector.Controls.Add(trait);
@@ -3403,6 +3443,7 @@ public partial class Main : Form
         else
         {
             option.Value = 0;
+            criterion.Value = 0.ToString();
         }
         option.PerformLayout();
         option.ValueChanged += (_, _) => criterion.Value = option.Value.ToString();
@@ -3415,11 +3456,20 @@ public partial class Main : Form
         equ.Items.AddRange(Enum.GetNames(typeof(ComparisonEquations)));
         if (int.TryParse(criterion.Value!, out int res))
         {
-            equ.SelectedIndex = res;
+            if (res < equ.Items.Count && res >= 1)
+            {
+                equ.SelectedIndex = res - 1;
+            }
+            else
+            {
+                equ.SelectedIndex = 0;
+                criterion.Value = 0.ToString();
+            }
         }
         else
         {
             equ.SelectedIndex = 0;
+            criterion.Value = 0.ToString();
         }
         equ.Select(equ.SelectedItem?.ToString()?.Length ?? 0, 0);
         equ.PerformLayout();
@@ -3644,6 +3694,7 @@ public partial class Main : Form
 
         if (!NodeSpawnBox.Enabled)
         {
+            nodeToLinkNext = Node.NullNode;
             return;
         }
         NodeSpawnBox.Enabled = false;
@@ -3651,7 +3702,18 @@ public partial class Main : Form
 
         string character = GetProbableCharacter();
         var newNode = GetNodeFromSpawnableType(selectedType, character);
+        ScreenToGraph(oldMousePosBeforeSpawnWindow.X, oldMousePosBeforeSpawnWindow.Y, out float nodeX, out float nodeY);
+
         SetUpNewlySpawnedNode(newNode);
+
+        newNode.Position = new(nodeX, nodeY);
+
+        if (nodeToLinkNext != Node.NullNode)
+        {
+            AddNodeToNextClicked(newNode);
+            ShowProperties(newNode);
+            oldMousePosBeforeSpawnWindow = Point.Empty;
+        }
     }
 
     private string GetProbableCharacter()
@@ -3934,6 +3996,7 @@ public partial class Main : Form
                             nodes[character].AddChild(newNode, clickedNode);
                         }
                     }
+                    //todo dofferentiate here as well
                     else if (clickedNode.DataType == typeof(Response))
                     {
                         clickedNode.Data<Response>()!.Next = newNode.Data<Dialogue>()!.ID;
@@ -4239,6 +4302,7 @@ public partial class Main : Form
                 {
                     if (clickedNode.DataType == typeof(Dialogue))
                     {
+                        //todo differentiate here as well
                         clickedNode.Data<Dialogue>()!.Responses.Add(newNode.Data<Response>()!);
                         nodes[character].AddParent(newNode, clickedNode);
                     }
