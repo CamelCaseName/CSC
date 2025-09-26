@@ -3,8 +3,10 @@ using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 using static CSC.StoryItems.StoryEnums;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace CSC;
 
@@ -24,9 +26,7 @@ public partial class Main : Form
     private Node clickedNode = Node.NullNode;
     private Node highlightNode = Node.NullNode;
     private Node movedNode = Node.NullNode;
-    private Node nodeToLinkToNext = Node.NullNode;
-    private PointF end;
-    private PointF start;
+    private Node nodeToLinkNext = Node.NullNode;
     private readonly Dictionary<string, float> OffsetX = [];
     private readonly Dictionary<string, float> OffsetY = [];
     private readonly Dictionary<string, float> Scaling = [];
@@ -38,6 +38,7 @@ public partial class Main : Form
     private readonly Pen clickedLinePen;
     private readonly Pen highlightPen;
     private readonly Pen linePen;
+    private readonly Pen nodeToLinkPen;
     private readonly SolidBrush ClickedNodeBrush;
     private readonly SolidBrush HighlightNodeBrush;
     private readonly SolidBrush NodeToLinkNextBrush;
@@ -101,6 +102,7 @@ public partial class Main : Form
     private readonly SolidBrush darkvalueNodeBrush;
     private RectangleF adjustedMouseClipBounds;
     private SizeF OffsetFromDragClick = SizeF.Empty;
+    CachedBitmap? oldGraph;
     private static MainStory Story = new();
     private static readonly Dictionary<string, CharacterStory> characterStories = [];
     private static readonly Dictionary<string, NodeStore> nodes = [];
@@ -160,6 +162,11 @@ public partial class Main : Form
             StartCap = LineCap.Round
         };
         highlightPen = new Pen(Brushes.DeepPink, 3)
+        {
+            EndCap = LineCap.Triangle,
+            StartCap = LineCap.Round
+        };
+        nodeToLinkPen = new Pen(Brushes.LightCyan, 3)
         {
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
@@ -294,6 +301,7 @@ public partial class Main : Form
 
                 //item and event and criterion
                 case NodeType.ItemAction:
+                case NodeType.ItemInteraction:
                 case NodeType.ItemGroupBehaviour:
                 case NodeType.ItemGroupInteraction:
                 case NodeType.Inventory:
@@ -416,9 +424,11 @@ public partial class Main : Form
         //everything else, scrolling for example
         if (e.Delta != 0)
         {
+            ClearOverlayBitmap();
             UpdateScaling(e);
             //redraw
             Graph.Invalidate();
+            TryCreateOverlayBitmap();
         }
 
         //set old position for next frame/call
@@ -457,6 +467,9 @@ public partial class Main : Form
 
                 EndPan();
                 UpdateHighlightNode(graphPos);
+
+                //we are only moving the mouse so we can go ahead and cache the latest state and draw over that with the connecting line if we need to
+                TryCreateOverlayBitmap();
             }
             break;
             case MouseButtons.Right:
@@ -495,6 +508,7 @@ public partial class Main : Form
                 }
                 EndPan();
                 UpdateHighlightNode(graphPos);
+                TryCreateOverlayBitmap();
             }
             break;
         }
@@ -512,6 +526,36 @@ public partial class Main : Form
                 Debug.WriteLine(MovingChild);
             }
             Graph.Focus();
+        }
+    }
+
+    private void TryCreateOverlayBitmap()
+    {
+        if (nodeToLinkNext != Node.NullNode)
+        {
+            if (oldGraph is null)
+            {
+                //this is correct
+                var map = new Bitmap(Graph.Width, Graph.Height);
+                Graph.DrawToBitmap(map, Graph.ClientRectangle);
+                oldGraph = new CachedBitmap(map, Graphics.FromHwnd(Handle));
+                map.Save("tmp.bmp");
+            }
+            Graph.Invalidate();
+        }
+        else
+        {
+            ClearOverlayBitmap();
+        }
+    }
+
+    private void ClearOverlayBitmap()
+    {
+        if (oldGraph is not null)
+        {
+            oldGraph.Dispose();
+            oldGraph = null;
+            Graph.Invalidate();
         }
     }
 
@@ -596,7 +640,7 @@ public partial class Main : Form
 
     }
 
-    private void DrawEdge(PaintEventArgs e, Node parent, Node child, Pen pen)
+    private void DrawEdge(Graphics g, Node parent, Node child, Pen pen, PointF start = default, PointF end = default)
     {
         int third = 0;
 
@@ -605,20 +649,14 @@ public partial class Main : Form
         {
             third = GetEdgeStartHeight(child, parent, third);
         }
-
-        if (third == 0)
+        if (start == default)
         {
-            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 2);
+            start = GetStartHeightFromThird(parent, parent.Position, third);
         }
-        else if (third == 1)
+        if (end == default)
         {
-            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 5);
+            end = child.Position + new SizeF(0, child.Size.Height / 2);
         }
-        else if (third == 2)
-        {
-            start = parent.Position + new SizeF(parent.Size.Width, parent.Size.Height / 5 * 4);
-        }
-        end = child.Position + new SizeF(0, child.Size.Height / 2);
 
         PointF controlStart;
         PointF controlEnd;
@@ -647,9 +685,27 @@ public partial class Main : Form
             controlEnd = new PointF((end.X - distanceX / 2), controlEndY);
         }
 
-        e.Graphics.DrawBezier(pen, start, controlStart, controlEnd, end);
+        g.DrawBezier(pen, start, controlStart, controlEnd, end);
         //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
         //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
+    }
+
+    private static PointF GetStartHeightFromThird(Node parent, PointF start, int third)
+    {
+        if (third == 0)
+        {
+            start = start + new SizeF(parent.Size.Width, parent.Size.Height / 2);
+        }
+        else if (third == 1)
+        {
+            start = start + new SizeF(parent.Size.Width, parent.Size.Height / 5);
+        }
+        else if (third == 2)
+        {
+            start = start + new SizeF(parent.Size.Width, parent.Size.Height / 5 * 4);
+        }
+
+        return start;
     }
 
     private static int GetEdgeStartHeight(Node parent, Node child, int third)
@@ -691,7 +747,7 @@ public partial class Main : Form
         return third;
     }
 
-    private void DrawNode(PaintEventArgs e, Node node, SolidBrush brush, bool lightText = false)
+    private void DrawNode(Graphics g, Node node, SolidBrush brush, bool lightText = false)
     {
         if (node == clickedNode)
         {
@@ -699,20 +755,20 @@ public partial class Main : Form
             if (node.FileName != SelectedCharacter)
             {
                 lightText = true;
-                e.Graphics.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 25), 18f));
+                g.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 25), 18f));
             }
-            e.Graphics.FillPath(ClickedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
+            g.FillPath(ClickedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
         }
         else if (node.FileName != SelectedCharacter)
         {
-            e.Graphics.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
+            g.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
         }
 
-        e.Graphics.FillPath(brush, RoundedRect(node.Rectangle, 10f));
+        g.FillPath(brush, RoundedRect(node.Rectangle, 10f));
 
         if (Scaling[SelectedCharacter] > 0.28f)
         {
-            var scaledRect = GetScaledRect(e.Graphics, node.RectangleNonF, Scaling[SelectedCharacter]);
+            var scaledRect = GetScaledRect(g, node.RectangleNonF, Scaling[SelectedCharacter]);
             scaledRect.Location += new Size(3, 3);
             scaledRect.Size -= new Size(6, 6);
 
@@ -722,7 +778,7 @@ public partial class Main : Form
                 textColor = Color.Black;
             }
 
-            TextRenderer.DrawText(e.Graphics,
+            TextRenderer.DrawText(g,
                                   node.Text[..Math.Min(node.Text.Length, 100)],
                                   scaledFont,
                                   scaledRect,
@@ -772,6 +828,7 @@ public partial class Main : Form
         if (CurrentlyInPan)
         {
             CurrentlyInPan = false;
+            TryCreateOverlayBitmap();
         }
     }
 
@@ -814,31 +871,52 @@ public partial class Main : Form
     private void Main_Paint(object sender, PaintEventArgs e)
     {
         var g = e.Graphics;
-        g.ToLowQuality();
 
-        //update canvas transforms
-        g.TranslateTransform(-OffsetX[SelectedCharacter] * Scaling[SelectedCharacter], -OffsetY[SelectedCharacter] * Scaling[SelectedCharacter]);
-        g.ScaleTransform(Scaling[SelectedCharacter], Scaling[SelectedCharacter]);
-        adjustedVisibleClipBounds = new(OffsetX[SelectedCharacter] - NodeSizeX,
-                                        OffsetY[SelectedCharacter] - NodeSizeY,
-                                        g.VisibleClipBounds.Width + NodeSizeX,
-                                        g.VisibleClipBounds.Height + NodeSizeY);
-        adjustedMouseClipBounds = new(OffsetX[SelectedCharacter],
-                                        OffsetY[SelectedCharacter],
-                                        g.VisibleClipBounds.Width,
-                                        g.VisibleClipBounds.Height);
-
-        if (Scaling[SelectedCharacter] < 0)
+        if (oldGraph is null || nodeToLinkNext == Node.NullNode)
         {
-            Debugger.Break();
-        }
-        scaledFont = GetScaledFont(g, new(DefaultFont.FontFamily, 8f), Scaling[SelectedCharacter]);
+            g.ToLowQuality();
 
-        //todo we need to cull here as well somehow
-        DrawAllNodes(e);
+            //update canvas transforms
+            g.TranslateTransform(-OffsetX[SelectedCharacter] * Scaling[SelectedCharacter], -OffsetY[SelectedCharacter] * Scaling[SelectedCharacter]);
+            g.ScaleTransform(Scaling[SelectedCharacter], Scaling[SelectedCharacter]);
+            adjustedVisibleClipBounds = new(OffsetX[SelectedCharacter] - NodeSizeX,
+                                            OffsetY[SelectedCharacter] - NodeSizeY,
+                                            g.VisibleClipBounds.Width + NodeSizeX,
+                                            g.VisibleClipBounds.Height + NodeSizeY);
+            adjustedMouseClipBounds = new(OffsetX[SelectedCharacter],
+                                            OffsetY[SelectedCharacter],
+                                            g.VisibleClipBounds.Width,
+                                            g.VisibleClipBounds.Height);
+
+            if (Scaling[SelectedCharacter] < 0)
+            {
+                Debugger.Break();
+            }
+            scaledFont = GetScaledFont(g, new(DefaultFont.FontFamily, 8f), Scaling[SelectedCharacter]);
+
+            DrawAllNodes(g);
+        }
+        else
+        {
+            g.DrawCachedBitmap(oldGraph, 0, 0);
+            DrawLinkToNextEdge(g);
+        }
     }
 
-    private void DrawAllNodes(PaintEventArgs e)
+    private void DrawLinkToNextEdge(Graphics g)
+    {
+        var pos = Graph.PointToClient(Cursor.Position);
+        GraphToScreen(nodeToLinkNext.Position.X, nodeToLinkNext.Position.Y, out float screenX, out float ScreenY);
+        var screenPos = new PointF(screenX, ScreenY);
+
+        //todo this is still wrong as the offset doesnt take scaling into accoutn
+
+        screenPos += new SizeF(nodeToLinkNext.Size.Width * Scaling[nodeToLinkNext.FileName], (nodeToLinkNext.Size.Height / 2) * Scaling[nodeToLinkNext.FileName]);
+
+        DrawEdge(g, nodeToLinkNext, Node.NullNode, nodeToLinkPen, start: screenPos, end: pos);
+    }
+
+    private void DrawAllNodes(Graphics g)
     {
         foreach (var node in nodes[SelectedCharacter].Nodes)
         {
@@ -847,7 +925,7 @@ public partial class Main : Form
             {
                 foreach (var item in list)
                 {
-                    DrawEdge(e, node, item, linePen);
+                    DrawEdge(g, node, item, linePen);
                 }
             }
         }
@@ -859,14 +937,14 @@ public partial class Main : Form
             {
                 foreach (var item in family.Childs)
                 {
-                    DrawEdge(e, clickedNode, item, clickedLinePen);
+                    DrawEdge(g, clickedNode, item, clickedLinePen);
                 }
             }
             if (family.Parents.Count > 0)
             {
                 foreach (var item in family.Parents)
                 {
-                    DrawEdge(e, item, clickedNode, clickedLinePen);
+                    DrawEdge(g, item, clickedNode, clickedLinePen);
                 }
             }
 
@@ -874,7 +952,7 @@ public partial class Main : Form
             {
                 //c++;
                 bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || clickedNode == node;
-                DrawNode(e, node, GetNodeColor(node.Type, light), light);
+                DrawNode(g, node, GetNodeColor(node.Type, light), light);
             }
         }
         else
@@ -882,7 +960,7 @@ public partial class Main : Form
             foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
             {
                 //c++;
-                DrawNode(e, node, GetNodeColor(node.Type, false));
+                DrawNode(g, node, GetNodeColor(node.Type, false));
             }
         }
 
@@ -893,22 +971,22 @@ public partial class Main : Form
             {
                 foreach (var item in family.Childs)
                 {
-                    DrawEdge(e, highlightNode, item, highlightPen);
+                    DrawEdge(g, highlightNode, item, highlightPen);
                 }
             }
             if (family.Parents.Count > 0)
             {
                 foreach (var item in family.Parents)
                 {
-                    DrawEdge(e, item, highlightNode, highlightPen);
+                    DrawEdge(g, item, highlightNode, highlightPen);
                 }
             }
-            DrawNode(e, highlightNode, HighlightNodeBrush, true);
+            DrawNode(g, highlightNode, HighlightNodeBrush, true);
         }
 
-        if (nodeToLinkToNext != Node.NullNode)
+        if (nodeToLinkNext != Node.NullNode)
         {
-            DrawNode(e, nodeToLinkToNext, NodeToLinkNextBrush, true);
+            DrawNode(g, nodeToLinkNext, NodeToLinkNextBrush, true);
         }
     }
 
@@ -1176,21 +1254,20 @@ public partial class Main : Form
         MovingChild = false;
         if (node != Node.NullNode)
         {
-            if (IsCtrlPressed
-                && node.Type is NodeType.GameEvent or NodeType.Criterion
-                && node.DataType != typeof(MissingReferenceInfo))
+            if (IsCtrlPressed && node.DataType != typeof(MissingReferenceInfo))
             {
-                nodeToLinkToNext = node;
+                nodeToLinkNext = node;
                 if (highlightNode == node)
                 {
                     highlightNode = Node.NullNode;
                 }
             }
-            else if (!IsCtrlPressed && nodeToLinkToNext != Node.NullNode)
+            else if (!IsCtrlPressed && nodeToLinkNext != Node.NullNode)
             {
                 AddNodeToNextClicked(node);
                 ShowProperties(node);
-                nodeToLinkToNext = Node.NullNode;
+                nodeToLinkNext = Node.NullNode;
+                ClearOverlayBitmap();
             }
             else if (clickedNode != node)
             {
@@ -1199,7 +1276,7 @@ public partial class Main : Form
         }
         else
         {
-            nodeToLinkToNext = Node.NullNode;
+            nodeToLinkNext = Node.NullNode;
         }
 
         clickedNode = node;
@@ -1235,6 +1312,7 @@ public partial class Main : Form
         NodeContext.Show(Graph, ScreenPos);
     }
 
+    //todo needs some more linking for criteria or events with other node types so we auto populate. should reuse the code from the node spawning
     private void AddNodeToNextClicked(Node addToThis)
     {
         if (addToThis.DataType == typeof(MissingReferenceInfo))
@@ -1244,89 +1322,89 @@ public partial class Main : Form
 
         bool linked = false;
 
-        if (nodeToLinkToNext.DataType == typeof(Criterion))
+        if (nodeToLinkNext.DataType == typeof(Criterion))
         {
             if (addToThis.DataType == typeof(ItemAction))
             {
-                addToThis.Data<ItemAction>()!.Criteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<ItemAction>()!.Criteria!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(UseWith))
             {
-                addToThis.Data<UseWith>()!.Criteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<UseWith>()!.Criteria!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(CriteriaList1))
             {
-                addToThis.Data<CriteriaList1>()!.CriteriaList!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<CriteriaList1>()!.CriteriaList!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(GameEvent))
             {
-                addToThis.Data<GameEvent>()!.Criteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<GameEvent>()!.Criteria!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(EventTrigger))
             {
-                addToThis.Data<EventTrigger>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<EventTrigger>()!.Critera!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(AlternateText))
             {
-                addToThis.Data<AlternateText>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<AlternateText>()!.Critera!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(Response))
             {
-                addToThis.Data<Response>()!.ResponseCriteria!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<Response>()!.ResponseCriteria!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(BackgroundChatter))
             {
-                addToThis.Data<BackgroundChatter>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<BackgroundChatter>()!.Critera!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemInteraction))
             {
-                addToThis.Data<ItemInteraction>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<ItemInteraction>()!.Critera!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemGroupInteraction))
             {
-                addToThis.Data<ItemGroupInteraction>()!.Critera!.Add(nodeToLinkToNext.Data<Criterion>()!);
+                addToThis.Data<ItemGroupInteraction>()!.Critera!.Add(nodeToLinkNext.Data<Criterion>()!);
                 linked = true;
             }
 
             if (linked)
             {
-                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkToNext);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
             }
         }
-        else if (nodeToLinkToNext.DataType == typeof(GameEvent))
+        else if (nodeToLinkNext.DataType == typeof(GameEvent))
         {
             if (addToThis.DataType == typeof(ItemAction))
             {
-                addToThis.Data<ItemAction>()!.OnTakeActionEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                addToThis.Data<ItemAction>()!.OnTakeActionEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(UseWith))
             {
-                addToThis.Data<UseWith>()!.OnSuccessEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                addToThis.Data<UseWith>()!.OnSuccessEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(EventTrigger))
             {
-                addToThis.Data<EventTrigger>()!.Events!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                addToThis.Data<EventTrigger>()!.Events!.Add(nodeToLinkNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(MainStory))
             {
-                addToThis.Data<MainStory>()!.GameStartEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                addToThis.Data<MainStory>()!.GameStartEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(Response))
             {
-                addToThis.Data<Response>()!.ResponseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                addToThis.Data<Response>()!.ResponseEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(Dialogue))
@@ -1335,18 +1413,18 @@ public partial class Main : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    addToThis.Data<Dialogue>()!.StartEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                    addToThis.Data<Dialogue>()!.StartEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    addToThis.Data<Dialogue>()!.CloseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                    addToThis.Data<Dialogue>()!.CloseEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                     linked = true;
                 }
             }
             else if (addToThis.DataType == typeof(BackgroundChatter))
             {
-                addToThis.Data<BackgroundChatter>()!.StartEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                addToThis.Data<BackgroundChatter>()!.StartEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(ItemInteraction))
@@ -1355,12 +1433,12 @@ public partial class Main : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    addToThis.Data<ItemInteraction>()!.OnAcceptEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                    addToThis.Data<ItemInteraction>()!.OnAcceptEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    addToThis.Data<ItemInteraction>()!.OnRefuseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                    addToThis.Data<ItemInteraction>()!.OnRefuseEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                     linked = true;
                 }
             }
@@ -1370,28 +1448,267 @@ public partial class Main : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    addToThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                    addToThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                     linked = true;
                 }
                 else if (result == DialogResult.No)
                 {
-                    addToThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Add(nodeToLinkToNext.Data<GameEvent>()!);
+                    addToThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Add(nodeToLinkNext.Data<GameEvent>()!);
                     linked = true;
                 }
+            }
+            else if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<GameEvent>()!.Criteria.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
             }
 
             if (linked)
             {
-                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkToNext);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
             }
         }
+        else if (nodeToLinkNext.DataType == typeof(ItemAction))
+        {
+            if (addToThis.DataType == typeof(ItemOverride))
+            {
+                addToThis.Data<ItemOverride>()!.ItemActions.Add(nodeToLinkNext.Data<ItemAction>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(ItemGroupBehavior))
+            {
+                addToThis.Data<ItemGroupBehavior>()!.ItemActions.Add(nodeToLinkNext.Data<ItemAction>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<ItemAction>()!.Criteria.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(GameEvent))
+            {
+                nodeToLinkNext.Data<ItemAction>()!.OnTakeActionEvents.Add(addToThis.Data<GameEvent>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(UseWith))
+        {
+            if (addToThis.DataType == typeof(ItemOverride))
+            {
+                addToThis.Data<ItemOverride>()!.UseWiths.Add(nodeToLinkNext.Data<UseWith>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(ItemGroupBehavior))
+            {
+                addToThis.Data<ItemGroupBehavior>()!.UseWiths.Add(nodeToLinkNext.Data<UseWith>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<UseWith>()!.Criteria.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(GameEvent))
+            {
+                nodeToLinkNext.Data<UseWith>()!.OnSuccessEvents.Add(addToThis.Data<GameEvent>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(ItemOverride))
+        {
+            if (addToThis.DataType == typeof(ItemAction))
+            {
+                nodeToLinkNext.Data<ItemOverride>()!.ItemActions.Add(addToThis.Data<ItemAction>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(UseWith))
+            {
+                nodeToLinkNext.Data<ItemOverride>()!.UseWiths.Add(addToThis.Data<UseWith>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(ItemGroupBehavior))
+        {
+            if (addToThis.DataType == typeof(ItemAction))
+            {
+                nodeToLinkNext.Data<ItemGroupBehavior>()!.ItemActions.Add(addToThis.Data<ItemAction>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(UseWith))
+            {
+                nodeToLinkNext.Data<ItemGroupBehavior>()!.UseWiths.Add(addToThis.Data<UseWith>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(Achievement))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(CriteriaList1))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(CriteriaGroup))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(ItemGroup))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(EventTrigger))
+        {
+            if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<EventTrigger>()!.Critera.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(GameEvent))
+            {
+                nodeToLinkNext.Data<EventTrigger>()!.Events.Add(addToThis.Data<GameEvent>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(CharacterGroup))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(AlternateText))
+        {
+            if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<AlternateText>()!.Critera.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(Dialogue))
+            {
+                addToThis.Data<Dialogue>()!.AlternateTexts.Add(nodeToLinkNext.Data<AlternateText>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(Response))
+        {
+            if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<Response>()!.ResponseCriteria.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(GameEvent))
+            {
+                nodeToLinkNext.Data<Response>()!.ResponseEvents.Add(addToThis.Data<GameEvent>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(Dialogue))
+            {
+                var result = MessageBox.Show("Add as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-        //todo also do for dialogues and responses and alternate texts...
+                if (result == DialogResult.Yes)
+                {
+                    addToThis.Data<Dialogue>()!.Responses.Add(nodeToLinkNext.Data<Response>()!);
+                    nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+                }
+                else if (result == DialogResult.No)
+                {
+                    nodeToLinkNext.Data<Response>()!.Next = addToThis.Data<Dialogue>()!.ID;
+                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+                }
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(Dialogue))
+        {
+            if (addToThis.DataType == typeof(GameEvent))
+            {
+                var result = MessageBox.Show("Add as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-        nodeToLinkToNext = Node.NullNode;
+                if (result == DialogResult.Yes)
+                {
+                    nodeToLinkNext.Data<Dialogue>()!.StartEvents!.Add(addToThis.Data<GameEvent>()!);
+                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+                }
+                else if (result == DialogResult.No)
+                {
+                    nodeToLinkNext.Data<Dialogue>()!.CloseEvents!.Add(addToThis.Data<GameEvent>()!);
+                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+                }
+            }
+            else if (addToThis.DataType == typeof(Response))
+            {
+                var result = MessageBox.Show("Add as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    nodeToLinkNext.Data<Dialogue>()!.Responses.Add(addToThis.Data<Response>()!);
+                    nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+                }
+                else if (result == DialogResult.No)
+                {
+                    addToThis.Data<Response>()!.Next = nodeToLinkNext.Data<Dialogue>()!.ID;
+                    nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+                }
+            }
+            else if (addToThis.DataType == typeof(AlternateText))
+            {
+                nodeToLinkNext.Data<Dialogue>()!.AlternateTexts.Add(addToThis.Data<AlternateText>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(BackgroundChatter))
+        {
+            if (addToThis.DataType == typeof(Criterion))
+            {
+                nodeToLinkNext.Data<BackgroundChatter>()!.Critera.Add(addToThis.Data<Criterion>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(GameEvent))
+            {
+                nodeToLinkNext.Data<BackgroundChatter>()!.StartEvents.Add(addToThis.Data<GameEvent>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+            else if (addToThis.DataType == typeof(BackgroundChatterResponse))
+            {
+                nodeToLinkNext.Data<BackgroundChatter>()!.Responses.Add(addToThis.Data<BackgroundChatterResponse>()!);
+                nodes[addToThis.FileName].AddParent(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(BackgroundChatterResponse))
+        {
+            if (addToThis.DataType == typeof(BackgroundChatter))
+            {
+                addToThis.Data<BackgroundChatter>()!.Responses.Add(nodeToLinkNext.Data<BackgroundChatterResponse>()!);
+                nodes[addToThis.FileName].AddChild(addToThis, nodeToLinkNext);
+            }
+        }
+        else if (nodeToLinkNext.DataType == typeof(Trait))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(ExtendedDetail))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(Quest))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(ItemInteraction))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(ItemGroupInteraction))
+        {
+            //todo
+        }
+        else if (nodeToLinkNext.DataType == typeof(Value))
+        {
+            //todo
+        }
+
+        NodeLinker.UpdateLinks(addToThis, SelectedCharacter, nodes[selectedCharacter]);
+
+        nodeToLinkNext = Node.NullNode;
     }
 
-    //todo implement drag/drop setting of node.Data<>() like item name or sth
+    //todo implement drag/drop setting of node data like item name or sth
     private void ShowProperties(Node node)
     {
         PropertyInspector.Controls.Clear();
@@ -1411,26 +1728,12 @@ public partial class Main : Form
                 PropertyInspector.ColumnCount = 2;
                 Criterion criterion = node.Data<Criterion>()!;
 
-                Label label = new()
-                {
-                    Text = "Order:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    Height = 30
-                };
+                Label label = GetLabel("Order:");
                 PropertyInspector.Controls.Add(label);
 
-                NumericUpDown sortOrder = new()
-                {
-                    //Dock = DockStyle.Fill,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                    Location = new(0, PropertyInspector.Size.Height / 2),
-                    Value = criterion.Order,
-                    Dock = DockStyle.Left,
-                    Width = 50
-                };
-                sortOrder.PerformLayout();
+                NumericUpDown sortOrder = GetNumericUpDown(criterion.Order);
+                sortOrder.DecimalPlaces = 0;
+                sortOrder.Minimum = 0;
                 sortOrder.ValueChanged += (_, _) => criterion.Order = (int)sortOrder.Value;
                 sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder);
@@ -1457,16 +1760,12 @@ public partial class Main : Form
                         {
                             clothing.SelectedIndex = 0;
                         }
-                        clothing.Select(clothing.SelectedItem?.ToString()?.Length ?? 0, 0);
-                        clothing.PerformLayout();
                         clothing.SelectedIndexChanged += (_, _) => criterion.Value = clothing.SelectedIndex!.ToString();
                         PropertyInspector.Controls.Add(clothing);
 
                         ComboBox set = GetComboBox(node);
                         set.Items.AddRange(Enum.GetNames(typeof(ClothingSet)));
                         set.SelectedIndex = criterion.Option!;
-                        set.Select(set.SelectedItem?.ToString()?.Length ?? 0, 0);
-                        set.PerformLayout();
                         set.SelectedIndexChanged += (_, _) => criterion.Option = set.SelectedIndex!;
                         PropertyInspector.Controls.Add(set);
 
@@ -1494,16 +1793,12 @@ public partial class Main : Form
                             valueChar1.Items.AddRange([.. characterStories[criterion.Character!].StoryValues!]);
                         }
                         valueChar1.SelectedItem = criterion.Key!;
-                        valueChar1.Select(valueChar1.SelectedItem?.ToString()?.Length ?? 0, 0);
-                        valueChar1.PerformLayout();
                         valueChar1.SelectedIndexChanged += (_, _) => criterion.Key = valueChar1.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(valueChar1);
 
                         ComboBox formula = GetComboBox(node);
                         formula.Items.AddRange(Enum.GetNames(typeof(ValueSpecificFormulas)));
                         formula.SelectedIndex = (int)criterion.ValueFormula!;
-                        formula.Select(formula.SelectedItem?.ToString()?.Length ?? 0, 0);
-                        formula.PerformLayout();
                         formula.SelectedIndexChanged += (_, _) => criterion.ValueFormula = (ValueSpecificFormulas)formula.SelectedIndex!;
                         PropertyInspector.Controls.Add(formula);
 
@@ -1519,8 +1814,6 @@ public partial class Main : Form
                             valueChar2.Items.AddRange([.. characterStories[criterion.Character2!].StoryValues!]);
                         }
                         valueChar2.SelectedItem = criterion.Key2!;
-                        valueChar2.Select(valueChar2.SelectedItem?.ToString()?.Length ?? 0, 0);
-                        valueChar2.PerformLayout();
                         valueChar2.SelectedIndexChanged += (_, _) => criterion.Key2 = valueChar2.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(valueChar2);
 
@@ -1537,8 +1830,6 @@ public partial class Main : Form
                         }
                         group.SelectedItem = criterion.Value!;
                         group.SelectedIndex = group.SelectedIndex;
-                        group.Select(group.SelectedItem?.ToString()?.Length ?? 0, 0);
-                        group.PerformLayout();
                         group.SelectedIndexChanged += (_, _) => criterion.Value = group.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(group);
 
@@ -1566,7 +1857,6 @@ public partial class Main : Form
                         {
                             cutscene.SelectedIndex = 0;
                         }
-                        cutscene.PerformLayout();
                         cutscene.SelectedIndexChanged += (_, _) => criterion.Value = (cutscene.SelectedIndex! + 1).ToString();
                         PropertyInspector.Controls.Add(cutscene);
 
@@ -1584,14 +1874,12 @@ public partial class Main : Form
                             dialogue.Items.Add(characterStories[criterion.Character!].Dialogues![i].ID.ToString());
                         }
                         dialogue.SelectedItem = criterion.Value!;
-                        dialogue.PerformLayout();
                         dialogue.SelectedIndexChanged += (_, _) => criterion.Value = dialogue.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(dialogue);
 
                         ComboBox status = GetComboBox(node);
                         status.Items.AddRange(Enum.GetNames(typeof(DialogueStatuses)));
                         status.SelectedItem = ((DialogueStatuses)criterion.Option!).ToString();
-                        status.PerformLayout();
                         status.SelectedIndexChanged += (_, _) => criterion.Option = (int)Enum.Parse<DialogueStatuses>(status.SelectedItem!.ToString()!);
                         PropertyInspector.Controls.Add(status);
                         break;
@@ -1634,14 +1922,12 @@ public partial class Main : Form
                         ComboBox door = GetComboBox(node);
                         door.Items.AddRange(Enum.GetNames(typeof(Doors)));
                         door.SelectedItem = criterion.Key?.Replace(" ", "");
-                        door.PerformLayout();
                         door.SelectedIndexChanged += (_, _) => criterion.Key = door.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(door);
 
                         ComboBox doorstate = GetComboBox(node);
                         doorstate.Items.AddRange(Enum.GetNames(typeof(DoorOptionValues)));
                         doorstate.SelectedIndex = criterion.Option!;
-                        doorstate.PerformLayout();
                         doorstate.SelectedIndexChanged += (_, _) => criterion.Option = (doorstate.SelectedIndex);
                         PropertyInspector.Controls.Add(doorstate);
                         break;
@@ -1661,9 +1947,6 @@ public partial class Main : Form
                         ComboBox character = GetComboBox(node);
                         character.Items.AddRange(Enum.GetNames(typeof(IntimateCharacters)));
                         character.SelectedItem = criterion.Value;
-                        character.SelectionLength = 0;
-                        character.SelectionStart = 0;
-                        character.PerformLayout();
                         character.SelectedIndexChanged += (_, _) => criterion.Value = (string)character.SelectedItem!;
                         PropertyInspector.Controls.Add(character);
 
@@ -1679,9 +1962,6 @@ public partial class Main : Form
                         ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(SexualActs)));
                         state.SelectedItem = criterion.Value;
-                        state.SelectionLength = 0;
-                        state.SelectionStart = 0;
-                        state.PerformLayout();
                         state.SelectedIndexChanged += (_, _) => criterion.Value = (string)state.SelectedItem!;
                         PropertyInspector.Controls.Add(state);
 
@@ -1716,9 +1996,6 @@ public partial class Main : Form
                         ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(ItemComparisonTypes)));
                         state.SelectedItem = criterion.ItemComparison.ToString();
-                        state.SelectionLength = 0;
-                        state.SelectionStart = 0;
-                        state.PerformLayout();
                         state.SelectedIndexChanged += (_, _) => criterion.ItemComparison = Enum.Parse<ItemComparisonTypes>(state.SelectedItem!.ToString()!);
                         PropertyInspector.Controls.Add(state);
 
@@ -1837,7 +2114,6 @@ public partial class Main : Form
                         {
                             trait.SelectedIndex = 0;
                         }
-                        trait.PerformLayout();
                         trait.SelectedIndexChanged += (_, _) => criterion.Key = trait.SelectedIndex.ToString();
                         PropertyInspector.Controls.Add(trait);
 
@@ -1853,7 +2129,6 @@ public partial class Main : Form
                         ComboBox gender = GetComboBox(node);
                         gender.Items.AddRange(Enum.GetNames(typeof(Gender)));
                         gender.SelectedItem = criterion.Value;
-                        gender.PerformLayout();
                         gender.SelectedIndexChanged += (_, _) => criterion.Value = gender.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(gender);
 
@@ -1866,7 +2141,6 @@ public partial class Main : Form
                         ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(PlayerInventoryOptions)));
                         state.SelectedItem = criterion.PlayerInventoryOption.ToString();
-                        state.PerformLayout();
                         state.SelectedIndexChanged += (_, _) => criterion.PlayerInventoryOption = Enum.Parse<PlayerInventoryOptions>(state.SelectedItem!.ToString()!);
                         PropertyInspector.Controls.Add(state);
 
@@ -1881,7 +2155,6 @@ public partial class Main : Form
                         ComboBox pref = GetComboBox(node);
                         pref.Items.AddRange(Enum.GetNames(typeof(PlayerPrefs)));
                         pref.SelectedItem = criterion.Key;
-                        pref.PerformLayout();
                         pref.SelectedIndexChanged += (_, _) => criterion.Key = pref.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(pref);
 
@@ -1898,7 +2171,6 @@ public partial class Main : Form
                         ComboBox option = GetComboBox(node);
                         option.Items.AddRange(Enum.GetNames(typeof(PoseOptions)));
                         option.SelectedItem = criterion.PoseOption.ToString();
-                        option.PerformLayout();
                         option.SelectedIndexChanged += (_, _) => criterion.PoseOption = Enum.Parse<PoseOptions>(option.SelectedItem!.ToString()!);
                         option.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(option);
@@ -1910,7 +2182,6 @@ public partial class Main : Form
                             ComboBox pose = GetComboBox(node);
                             pose.Items.AddRange(Enum.GetNames(typeof(Poses)));
                             pose.SelectedItem = Enum.Parse<Poses>(criterion.Value!).ToString();
-                            pose.PerformLayout();
                             pose.SelectedIndexChanged += (sender, values) => criterion.Value = ((int)Enum.Parse<Poses>(pose.SelectedItem!.ToString()!)).ToString();
                             PropertyInspector.Controls.Add(pose);
                         }
@@ -1928,7 +2199,6 @@ public partial class Main : Form
                         ComboBox property = GetComboBox(node);
                         property.Items.AddRange(Enum.GetNames(typeof(InteractiveProperties)));
                         property.SelectedItem = Enum.Parse<InteractiveProperties>(criterion.Value!).ToString();
-                        property.PerformLayout();
                         property.SelectedIndexChanged += (sender, values) => criterion.Value = ((int)Enum.Parse<InteractiveProperties>(property.SelectedItem!.ToString()!)).ToString();
                         PropertyInspector.Controls.Add(property);
 
@@ -1949,7 +2219,6 @@ public partial class Main : Form
                             }
                         }
                         quest.SelectedItem = criterion.Key!;
-                        quest.PerformLayout();
                         quest.SelectedIndexChanged += (_, _) =>
                         {
                             //todo implement quest store or sth
@@ -1972,7 +2241,6 @@ public partial class Main : Form
                         ComboBox obtained = GetComboBox(node);
                         obtained.Items.AddRange(Enum.GetNames(typeof(QuestStatus)));
                         obtained.SelectedItem = Enum.Parse<QuestStatus>(criterion.Value!).ToString();
-                        obtained.PerformLayout();
                         obtained.SelectedIndexChanged += (sender, values) => criterion.Value = ((int)Enum.Parse<QuestStatus>(obtained.SelectedItem!.ToString()!)).ToString();
                         PropertyInspector.Controls.Add(obtained);
                         break;
@@ -1999,7 +2267,6 @@ public partial class Main : Form
                         ComboBox social = GetComboBox(node);
                         social.Items.AddRange(Enum.GetNames(typeof(SocialStatuses)));
                         social.SelectedItem = criterion.SocialStatus!.ToString();
-                        social.PerformLayout();
                         social.SelectedIndexChanged += (sender, values) => criterion.SocialStatus = Enum.Parse<SocialStatuses>(social.SelectedItem!.ToString()!);
                         PropertyInspector.Controls.Add(social);
 
@@ -2016,7 +2283,6 @@ public partial class Main : Form
                         ComboBox state = GetComboBox(node);
                         state.Items.AddRange(Enum.GetNames(typeof(InteractiveStates)));
                         state.SelectedItem = Enum.Parse<InteractiveStates>(criterion.Value!).ToString();
-                        state.PerformLayout();
                         state.SelectedIndexChanged += (sender, values) => criterion.Value = ((int)Enum.Parse<InteractiveStates>(state.SelectedItem!.ToString()!)).ToString();
                         PropertyInspector.Controls.Add(state);
 
@@ -2044,7 +2310,6 @@ public partial class Main : Form
                             }
                         }
                         value.SelectedItem = criterion.Key!;
-                        value.PerformLayout();
                         value.SelectedIndexChanged += (sender, values) => criterion.Key = value.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(value);
 
@@ -2091,15 +2356,10 @@ public partial class Main : Form
             {
                 PropertyInspector.RowCount = 2;
                 PropertyInspector.ColumnCount = 9;
-                Label label = new()
-                {
-                    Text = node.FileName + "'s\n Background Chatter" + node.ID + "\nSpeaking to:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+
+                Label label = GetLabel(node.FileName + "'s\n Background Chatter" + node.ID + "\nSpeaking to:");
                 PropertyInspector.Controls.Add(label);
+
                 BackgroundChatter dialogue = node.Data<BackgroundChatter>()!;
 
                 ComboBox talkingTo = GetComboBox(node);
@@ -2108,14 +2368,7 @@ public partial class Main : Form
                 talkingTo.SelectedIndexChanged += (_, _) => dialogue.SpeakingTo = talkingTo.SelectedItem!.ToString();
                 PropertyInspector.Controls.Add(talkingTo);
 
-                label = new()
-                {
-                    Text = "Importance:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                label = GetLabel("Importance:");
                 PropertyInspector.Controls.Add(label);
 
                 ComboBox importance = GetComboBox(node);
@@ -2124,53 +2377,19 @@ public partial class Main : Form
                 importance.SelectedIndexChanged += (_, _) => dialogue.SpeakingTo = importance.SelectedItem!.ToString();
                 PropertyInspector.Controls.Add(importance);
 
-                CheckBox checkBox = new()
-                {
-                    Checked = dialogue.IsConversationStarter,
-                    Dock = DockStyle.Fill,
-                    Text = "Is conversation starter:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                CheckBox checkBox = GetCheckbox("Is conversation starter:", dialogue.IsConversationStarter);
                 checkBox.CheckedChanged += (_, args) => dialogue.IsConversationStarter = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                checkBox = new()
-                {
-                    Checked = dialogue.OverrideCombatRestriction,
-                    Dock = DockStyle.Fill,
-                    Text = "Override combat in vicinity:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                checkBox = GetCheckbox("Override combat in vicinity:", dialogue.OverrideCombatRestriction);
                 checkBox.CheckedChanged += (_, args) => dialogue.OverrideCombatRestriction = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                checkBox = new()
-                {
-                    Checked = dialogue.PlaySilently,
-                    Dock = DockStyle.Fill,
-                    Text = "Silence Voice Acting:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                checkBox = GetCheckbox("Silence Voice Acting:", dialogue.PlaySilently);
                 checkBox.CheckedChanged += (_, args) => dialogue.PlaySilently = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                label = new()
-                {
-                    Text = "Paired Emote:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                label = GetLabel("Paired Emote:");
                 PropertyInspector.Controls.Add(label);
 
                 ComboBox pairedEmote = GetComboBox(node);
@@ -2202,24 +2421,11 @@ public partial class Main : Form
             case NodeType.Dialogue:
             {
                 PropertyInspector.RowCount = 1;
-                Label label = new()
-                {
-                    Text = node.FileName + "'s Dialogue " + node.ID + "\n Talking to:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                Label label = GetLabel(node.FileName + "'s Dialogue " + node.ID + "\n Talking to:");
                 PropertyInspector.Controls.Add(label);
                 if (node.Data<Dialogue>() is null)
                 {
-                    Label label2 = new()
-                    {
-                        Text = "No data on this node",
-                        TextAlign = ContentAlignment.MiddleLeft,
-                        Dock = DockStyle.Fill,
-                        ForeColor = Color.LightGray
-                    };
+                    Label label2 = GetLabel("No data on this node", ContentAlignment.TopCenter);
                     PropertyInspector.Controls.Add(label2);
                     break;
                 }
@@ -2229,61 +2435,22 @@ public partial class Main : Form
                 ComboBox talkingTo = GetComboBox(node);
                 talkingTo.Items.AddRange(Enum.GetNames(typeof(StoryEnums.Characters)));
                 talkingTo.SelectedItem = dialogue.SpeakingToCharacterName;
-                talkingTo.SelectedText = string.Empty;
-                talkingTo.Select(talkingTo.SelectedItem?.ToString()?.Length ?? 0, 0);
-                talkingTo.PerformLayout();
                 talkingTo.SelectedIndexChanged += (_, _) => dialogue.SpeakingToCharacterName = talkingTo.SelectedItem!.ToString();
                 PropertyInspector.Controls.Add(talkingTo);
 
-                CheckBox checkBox = new()
-                {
-                    Checked = dialogue.DoesNotCountAsMet,
-                    Dock = DockStyle.Fill,
-                    Text = "Doesn't count as met:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                CheckBox checkBox = GetCheckbox("Doesn't count as met:", dialogue.DoesNotCountAsMet);
                 checkBox.CheckedChanged += (_, args) => dialogue.DoesNotCountAsMet = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                checkBox = new()
-                {
-                    Checked = dialogue.ShowGlobalResponses,
-                    Dock = DockStyle.Fill,
-                    Text = "Show global repsonses:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                checkBox = GetCheckbox("Show global repsonses:", dialogue.ShowGlobalResponses);
                 checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalResponses = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                checkBox = new()
-                {
-                    Checked = dialogue.ShowGlobalGoodByeResponses,
-                    Dock = DockStyle.Fill,
-                    Text = "Use goodbye responses:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                checkBox = GetCheckbox("Use goodbye responses:", dialogue.ShowGlobalGoodByeResponses);
                 checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalGoodByeResponses = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                checkBox = new()
-                {
-                    Checked = dialogue.IsDynamic,
-                    Dock = DockStyle.Fill,
-                    Text = "Auto Immersive:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                checkBox = GetCheckbox("Auto Immersive:", dialogue.IsDynamic);
                 checkBox.CheckedChanged += (_, args) => dialogue.IsDynamic = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
@@ -2311,29 +2478,18 @@ public partial class Main : Form
             {
                 PropertyInspector.RowCount = 2;
                 PropertyInspector.ColumnCount = 3;
-                Label label = new()
-                {
-                    Text = "Alternate text for " + node.FileName + "'s Dialogue " + node.ID + "\n Sort order:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+
+                Label label = GetLabel("Alternate text for " + node.FileName + "'s Dialogue " + node.ID + "\n Sort order:");
                 PropertyInspector.Controls.Add(label);
                 AlternateText alternate = node.Data<AlternateText>()!;
 
-                NumericUpDown sortOrder = new()
-                {
-                    //Dock = DockStyle.Fill,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                    Location = new(0, PropertyInspector.Size.Height / 2),
-                    Value = alternate.Order,
-                    Dock = DockStyle.Left,
-                    Width = 50
-                };
+                NumericUpDown sortOrder = GetNumericUpDown(alternate.Order);
+                sortOrder.DecimalPlaces = 0;
+                sortOrder.Minimum = 0;
                 sortOrder.ValueChanged += (_, _) => alternate.Order = (int)sortOrder.Value;
                 sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder);
+
                 TextBox text = new()
                 {
                     Text = alternate.Text,
@@ -2347,6 +2503,7 @@ public partial class Main : Form
                 text.TextChanged += (_, _) => alternate.Text = text.Text;
                 text.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 text.Select();
+
                 PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                 PropertyInspector.RowStyles[0].Height = 35;
                 PropertyInspector.Controls.Add(text, 0, 1);
@@ -2357,14 +2514,7 @@ public partial class Main : Form
             {
                 if (node.Data<GameEvent>() is null)
                 {
-                    Label label2 = new()
-                    {
-                        Text = "No data on this node",
-                        TextAlign = ContentAlignment.MiddleLeft,
-                        Dock = DockStyle.Top,
-                        ForeColor = Color.LightGray,
-                        Height = 30,
-                    };
+                    Label label2 = GetLabel("No data on this node", ContentAlignment.TopCenter);
                     PropertyInspector.Controls.Add(label2);
                     break;
                 }
@@ -2374,24 +2524,12 @@ public partial class Main : Form
 
                 GameEvent gevent = node.Data<GameEvent>()!;
 
-                Label label = new()
-                {
-                    Text = "Order:",
-                    TextAlign = ContentAlignment.TopRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                };
+                Label label = GetLabel("Order:");
                 PropertyInspector.Controls.Add(label, 0, 0);
 
-                NumericUpDown sortOrder = new()
-                {
-                    //Dock = DockStyle.Fill,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                    Location = new(0, PropertyInspector.Size.Height / 2),
-                    Value = gevent.SortOrder,
-                    Dock = DockStyle.Left,
-                    Width = 50
-                };
+                NumericUpDown sortOrder = GetNumericUpDown(gevent.SortOrder);
+                sortOrder.DecimalPlaces = 0;
+                sortOrder.Minimum = 0;
                 sortOrder.ValueChanged += (_, _) => gevent.SortOrder = (int)sortOrder.Value;
                 sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder, 1, 0);
@@ -2402,24 +2540,10 @@ public partial class Main : Form
                 type.SelectedIndexChanged += (_, _) => gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
                 PropertyInspector.Controls.Add(type, 2, 0);
 
-                Label label3 = new()
-                {
-                    Text = "Delay:",
-                    TextAlign = ContentAlignment.TopRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                };
+                Label label3 = GetLabel("Delay:");
                 PropertyInspector.Controls.Add(label3, 3, 0);
 
-                NumericUpDown delay = new()
-                {
-                    //Dock = DockStyle.Fill,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                    Location = new(0, PropertyInspector.Size.Height / 2),
-                    Value = (decimal)gevent.Delay,
-                    Dock = DockStyle.Left,
-                    DecimalPlaces = 2,
-                };
+                NumericUpDown delay = GetNumericUpDown((float)gevent.Delay);
                 delay.ValueChanged += (_, _) => gevent.Delay = (double)delay.Value;
                 delay.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(delay, 4, 0);
@@ -2675,14 +2799,7 @@ public partial class Main : Form
             {
                 if (node.Data<EventTrigger>() is null)
                 {
-                    Label label2 = new()
-                    {
-                        Text = "No data on this node",
-                        TextAlign = ContentAlignment.MiddleLeft,
-                        Dock = DockStyle.Top,
-                        ForeColor = Color.LightGray,
-                        Height = 30
-                    };
+                    Label label2 = GetLabel("No data on this node", ContentAlignment.TopCenter);
                     PropertyInspector.Controls.Add(label2);
                     break;
                 }
@@ -2690,14 +2807,7 @@ public partial class Main : Form
 
                 PropertyInspector.RowCount = 2;
 
-                Label label = new()
-                {
-                    Text = "Name:",
-                    TextAlign = ContentAlignment.TopRight,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                    Height = 30,
-                };
+                Label label = GetLabel("Name:");
                 PropertyInspector.Controls.Add(label, 0, 0);
 
                 TextBox customName = new()
@@ -2762,7 +2872,6 @@ public partial class Main : Form
                         ComboBox zone = GetComboBox(node);
                         zone.Items.AddRange(Enum.GetNames(typeof(ZoneEnums)));
                         zone.SelectedItem = eventTrigger.Value;
-                        zone.PerformLayout();
                         zone.SelectedIndexChanged += (_, _) => eventTrigger.Value = (string)zone.SelectedItem!;
                         PropertyInspector.Controls.Add(zone);
 
@@ -2776,7 +2885,6 @@ public partial class Main : Form
                         ComboBox targetType = GetComboBox(node);
                         targetType.Items.AddRange(Enum.GetNames(typeof(LocationTargetOption)));
                         targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
-                        targetType.PerformLayout();
                         targetType.SelectedIndexChanged += (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>(targetType.SelectedItem!.ToString()!);
                         targetType.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(targetType);
@@ -2788,7 +2896,6 @@ public partial class Main : Form
                                 ComboBox target = GetComboBox(node);
                                 target.Items.AddRange(Enum.GetNames(typeof(MoveTargets)));
                                 target.SelectedItem = eventTrigger.Value!.Replace(" ", "");
-                                target.PerformLayout();
                                 target.SelectedIndexChanged += (_, _) => eventTrigger.Value = target.SelectedItem!.ToString()!;
                                 PropertyInspector.Controls.Add(target);
                                 break;
@@ -2843,20 +2950,12 @@ public partial class Main : Form
                         PutStartCondition(node, eventTrigger);
                         PutItemkey(node, eventTrigger);
 
-                        Label inlabel = new()
-                        {
-                            Text = "in the:",
-                            TextAlign = ContentAlignment.MiddleRight,
-                            Dock = DockStyle.Top,
-                            ForeColor = Color.LightGray,
-                            Height = 30,
-                        };
+                        Label inlabel = GetLabel("in the:");
                         PropertyInspector.Controls.Add(inlabel);
 
                         ComboBox zone = GetComboBox(node);
                         zone.Items.AddRange(Enum.GetNames(typeof(BodyRegion)));
                         zone.SelectedItem = ((BodyRegion)int.Parse(eventTrigger.Value!)).ToString();
-                        zone.PerformLayout();
                         zone.SelectedIndexChanged += (_, _) => eventTrigger.Value = ((int)Enum.Parse<BodyRegion>(zone.SelectedItem!.ToString()!)).ToString();
                         PropertyInspector.Controls.Add(zone);
 
@@ -2881,38 +2980,15 @@ public partial class Main : Form
                     {
                         PutStartCondition(node, eventTrigger);
 
-                        Label inlabel = new()
-                        {
-                            Text = "every:",
-                            TextAlign = ContentAlignment.MiddleRight,
-                            Dock = DockStyle.Top,
-                            ForeColor = Color.LightGray,
-                            Height = 30,
-                        };
+                        Label inlabel = GetLabel("every:");
                         PropertyInspector.Controls.Add(inlabel);
 
-                        NumericUpDown option = new()
-                        {
-                            //Dock = DockStyle.Fill,
-                            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                            Location = new(0, PropertyInspector.Size.Height / 2),
-                            Dock = DockStyle.Left,
-                            Width = 50,
-                            Value = (decimal)eventTrigger.UpdateIteration
-                        };
-                        option.PerformLayout();
+                        NumericUpDown option = GetNumericUpDown((float)eventTrigger.UpdateIteration);
                         option.ValueChanged += (_, _) => eventTrigger.UpdateIteration = (double)option.Value;
                         option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(option);
 
-                        Label seconds = new()
-                        {
-                            Text = "seconds",
-                            TextAlign = ContentAlignment.MiddleRight,
-                            Dock = DockStyle.Top,
-                            ForeColor = Color.LightGray,
-                            Height = 30,
-                        };
+                        Label seconds = GetLabel("seconds");
                         PropertyInspector.Controls.Add(seconds);
                         break;
                     }
@@ -2968,7 +3044,6 @@ public partial class Main : Form
                         ComboBox cutscene = GetComboBox(node);
                         cutscene.Items.AddRange(Enum.GetNames(typeof(Cutscenes)));
                         cutscene.SelectedItem = eventTrigger.Value;
-                        cutscene.PerformLayout();
                         cutscene.SelectedIndexChanged += (_, _) => eventTrigger.Value = cutscene.SelectedItem!.ToString();
                         PropertyInspector.Controls.Add(cutscene);
 
@@ -2998,14 +3073,7 @@ public partial class Main : Form
                 PropertyInspector.RowCount = 2;
                 if (node.Data<Response>() is null)
                 {
-                    Label label2 = new()
-                    {
-                        Text = "No data on this node",
-                        TextAlign = ContentAlignment.MiddleLeft,
-                        Dock = DockStyle.Top,
-                        ForeColor = Color.LightGray,
-                        Height = 30
-                    };
+                    Label label2 = GetLabel("No data on this node", ContentAlignment.TopCenter);
                     PropertyInspector.Controls.Add(label2);
                     break;
                 }
@@ -3013,15 +3081,7 @@ public partial class Main : Form
 
                 PropertyInspector.ColumnCount = 6;
 
-                Label label = new()
-                {
-                    Text = "Trigger New Dialogue:\n\nResponse Text:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    Height = 49,
-                    Width = 100
-                };
+                Label label = GetLabel("Trigger New Dialogue:\n\nResponse Text:");
                 PropertyInspector.Controls.Add(label);
 
                 ComboBox dialogue = GetComboBox(node);
@@ -3031,7 +3091,6 @@ public partial class Main : Form
                     dialogue.Items.Add(characterStories[node.FileName].Dialogues![i].ID.ToString());
                 }
                 dialogue.SelectedItem = response.Next.ToString()!;
-                dialogue.PerformLayout();
                 dialogue.SelectedIndexChanged += (_, _) =>
                 {
                     if (int.TryParse(dialogue.SelectedItem!.ToString()!, out int res))
@@ -3046,48 +3105,20 @@ public partial class Main : Form
                 };
                 PropertyInspector.Controls.Add(dialogue);
 
-                Label label3 = new()
-                {
-                    Text = characterStories[node.FileName].Dialogues!.Find((dialog) => dialog.ID.ToString() == dialogue.SelectedItem?.ToString())?.Text ?? "No text on dialogue",
-                    TextAlign = ContentAlignment.TopLeft,
-                    Dock = DockStyle.Fill,
-                    ForeColor = Color.LightGray,
-                };
+                Label label3 = GetLabel(characterStories[node.FileName].Dialogues!.Find((dialog) => dialog.ID.ToString() == dialogue.SelectedItem?.ToString())?.Text ?? "No text on dialogue");
                 PropertyInspector.Controls.Add(label3);
 
-                Label label4 = new()
-                {
-                    Text = "Display Order",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                };
+                Label label4 = GetLabel("Display Order");
                 PropertyInspector.Controls.Add(label4);
 
-                NumericUpDown option = new()
-                {
-                    //Dock = DockStyle.Fill,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                    Location = new(0, PropertyInspector.Size.Height / 2),
-                    Value = response.Order,
-                    Dock = DockStyle.Left,
-                    Width = 50
-                };
-                option.PerformLayout();
+                NumericUpDown option = GetNumericUpDown(response.Order);
+                option.DecimalPlaces = 0;
+                option.Minimum = 0;
                 option.ValueChanged += (_, _) => response.Order = (int)option.Value;
                 option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(option);
 
-                CheckBox checkBox = new()
-                {
-                    Checked = response.AlwaysDisplay,
-                    Dock = DockStyle.Top,
-                    Text = "Always Available:",
-                    CheckAlign = ContentAlignment.MiddleRight,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                CheckBox checkBox = GetCheckbox("Always Available:", response.AlwaysDisplay);
                 checkBox.CheckedChanged += (_, args) => response.AlwaysDisplay = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
@@ -3112,14 +3143,7 @@ public partial class Main : Form
             }
             case NodeType.Value:
             {
-                Label label = new()
-                {
-                    Text = node.FileName + "'s value:",
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    Height = 30,
-                };
+                Label label = GetLabel(node.FileName + "'s value:");
                 PropertyInspector.Controls.Add(label);
 
                 if (node.Data<Value>() is not null)
@@ -3138,58 +3162,29 @@ public partial class Main : Form
                 }
                 else
                 {
-                    Label label2 = new()
-                    {
-                        Text = "No data on this node!",
-                        TextAlign = ContentAlignment.MiddleLeft,
-                        Dock = DockStyle.Top,
-                        ForeColor = Color.LightGray,
-                        Height = 30
-                    };
+                    Label label2 = GetLabel("No data on this node!", ContentAlignment.TopCenter);
                     PropertyInspector.Controls.Add(label2);
                 }
                 break;
             }
             case NodeType.Personality:
             {
-                Label label = new()
-                {
-                    Text = node.FileName + "'s " + node.ID,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    Height = 30
-                };
+                Label label = GetLabel(node.FileName + "'s " + node.ID);
                 PropertyInspector.Controls.Add(label);
 
                 if (node.Data<Trait>() is not null)
                 {
-                    NumericUpDown option = new()
-                    {
-                        Dock = DockStyle.Top,
-                        ForeColor = Color.LightGray,
-                        Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                        Location = new(0, PropertyInspector.Size.Height / 2),
-                        Value = node.Data<Trait>()!.Value,
-                        Maximum = 100,
-                        Minimum = -100,
-                        Width = 50
-                    };
-                    option.PerformLayout();
+                    NumericUpDown option = GetNumericUpDown(node.Data<Trait>()!.Value);
+                    option.Maximum = 100;
+                    option.Minimum = -100;
+                    option.DecimalPlaces = 0;
                     option.ValueChanged += (_, _) => node.Data<Trait>()!.Value = (int)option.Value;
                     option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[node.FileName]); Graph.Invalidate(); };
                     PropertyInspector.Controls.Add(option);
                 }
                 else
                 {
-                    Label label2 = new()
-                    {
-                        Text = "No data on this node!",
-                        TextAlign = ContentAlignment.MiddleLeft,
-                        Dock = DockStyle.Top,
-                        ForeColor = Color.LightGray,
-                        Height = 30
-                    };
+                    Label label2 = GetLabel("No data on this node!", ContentAlignment.TopCenter);
                     PropertyInspector.Controls.Add(label2);
                 }
                 break;
@@ -3217,32 +3212,11 @@ public partial class Main : Form
             {
                 PropertyInspector.RowCount = 1;
                 PropertyInspector.ColumnCount = 3;
-                Label label = new()
-                {
-                    Text = node.Type.ToString(),
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                Label label = GetLabel(node.Type.ToString(), ContentAlignment.TopCenter);
                 PropertyInspector.Controls.Add(label);
-                label = new()
-                {
-                    Text = node.ID,
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                label = GetLabel(node.ID, ContentAlignment.TopCenter);
                 PropertyInspector.Controls.Add(label);
-                label = new()
-                {
-                    Text = node.Text,
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Dock = DockStyle.Top,
-                    ForeColor = Color.LightGray,
-                    AutoSize = true,
-                };
+                label = GetLabel(node.Text, ContentAlignment.TopCenter);
                 PropertyInspector.Controls.Add(label);
                 break;
             }
@@ -3270,6 +3244,45 @@ public partial class Main : Form
                 }
             }
         }
+    }
+
+    private static NumericUpDown GetNumericUpDown(float start)
+    {
+        NumericUpDown sortOrder = new()
+        {
+            //Dock = DockStyle.Fill,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
+            Value = (decimal)start,
+            Dock = DockStyle.Left,
+            Width = 50
+        };
+        return sortOrder;
+    }
+
+    private static Label GetLabel(string text, ContentAlignment alignment = ContentAlignment.TopRight)
+    {
+        return new()
+        {
+            Text = text,
+            TextAlign = alignment,
+            Dock = DockStyle.Top,
+            ForeColor = Color.LightGray,
+            AutoSize = true,
+        };
+    }
+
+    private static CheckBox GetCheckbox(string text, bool ischecked)
+    {
+        return new()
+        {
+            Checked = ischecked,
+            Dock = DockStyle.Fill,
+            Text = text,
+            CheckAlign = ContentAlignment.MiddleRight,
+            TextAlign = ContentAlignment.MiddleRight,
+            ForeColor = Color.LightGray,
+            AutoSize = true,
+        };
     }
 
     private void PutItemValue(Node node, EventTrigger eventTrigger)
@@ -3530,6 +3543,7 @@ public partial class Main : Form
             CurrentlyInPan = true;
             //get current position in screen coordinates when we start to pan
             SetPanOffset(mouseLocation);
+            ClearOverlayBitmap();
         }
         //in pan
         else if (CurrentlyInPan)
@@ -3743,11 +3757,6 @@ public partial class Main : Form
                         clickedNode.Data<Response>()!.ResponseCriteria.Add(newNode.Data<Criterion>()!);
                         nodes[character].AddParent(clickedNode, newNode);
                     }
-                    else if (clickedNode.DataType == typeof(Dialogue))
-                    {
-                        clickedNode.Data<Dialogue>()!.DynamicDialogueCriteria.Add(newNode.Data<Criterion>()!);
-                        nodes[character].AddParent(clickedNode, newNode);
-                    }
                     else if (clickedNode.DataType == typeof(BackgroundChatter))
                     {
                         clickedNode.Data<BackgroundChatter>()!.Critera.Add(newNode.Data<Criterion>()!);
@@ -3910,16 +3919,20 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    if (clickedNode.DataType == typeof(Criterion))
+                    if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        newNode.Data<Dialogue>()!.DynamicDialogueCriteria.Add(clickedNode.Data<Criterion>()!);
-                        nodes[character].AddParent(newNode, clickedNode);
-                    }
-                    else if (clickedNode.DataType == typeof(GameEvent))
-                    {
-                        //todo we need to seperate between start and end like when linking
-                        newNode.Data<Dialogue>()!.StartEvents.Add(clickedNode.Data<GameEvent>()!);
-                        nodes[character].AddChild(newNode, clickedNode);
+                        var result = MessageBox.Show("Add as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            newNode.Data<Dialogue>()!.StartEvents.Add(clickedNode.Data<GameEvent>()!);
+                            nodes[character].AddChild(newNode, clickedNode);
+                        }
+                        else
+                        {
+                            newNode.Data<Dialogue>()!.CloseEvents.Add(clickedNode.Data<GameEvent>()!);
+                            nodes[character].AddChild(newNode, clickedNode);
+                        }
                     }
                     else if (clickedNode.DataType == typeof(Response))
                     {
@@ -4099,9 +4112,18 @@ public partial class Main : Form
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        //todo we need to decide between the two event lists here
-                        newNode.Data<ItemInteraction>()!.OnAcceptEvents.Add(clickedNode.Data<GameEvent>()!);
-                        nodes[character].AddChild(newNode, clickedNode);
+                        var result = MessageBox.Show("Add as Accept Event? Hit yes for Accept Event, no for Refuse Event", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            newNode.Data<ItemInteraction>()!.OnAcceptEvents.Add(clickedNode.Data<GameEvent>()!);
+                            nodes[character].AddChild(newNode, clickedNode);
+                        }
+                        else
+                        {
+                            newNode.Data<ItemInteraction>()!.OnRefuseEvents.Add(clickedNode.Data<GameEvent>()!);
+                            nodes[character].AddChild(newNode, clickedNode);
+                        }
                     }
                 }
 
@@ -4131,9 +4153,18 @@ public partial class Main : Form
                     }
                     else if (clickedNode.DataType == typeof(GameEvent))
                     {
-                        //todo we need to decide between the two event lists here
-                        newNode.Data<ItemGroupInteraction>()!.OnAcceptEvents.Add(clickedNode.Data<GameEvent>()!);
-                        nodes[character].AddChild(newNode, clickedNode);
+                        var result = MessageBox.Show("Add as Accept Event? Hit yes for Accept Event, no for Refuse Event", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            newNode.Data<ItemGroupInteraction>()!.OnAcceptEvents.Add(clickedNode.Data<GameEvent>()!);
+                            nodes[character].AddChild(newNode, clickedNode);
+                        }
+                        else
+                        {
+                            newNode.Data<ItemGroupInteraction>()!.OnRefuseEvents.Add(clickedNode.Data<GameEvent>()!);
+                            nodes[character].AddChild(newNode, clickedNode);
+                        }
                     }
                 }
 

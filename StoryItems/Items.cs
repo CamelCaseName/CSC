@@ -280,7 +280,7 @@ namespace CSC.StoryItems
 
         public string? SpeakingToCharacterName { get; set; } = Main.Player;
         public List<GameEvent> StartEvents { get; set; } = [];
-        public List<Criterion> DynamicDialogueCriteria { get; set; } = [];
+        //public List<Criterion> DynamicDialogueCriteria { get; set; } = [];
 
         public string? Text { get; set; }
     }

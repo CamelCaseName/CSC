@@ -1187,6 +1187,19 @@ namespace CSC.Nodestuff
                     {
                         HandleCriterion(nodes, node, newList, _criterion);
                     }
+
+                    result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
+                    if (result is not null)
+                    {
+                        nodes.AddChild(node, result);
+                    }
+                    else
+                    {
+                        //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
+                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
+                        newList.Add(newNode);
+                        nodes.AddChild(node, newNode);
+                    }
                     break;
                 }
             }
@@ -1349,6 +1362,7 @@ namespace CSC.Nodestuff
                 }
             }
         }
+       
         private static void MergeDoors(NodeStore nodes)
         {
             Node? result;
