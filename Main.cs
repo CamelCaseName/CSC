@@ -41,11 +41,11 @@ public partial class Main : Form
     private readonly Pen clickedLinePen;
     private readonly Pen highlightPen;
     private readonly Pen linePen;
+    private readonly Pen circlePen;
     private readonly Pen nodeToLinkPen;
     private readonly SolidBrush ClickedNodeBrush;
     private readonly SolidBrush HighlightNodeBrush;
     private readonly SolidBrush NodeToLinkNextBrush;
-
     private readonly SolidBrush achievementNodeBrush;
     private readonly SolidBrush alternateTextNodeBrush;
     private readonly SolidBrush bgcNodeBrush;
@@ -74,7 +74,6 @@ public partial class Main : Form
     private readonly SolidBrush socialNodeBrush;
     private readonly SolidBrush stateNodeBrush;
     private readonly SolidBrush valueNodeBrush;
-
     private readonly SolidBrush darkachievementNodeBrush;
     private readonly SolidBrush darkalternateTextNodeBrush;
     private readonly SolidBrush darkbgcNodeBrush;
@@ -105,6 +104,7 @@ public partial class Main : Form
     private readonly SolidBrush darkvalueNodeBrush;
     private RectangleF adjustedMouseClipBounds;
     private SizeF OffsetFromDragClick = SizeF.Empty;
+    private SizeF CircleSize = new(15, 15);
     CachedBitmap? oldGraph;
     private static MainStory Story = new();
     public static readonly Dictionary<string, CharacterStory> Stories = [];
@@ -158,6 +158,11 @@ public partial class Main : Form
         Application.AddMessageFilter(new MouseMessageFilter());
         MouseMessageFilter.MouseMove += HandleMouseEvents;
         linePen = new Pen(Color.FromArgb(75, 75, 75), 0.2f)
+        {
+            EndCap = LineCap.Triangle,
+            StartCap = LineCap.Round
+        };
+        circlePen = new Pen(Color.FromArgb(75, 75, 75), 0.5f)
         {
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
@@ -622,7 +627,7 @@ public partial class Main : Form
         {
             if (node.FileName != SelectedCharacter)
             {
-                if (node.FileName == StoryName ||  node.FileName == Player || node.FileName == Anybody)
+                if (node.FileName == StoryName || node.FileName == Player || node.FileName == Anybody)
                 {
                     StoryTree.SelectedNode = StoryTree.Nodes[0].FirstNode;
                 }
@@ -675,6 +680,32 @@ public partial class Main : Form
                 if (key.Rectangle.Contains(mouseGraphLocation))
                 {
                     return key;
+                }
+            }
+        }
+        return Node.NullNode;
+    }
+
+    private Node TryGetNodeLinkStart(PointF mouseGraphLocation)
+    {
+        if (adjustedMouseClipBounds.Contains(mouseGraphLocation))
+        {
+            foreach (var node in nodes[SelectedCharacter].Positions[mouseGraphLocation])
+            {
+                GetLinkCircleRects(node, out RectangleF leftRect, out RectangleF rightRect);
+                float circleCenterX = leftRect.X + leftRect.Width / 2;
+                float circleCenterRightX = rightRect.X + rightRect.Width / 2;
+                float circleCenterY = leftRect.Y + leftRect.Height / 2;
+                float DistanceLeft = MathF.Sqrt(MathF.Pow(mouseGraphLocation.X - circleCenterX, 2) + MathF.Pow(mouseGraphLocation.Y - circleCenterY, 2));
+                float DistanceRight = MathF.Sqrt(MathF.Pow(mouseGraphLocation.X - (circleCenterRightX), 2) + MathF.Pow(mouseGraphLocation.Y - circleCenterY, 2));
+
+                if (DistanceLeft < CircleSize.Width / 2)
+                {
+                    return node;
+                }
+                else if (DistanceRight < CircleSize.Width / 2)
+                {
+                    return node;
                 }
             }
         }
@@ -805,6 +836,13 @@ public partial class Main : Form
 
     private void DrawNode(Graphics g, Node node, SolidBrush brush, bool lightText = false)
     {
+        if (Scaling[SelectedCharacter] > 0.28f)
+        {
+            GetLinkCircleRects(node, out RectangleF leftRect, out RectangleF rightRect);
+
+            g.DrawEllipse(circlePen, leftRect);
+            g.DrawEllipse(circlePen, rightRect);
+        }
         if (node == clickedNode)
         {
             lightText = true;
@@ -840,6 +878,30 @@ public partial class Main : Form
                                   scaledRect,
                                   textColor,
                                   TextFlags);
+        }
+    }
+
+    private void GetLinkCircleRects(Node node, out RectangleF leftRect, out RectangleF rightRect)
+    {
+        leftRect = new RectangleF(node.Position + new SizeF(-CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
+        rightRect = new RectangleF(node.Position + new SizeF(node.Size.Width - CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
+        if (node.FileName != SelectedCharacter)
+        {
+            if (node == clickedNode)
+            {
+                leftRect.Location -= new SizeF(25 / 2, 0);
+                rightRect.Location += new SizeF(25 / 2, 0);
+            }
+            else
+            {
+                leftRect.Location -= new SizeF(15 / 2, 0);
+                rightRect.Location += new SizeF(15 / 2, 0);
+            }
+        }
+        else if (node == clickedNode)
+        {
+            leftRect.Location -= new SizeF(15 / 2, 0);
+            rightRect.Location += new SizeF(15 / 2, 0);
         }
     }
 
@@ -1352,7 +1414,25 @@ public partial class Main : Form
         }
         else
         {
-            if (nodeToLinkNext != Node.NullNode)
+            var circleNode = TryGetNodeLinkStart(graphPos);
+            if (circleNode != Node.NullNode)
+            {
+                if (nodeToLinkNext == Node.NullNode)
+                {
+                    nodeToLinkNext = circleNode;
+                }
+                else if (nodeToLinkNext != Node.NullNode)
+                {
+                    LinkTwoNodes(nodeToLinkNext, circleNode);
+
+                    nodeToLinkNext = Node.NullNode;
+                    oldMousePosBeforeSpawnWindow = Point.Empty;
+
+                    ShowProperties(node);
+                    ClearOverlayBitmap();
+                }
+            }
+            else if (nodeToLinkNext != Node.NullNode)
             {
                 ShowNodeSpawnBox();
             }
