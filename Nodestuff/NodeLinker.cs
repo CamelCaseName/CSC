@@ -122,7 +122,7 @@ namespace CSC.Nodestuff
         }
 
         //doubles some connections
-        private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> newList)
+        private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn)
         {
             AlternateText alternateText;
             BackgroundChatter chatter;
@@ -189,7 +189,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.CriteriaGroup:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.CriteriaGroup && n.ID == criterion.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.CriteriaGroup && n.ID == criterion.Value);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -211,14 +211,14 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.Dialogue:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Dialogue && n.FileName == criterion.Character && n.ID == criterion.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.FileName == criterion.Character && n.ID == criterion.Value);
                             if (result is not null)
                             {
                                 //dialogue influences this criteria
@@ -229,7 +229,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add new personality, should be from someone else
                                 var item = new Node(criterion.Value!, NodeType.Dialogue, criterion.Character + " dialogue " + criterion.Value, nodes.Positions) { FileName = criterion.Character! };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
@@ -256,7 +256,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.Item:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -269,14 +269,14 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.IsCurrentlyBeingUsed:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -289,14 +289,14 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.IsCurrentlyUsing:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -309,14 +309,14 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.ItemFromItemGroup:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -329,14 +329,14 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.Personality:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Personality && n.FileName == criterion.Character && n.ID == ((PersonalityTraits)int.Parse(criterion.Key!)).ToString());
+                            result = searchIn.Find((n) => n.Type == NodeType.Personality && n.FileName == criterion.Character && n.ID == ((PersonalityTraits)int.Parse(criterion.Key!)).ToString());
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -346,7 +346,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add new personality, should be from someone else
                                 var item = new Node(((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), NodeType.Personality, criterion.Character + "'s Personality " + ((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), nodes.Positions) { FileName = criterion.Character! };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
@@ -371,7 +371,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, item);
                             }
                             //find normal item if it exists
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -423,7 +423,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.Quest:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == criterion.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 nodes.AddParent(node, result);
@@ -557,7 +557,7 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddChild(node, item);
                             }
                             node.StaticText = ((CutsceneAction)gameEvent.Option).ToString() + " " + gameEvent.Key + " with " + gameEvent.Character + ", " + gameEvent.Value + ", " + gameEvent.Value2 + ", " + gameEvent.Character2 + " (location: " + gameEvent.Option2 + ")";
@@ -565,7 +565,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Dialogue:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Dialogue && n.FileName == gameEvent.Character && n.ID == gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.FileName == gameEvent.Character && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
                                 //dialogue influences this criteria
@@ -575,7 +575,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add new dialogue, should be from someone else
                                 var item = new Node(gameEvent.Value!, NodeType.Dialogue, gameEvent.Character + " dialoge " + gameEvent.Value, nodes.Positions) { FileName = gameEvent.Character! };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddChild(node, item);
                             }
                             node.StaticText = ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value;
@@ -603,7 +603,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.EventTriggers:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.GameEvent && n.StaticText == gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.GameEvent && n.StaticText == gameEvent.Value);
                             if (result is not null)
                             {
                                 //stop 0 step cyclic self reference as it is not allowed
@@ -619,7 +619,7 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(_event);
+                                searchIn.Add(_event);
                                 nodes.AddChild(node, _event);
                             }
                             node.StaticText = gameEvent.Character + (gameEvent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gameEvent.Option2 == 0 ? "(False) " : "(True) ") + gameEvent.Value;
@@ -627,7 +627,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Item:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -639,7 +639,7 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddChild(node, item);
                             }
                             node.StaticText = gameEvent.Key!.ToString() + " " + ((ItemEventAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
@@ -647,7 +647,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.ItemFromItemGroup:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -659,7 +659,7 @@ namespace CSC.Nodestuff
                                 {
                                     FileName = FileName!
                                 };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddChild(node, item);
                             }
                             node.StaticText = gameEvent.Key!.ToString() + " " + ((ItemGroupAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
@@ -667,7 +667,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Personality:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Personality && n.FileName == gameEvent.Character && n.ID == ((PersonalityTraits)gameEvent.Option).ToString());
+                            result = searchIn.Find((n) => n.Type == NodeType.Personality && n.FileName == gameEvent.Character && n.ID == ((PersonalityTraits)gameEvent.Option).ToString());
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -676,7 +676,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add new personality, should be from someone else
                                 var item = new Node(((PersonalityTraits)gameEvent.Option).ToString(), NodeType.Personality, gameEvent.Character + "'s Personality " + ((PersonalityTraits)gameEvent.Option).ToString(), nodes.Positions) { FileName = gameEvent.Character! };
-                                newList.Add(item);
+                                searchIn.Add(item);
                                 nodes.AddChild(node, item);
                             }
                             node.StaticText = gameEvent.Character + " " + ((PersonalityTraits)gameEvent.Option).ToString() + " " + ((PersonalityAction)gameEvent.Option2).ToString() + " " + gameEvent.Value;
@@ -763,7 +763,7 @@ namespace CSC.Nodestuff
                                 InventoryItems.Add(item);
                                 nodes.AddParent(node, item);
                             }
-                            result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -794,7 +794,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Quest:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -803,7 +803,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var quest = new Node(gameEvent.Value!, NodeType.Quest, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files", nodes.Positions) { FileName = gameEvent.Character! };
-                                newList.Add(quest);
+                                searchIn.Add(quest);
                                 nodes.AddChild(node, quest);
                             }
                             node.StaticText = ((QuestActions)gameEvent.Option).ToString() + " the quest " + gameEvent.Value + " from " + gameEvent.Character;
@@ -867,7 +867,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.TriggerBGC:
                         {
-                            result = newList.Find((n) => n.Type == NodeType.BGC && n.ID == "BGC" + gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.BGC && n.ID == "BGC" + gameEvent.Value);
                             if (result is not null)
                             {
                                 nodes.AddChild(node, result);
@@ -876,7 +876,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var bgc = new Node("BGC" + gameEvent.Value, NodeType.BGC, gameEvent.Character + "'s BGC " + gameEvent.Value + ", not found in loaded story files", nodes.Positions) { FileName = gameEvent.Character! };
-                                newList.Add(bgc);
+                                searchIn.Add(bgc);
                                 nodes.AddChild(node, bgc);
                             }
                             node.StaticText = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((ImportanceSpecified)gameEvent.Option).ToString();
@@ -888,7 +888,7 @@ namespace CSC.Nodestuff
 
                     foreach (var _criterion in gameEvent.Criteria)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
 
                     break;
@@ -898,12 +898,12 @@ namespace CSC.Nodestuff
                     //link against events
                     foreach (GameEvent _event in trigger.Events!)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
                     //link against criteria
                     foreach (Criterion _criterion in trigger.Critera!)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
                     node.StaticText = trigger.Critera.Count == 0
                         ? trigger.Name + " " + trigger.Type
@@ -914,12 +914,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (GameEvent _event in response.ResponseEvents!)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
 
                     foreach (Criterion _criterion in response.ResponseCriteria!)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
 
                     if (response.Next == 0)
@@ -927,7 +927,7 @@ namespace CSC.Nodestuff
                         return;
                     }
 
-                    result = newList.Find((n) => n.Type == NodeType.Dialogue && n.ID == response.Next.ToString());
+                    result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.ID == response.Next.ToString());
 
                     if (result is not null)
                     {
@@ -937,7 +937,7 @@ namespace CSC.Nodestuff
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                         var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
-                        newList.Add(dialogueNode);
+                        searchIn.Add(dialogueNode);
                         nodes.AddChild(node, dialogueNode);
                     }
 
@@ -949,7 +949,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var resp in dialogue.Responses)
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Response && n.ID == resp.Id!);
+                            result = searchIn.Find((n) => n.Type == NodeType.Response && n.ID == resp.Id!);
 
                             if (result is not null)
                             {
@@ -959,7 +959,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                                 var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
-                                newList.Add(respNode);
+                                searchIn.Add(respNode);
                                 nodes.AddChild(node, respNode);
                             }
                         }
@@ -969,7 +969,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var alternate in dialogue.AlternateTexts)
                         {
-                            result = newList.Find((n) => n.Type == NodeType.AlternateText && n.ID == $"{dialogue.ID}.{alternate.Order!}");
+                            result = searchIn.Find((n) => n.Type == NodeType.AlternateText && n.ID == $"{dialogue.ID}.{alternate.Order!}");
 
                             if (result is not null)
                             {
@@ -979,7 +979,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                                 var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
-                                newList.Add(_node);
+                                searchIn.Add(_node);
                                 nodes.AddChild(node, _node);
                             }
                         }
@@ -989,7 +989,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _event in dialogue.StartEvents)
                         {
-                            HandleEvent(nodes, node, newList, _event);
+                            HandleEvent(nodes, node, searchIn, _event);
                         }
                     }
 
@@ -997,7 +997,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _event in dialogue.CloseEvents)
                         {
-                            HandleEvent(nodes, node, newList, _event);
+                            HandleEvent(nodes, node, searchIn, _event);
                         }
                     }
 
@@ -1007,12 +1007,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (GameEvent _event in itemAction.OnTakeActionEvents!)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
 
                     foreach (Criterion _criterion in itemAction.Criteria!)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
 
                     break;
@@ -1021,12 +1021,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _action in itemGroupBehavior.ItemActions)
                     {
-                        HandleItemAction(nodes, node, newList, _action);
+                        HandleItemAction(nodes, node, searchIn, _action);
                     }
 
                     foreach (var _usewith in itemGroupBehavior.UseWiths)
                     {
-                        HandleUseWith(nodes, node, newList, _usewith);
+                        HandleUseWith(nodes, node, searchIn, _usewith);
                     }
                     break;
                 }
@@ -1034,17 +1034,17 @@ namespace CSC.Nodestuff
                 {
                     foreach (GameEvent _event in itemGroupInteraction.OnAcceptEvents!)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
 
                     foreach (GameEvent _event in itemGroupInteraction.OnRefuseEvents!)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
 
                     foreach (Criterion _criterion in itemGroupInteraction.Critera!)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
 
                     break;
@@ -1053,7 +1053,7 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _response in chatter.Responses)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.BGCResponse && n.ID == $"{_response.CharacterName}{_response.ChatterId}");
+                        result = searchIn.Find((n) => n.Type == NodeType.BGCResponse && n.ID == $"{_response.CharacterName}{_response.ChatterId}");
 
                         if (result is not null)
                         {
@@ -1063,19 +1063,19 @@ namespace CSC.Nodestuff
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                             var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}", nodes.Positions) { FileName = NodeLinker.FileName };
-                            newList.Add(newNode);
+                            searchIn.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
                     }
 
                     foreach (var _event in chatter.StartEvents)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
 
                     foreach (var _criterion in chatter.Critera)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
 
                     break;
@@ -1087,7 +1087,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _criterion in list.CriteriaList)
                         {
-                            HandleCriterion(nodes, node, newList, _criterion);
+                            HandleCriterion(nodes, node, searchIn, _criterion);
                         }
                     }
                     break;
@@ -1096,7 +1096,7 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _criterion in alternateText.Critera)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
                     break;
                 }
@@ -1104,12 +1104,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _action in itemOverride.ItemActions)
                     {
-                        HandleItemAction(nodes, node, newList, _action);
+                        HandleItemAction(nodes, node, searchIn, _action);
                     }
 
                     foreach (var _usewith in itemOverride.UseWiths)
                     {
-                        HandleUseWith(nodes, node, newList, _usewith);
+                        HandleUseWith(nodes, node, searchIn, _usewith);
                     }
                     break;
                 }
@@ -1117,7 +1117,7 @@ namespace CSC.Nodestuff
                 {
                     foreach (var item in itemGroup.ItemsInGroup)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == item);
+                        result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == item);
 
                         if (result is not null)
                         {
@@ -1127,7 +1127,7 @@ namespace CSC.Nodestuff
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                             var newNode = new Node(item, NodeType.StoryItem, item, nodes.Positions) { FileName = NodeLinker.FileName };
-                            newList.Add(newNode);
+                            searchIn.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
                     }
@@ -1138,7 +1138,7 @@ namespace CSC.Nodestuff
                     //Add details
                     if (quest1.Details?.Length > 0)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}Description" && n.FileName == quest1.CharacterName);
+                        result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}Description" && n.FileName == quest1.CharacterName);
 
                         if (result is not null)
                         {
@@ -1148,7 +1148,7 @@ namespace CSC.Nodestuff
                     //Add completed details
                     if (quest1.CompletedDetails?.Length > 0)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}CompletedDetails" && n.FileName == quest1.CharacterName);
+                        result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}CompletedDetails" && n.FileName == quest1.CharacterName);
 
                         if (result is not null)
                         {
@@ -1158,7 +1158,7 @@ namespace CSC.Nodestuff
                     //Add failed details
                     if (quest1.FailedDetails?.Length > 0)
                     {
-                        result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}FailedDetails" && n.FileName == quest1.CharacterName);
+                        result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}FailedDetails" && n.FileName == quest1.CharacterName);
 
                         if (result is not null)
                         {
@@ -1168,7 +1168,7 @@ namespace CSC.Nodestuff
                         //Add extended details
                         foreach (ExtendedDetail detail in quest1.ExtendedDetails ?? [])
                         {
-                            result = newList.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}Description{detail.Value}" && n.FileName == quest1.CharacterName);
+                            result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == $"{quest1.ID}Description{detail.Value}" && n.FileName == quest1.CharacterName);
 
                             if (result is not null)
                             {
@@ -1182,15 +1182,15 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _event in useWith.OnSuccessEvents)
                     {
-                        HandleEvent(nodes, node, newList, _event);
+                        HandleEvent(nodes, node, searchIn, _event);
                     }
 
                     foreach (var _criterion in useWith.Criteria)
                     {
-                        HandleCriterion(nodes, node, newList, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion);
                     }
 
-                    result = newList.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
+                    result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
                     if (result is not null)
                     {
                         nodes.AddChild(node, result);
@@ -1199,7 +1199,7 @@ namespace CSC.Nodestuff
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                         var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
-                        newList.Add(newNode);
+                        searchIn.Add(newNode);
                         nodes.AddChild(node, newNode);
                     }
                     break;
@@ -1291,80 +1291,19 @@ namespace CSC.Nodestuff
                         if (stores.TryGetValue(node.FileName, out var nodeStore))
                         {
                             var templist2 = nodeStore.Nodes;
-                            //todo need to link here more
-                            switch (node.Type)
+
+                            var result = templist2.Find(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName);
+                            if (result is not null)
                             {
-                                case NodeType.Null:
-                                    break;
-                                case NodeType.CharacterGroup:
-                                    break;
-                                case NodeType.Criterion:
-                                    break;
-                                case NodeType.ItemAction:
-                                    break;
-                                case NodeType.ItemGroupBehaviour:
-                                    break;
-                                case NodeType.ItemGroupInteraction:
-                                    break;
-                                case NodeType.Pose:
-                                    break;
-                                case NodeType.Achievement:
-                                    break;
-                                case NodeType.BGC:
-                                    break;
-                                case NodeType.BGCResponse:
-                                    break;
-                                case NodeType.Clothing:
-                                    break;
-                                case NodeType.CriteriaGroup:
-                                    break;
-                                case NodeType.Cutscene:
-                                    break;
-                                case NodeType.Dialogue:
-                                    var result = templist2.Find(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName);
-                                    if (result is not null)
-                                    {
-                                        result.DupeToOtherSorting(store, node.CurrentPositionSorting);
-                                        stores[store].Replace(node, result);
-                                    }
-                                    break;
-                                case NodeType.AlternateText:
-                                    break;
-                                case NodeType.Door:
-                                    break;
-                                case NodeType.GameEvent:
-                                    break;
-                                case NodeType.EventTrigger:
-                                    break;
-                                case NodeType.Inventory:
-                                    break;
-                                case NodeType.StoryItem:
-                                    break;
-                                case NodeType.ItemGroup:
-                                    break;
-                                case NodeType.Personality:
-                                    break;
-                                case NodeType.Property:
-                                    break;
-                                case NodeType.Quest:
-                                    break;
-                                case NodeType.Response:
-                                    break;
-                                case NodeType.Social:
-                                    break;
-                                case NodeType.State:
-                                    break;
-                                case NodeType.Value:
-                                    break;
-                                default:
-                                    break;
+                                result.DupeToOtherSorting(store, node.CurrentPositionSorting);
+                                stores[store].Replace(node, result);
                             }
                         }
                     }
                 }
             }
         }
-       
+
         private static void MergeDoors(NodeStore nodes)
         {
             Node? result;
