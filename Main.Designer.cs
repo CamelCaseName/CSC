@@ -146,6 +146,8 @@ namespace CSC
             StoryTree.BackColor = Color.FromArgb(50, 50, 50);
             StoryTree.Dock = DockStyle.Fill;
             StoryTree.ForeColor = Color.White;
+            StoryTree.FullRowSelect = true;
+            StoryTree.HideSelection = false;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
             treeNode1.Name = "Characters";
@@ -157,7 +159,7 @@ namespace CSC
             treeNode2.ToolTipText = "The Story itself and the Characters are in here";
             StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
             StoryTree.ShowNodeToolTips = true;
-            StoryTree.Size = new Size(235, 537);
+            StoryTree.Size = new Size(186, 537);
             StoryTree.TabIndex = 1;
             StoryTree.AfterSelect += StoryTree_AfterSelect;
             // 
@@ -175,7 +177,7 @@ namespace CSC
             // 
             HierarchyAndRest.Panel2.Controls.Add(GraphAndProperties);
             HierarchyAndRest.Size = new Size(1431, 537);
-            HierarchyAndRest.SplitterDistance = 235;
+            HierarchyAndRest.SplitterDistance = 186;
             HierarchyAndRest.TabIndex = 2;
             // 
             // GraphAndProperties
@@ -192,8 +194,8 @@ namespace CSC
             // GraphAndProperties.Panel2
             // 
             GraphAndProperties.Panel2.Controls.Add(PropertyInspector);
-            GraphAndProperties.Size = new Size(1192, 537);
-            GraphAndProperties.SplitterDistance = 384;
+            GraphAndProperties.Size = new Size(1241, 537);
+            GraphAndProperties.SplitterDistance = 439;
             GraphAndProperties.TabIndex = 0;
             // 
             // Graph
@@ -202,7 +204,7 @@ namespace CSC
             Graph.Dock = DockStyle.Fill;
             Graph.Location = new Point(0, 0);
             Graph.Name = "Graph";
-            Graph.Size = new Size(1192, 384);
+            Graph.Size = new Size(1241, 439);
             Graph.TabIndex = 0;
             Graph.Paint += Main_Paint;
             Graph.MouseClick += HandleMouseEvents;
@@ -221,7 +223,7 @@ namespace CSC
             NodeSpawnBox.Location = new Point(264, 62);
             NodeSpawnBox.MinimumSize = new Size(200, 0);
             NodeSpawnBox.Name = "NodeSpawnBox";
-            NodeSpawnBox.Size = new Size(674, 23);
+            NodeSpawnBox.Size = new Size(723, 23);
             NodeSpawnBox.TabIndex = 0;
             NodeSpawnBox.Visible = false;
             NodeSpawnBox.SelectedIndexChanged += SpawnNodeFromSpaceSpawner;
@@ -244,17 +246,16 @@ namespace CSC
             PropertyInspector.RowCount = 2;
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
-            PropertyInspector.Size = new Size(1192, 149);
+            PropertyInspector.Size = new Size(1241, 94);
             PropertyInspector.TabIndex = 0;
             // 
             // NodeContext
             // 
             NodeContext.BackColor = Color.FromArgb(64, 64, 64);
             NodeContext.Name = "contextMenuStrip1";
-            NodeContext.Size = new Size(61, 4);
-            NodeContext.Text = "Spawn new Node:";
             NodeContext.ShowImageMargin = false;
-            NodeContext.ShowCheckMargin = false;
+            NodeContext.Size = new Size(36, 4);
+            NodeContext.Text = "Spawn new Node:";
             // 
             // Main
             // 

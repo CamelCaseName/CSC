@@ -1,68 +1,29 @@
 ﻿using CSC.StoryItems;
 using System.Diagnostics;
-using System.Security.Policy;
-using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
     internal static class NodeLinker
     {
-        private static readonly Dictionary<string, List<Node>> AllDoors = [];
-        private static readonly Dictionary<string, List<Node>> AllValues = [];
-        private static readonly Dictionary<string, List<Node>> AllSocials = [];
-        private static readonly Dictionary<string, List<Node>> AllStates = [];
-        private static readonly Dictionary<string, List<Node>> AllClothing = [];
-        private static readonly Dictionary<string, List<Node>> AllPoses = [];
-        private static readonly Dictionary<string, List<Node>> AllInventoryItems = [];
-        private static readonly Dictionary<string, List<Node>> AllProperties = [];
-        private static readonly Dictionary<string, List<Node>> AllCompareValuesToCheckAgain = [];
+        private static readonly List<Node> Doors = [];
+        private static readonly List<Node> Values = [];
+        private static readonly List<Node> Socials = [];
+        private static readonly List<Node> States = [];
+        private static readonly List<Node> Clothing = [];
+        private static readonly List<Node> Poses = [];
+        private static readonly List<Node> InventoryItems = [];
+        private static readonly List<Node> Properties = [];
+        private static readonly List<Node> CompareValuesToCheckAgain = [];
 
-        private static List<Node> Doors => AllDoors[FileName];
-        private static List<Node> Values => AllValues[FileName];
-        private static List<Node> Socials => AllSocials[FileName];
-        private static List<Node> States => AllStates[FileName];
-        private static List<Node> Clothing => AllClothing[FileName];
-        private static List<Node> Poses => AllPoses[FileName];
-        private static List<Node> InventoryItems => AllInventoryItems[FileName];
-        private static List<Node> Properties => AllProperties[FileName];
-        private static List<Node> CompareValuesToCheckAgain => AllCompareValuesToCheckAgain[FileName];
-        public static string FileName { get; private set; } = Main.Player;
+        public static string FileName { get; private set; } = Main.NoCharacter;
 
-        //this doesnt remove the old nodes correctly it feels
         public static void Interlinknodes(NodeStore store, string filename)
         {
             FileName = filename;
             DateTime start = DateTime.UtcNow;
             //lists to save new stuff
-            if (!AllDoors.ContainsKey(FileName))
-            { AllDoors[FileName] = []; }
-            if (!AllValues.ContainsKey(FileName))
-            { AllValues[FileName] = []; }
-            if (!AllSocials.ContainsKey(FileName))
-            { AllSocials[FileName] = []; }
-            if (!AllStates.ContainsKey(FileName))
-            { AllStates[FileName] = []; }
-            if (!AllClothing.ContainsKey(FileName))
-            { AllClothing[FileName] = []; }
-            if (!AllPoses.ContainsKey(FileName))
-            { AllPoses[FileName] = []; }
-            if (!AllInventoryItems.ContainsKey(FileName))
-            { AllInventoryItems[FileName] = []; }
-            if (!AllProperties.ContainsKey(FileName))
-            { AllProperties[FileName] = []; }
-            if (!AllCompareValuesToCheckAgain.ContainsKey(FileName))
-            { AllCompareValuesToCheckAgain[FileName] = []; }
 
-            Doors.Clear();
-            Values.Clear();
-            Socials.Clear();
-            States.Clear();
-            Clothing.Clear();
-            Poses.Clear();
-            InventoryItems.Clear();
-            Properties.Clear();
-            CompareValuesToCheckAgain.Clear();
             try
             {
                 int count = store.Count;
@@ -121,7 +82,6 @@ namespace CSC.Nodestuff
             }
         }
 
-        //doubles some connections
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn)
         {
             AlternateText alternateText;
@@ -153,13 +113,15 @@ namespace CSC.Nodestuff
                             result = Clothing.Find((n) => n.Type == NodeType.Clothing && n.FileName == criterion.Character && n.ID == criterion.Option + criterion.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString()), nodes.Positions) { FileName = criterion.Character! };
+                                var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString())) { FileName = criterion.Character! };
                                 Clothing.Add(clothing);
                                 nodes.AddParent(node, clothing);
                             }
@@ -170,6 +132,8 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                             }
                             else
@@ -179,6 +143,8 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                             }
                             else
@@ -192,6 +158,8 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.CriteriaGroup && n.ID == criterion.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
@@ -202,12 +170,14 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Cutscene && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                             }
                             else
                             {
                                 //add cutscene
-                                var item = new Node(criterion.Key!, NodeType.Cutscene, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.Cutscene, criterion.Key!)
                                 {
                                     FileName = FileName!
                                 };
@@ -221,6 +191,8 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.FileName == criterion.Character && n.ID == criterion.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 //dialogue influences this criteria
                                 nodes.AddParent(node, result);
                                 break;
@@ -228,7 +200,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add new personality, should be from someone else
-                                var item = new Node(criterion.Value!, NodeType.Dialogue, criterion.Character + " dialogue " + criterion.Value, nodes.Positions) { FileName = criterion.Character! };
+                                var item = new Node(criterion.Value!, NodeType.Dialogue, criterion.Character + " dialogue " + criterion.Value) { FileName = criterion.Character! };
                                 searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
@@ -239,13 +211,15 @@ namespace CSC.Nodestuff
                             result = Doors.Find((n) => n.Type == NodeType.Door && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!, nodes.Positions)
+                                var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!)
                                 {
                                     FileName = FileName!
                                 };
@@ -259,13 +233,15 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     FileName = FileName!
                                 };
@@ -279,13 +255,15 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     FileName = FileName!
                                 };
@@ -299,13 +277,15 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     FileName = FileName!
                                 };
@@ -319,13 +299,15 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     FileName = FileName!
                                 };
@@ -339,13 +321,15 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Personality && n.FileName == criterion.Character && n.ID == ((PersonalityTraits)int.Parse(criterion.Key!)).ToString());
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add new personality, should be from someone else
-                                var item = new Node(((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), NodeType.Personality, criterion.Character + "'s Personality " + ((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), nodes.Positions) { FileName = criterion.Character! };
+                                var item = new Node(((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), NodeType.Personality, criterion.Character + "'s Personality " + ((PersonalityTraits)int.Parse(criterion.Key!)).ToString()) { FileName = criterion.Character! };
                                 searchIn.Add(item);
                                 nodes.AddParent(node, item);
                             }
@@ -357,13 +341,15 @@ namespace CSC.Nodestuff
                             result = InventoryItems.Find((n) => n.Type == NodeType.Inventory && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key, nodes.Positions)
+                                var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key)
                                 {
                                     FileName = FileName!
                                 };
@@ -374,6 +360,8 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
 
@@ -389,13 +377,15 @@ namespace CSC.Nodestuff
                             result = Poses.Find((n) => n.Type == NodeType.Pose && n.ID == criterion.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add pose node, hasnt been referenced yet
-                                var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value, nodes.Positions)
+                                var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value)
                                 {
                                     FileName = FileName!
                                 };
@@ -409,13 +399,15 @@ namespace CSC.Nodestuff
                             result = Properties.Find((n) => n.Type == NodeType.Property && n.ID == criterion.Character + "Property" + criterion.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var property = new Node(criterion.Character + "Property" + criterion.Value, NodeType.Property, criterion.Character + ((InteractiveProperties)int.Parse(criterion.Value!)).ToString(), nodes.Positions) { FileName = criterion.Character! };
+                                var property = new Node(criterion.Character + "Property" + criterion.Value, NodeType.Property, criterion.Character + ((InteractiveProperties)int.Parse(criterion.Value!)).ToString()) { FileName = criterion.Character! };
                                 Properties.Add(property);
                                 nodes.AddParent(node, property);
                             }
@@ -426,6 +418,8 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == criterion.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
@@ -436,13 +430,15 @@ namespace CSC.Nodestuff
                             result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == criterion.Character + criterion.SocialStatus + criterion.Character2);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var social = new Node(criterion.Character + criterion.SocialStatus + criterion.Character2, NodeType.Social, criterion.Character + " " + criterion.SocialStatus + " " + criterion.Character2, nodes.Positions) { FileName = criterion.Character! };
+                                var social = new Node(criterion.Character + criterion.SocialStatus + criterion.Character2, NodeType.Social, criterion.Character + " " + criterion.SocialStatus + " " + criterion.Character2) { FileName = criterion.Character! };
                                 Socials.Add(social);
                                 nodes.AddParent(node, social);
                             }
@@ -453,13 +449,15 @@ namespace CSC.Nodestuff
                             result = States.Find((n) => n.Type == NodeType.State && n.FileName == criterion.Character && n.StaticText.AsSpan()[..2].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add state node, hasnt been referenced yet
-                                var state = new Node(criterion.Character + "State" + criterion.Value, NodeType.State, criterion.Value + "|" + ((InteractiveStates)int.Parse(criterion.Value!)).ToString(), nodes.Positions) { FileName = criterion.Character! };
+                                var state = new Node(criterion.Character + "State" + criterion.Value, NodeType.State, criterion.Value + "|" + ((InteractiveStates)int.Parse(criterion.Value!)).ToString()) { FileName = criterion.Character! };
                                 States.Add(state);
                                 nodes.AddParent(node, state);
                             }
@@ -470,6 +468,8 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key && n.FileName == criterion.Character);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 if (!result.StaticText.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value))
                                 {
                                     result.StaticText += GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ";
@@ -481,7 +481,7 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ", nodes.Positions) { FileName = criterion.Character ?? string.Empty };
+                                var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddParent(node, value);
                             }
@@ -502,16 +502,18 @@ namespace CSC.Nodestuff
                             result = Clothing.Find((n) => n.Type == NodeType.Clothing && n.FileName == gameEvent.Character && n.ID == gameEvent.Option + gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString()), nodes.Positions) { FileName = gameEvent.Character! };
+                                var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
                                 Clothing.Add(clothing);
                                 nodes.AddChild(node, clothing);
+                                clothing.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Character + " " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString()) + " " + (gameEvent.Option2 == 0 ? "Change" : "Assign default set") + " " + (gameEvent.Option3 == 0 ? "On" : "Off");
                             break;
                         }
                         case GameEvents.CombineValue:
@@ -519,28 +521,33 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key, nodes.Positions) { FileName = gameEvent.Character ?? string.Empty };
+                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddChild(node, value);
+                                value.DupeToOtherSorting(node.FileName);
                             }
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value, nodes.Positions) { FileName = gameEvent.Character2 ?? string.Empty };
+                                var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddParent(node, value);
+                                value.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = "Add " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
                             break;
                         }
                         case GameEvents.CutScene:
@@ -548,19 +555,21 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Cutscene && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //add cutscene
-                                var item = new Node(gameEvent.Key!, NodeType.Cutscene, gameEvent.Key!, nodes.Positions)
+                                var item = new Node(gameEvent.Key!, NodeType.Cutscene, gameEvent.Key!)
                                 {
                                     FileName = FileName!
                                 };
                                 searchIn.Add(item);
                                 nodes.AddChild(node, item);
+                                item.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = ((CutsceneAction)gameEvent.Option).ToString() + " " + gameEvent.Key + " with " + gameEvent.Character + ", " + gameEvent.Value + ", " + gameEvent.Value2 + ", " + gameEvent.Character2 + " (location: " + gameEvent.Option2 + ")";
                             break;
                         }
                         case GameEvents.Dialogue:
@@ -568,17 +577,19 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.FileName == gameEvent.Character && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 //dialogue influences this criteria
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add new dialogue, should be from someone else
-                                var item = new Node(gameEvent.Value!, NodeType.Dialogue, gameEvent.Character + " dialoge " + gameEvent.Value, nodes.Positions) { FileName = gameEvent.Character! };
+                                var item = new Node(gameEvent.Value!, NodeType.Dialogue, ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value) { FileName = gameEvent.Character! };
                                 searchIn.Add(item);
                                 nodes.AddChild(node, item);
+                                item.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value;
                             break;
                         }
                         case GameEvents.Door:
@@ -586,19 +597,21 @@ namespace CSC.Nodestuff
                             result = Doors.Find((n) => n.Type == NodeType.Door && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!, nodes.Positions)
+                                var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!)
                                 {
                                     FileName = FileName!
                                 };
                                 Doors.Add(door);
                                 nodes.AddChild(node, door);
+                                door.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = ((DoorAction)gameEvent.Option).ToString() + " " + gameEvent.Key!.ToString();
                             break;
                         }
                         case GameEvents.EventTriggers:
@@ -606,6 +619,8 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.GameEvent && n.StaticText == gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 //stop 0 step cyclic self reference as it is not allowed
                                 if (node != result)
                                 {
@@ -615,14 +630,14 @@ namespace CSC.Nodestuff
                             else
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var _event = new Node("NA-" + gameEvent.Value, NodeType.GameEvent, gameEvent.Value!, nodes.Positions)
+                                var _event = new Node("NA-" + gameEvent.Value, NodeType.GameEvent, gameEvent.Value!)
                                 {
                                     FileName = FileName!
                                 };
                                 searchIn.Add(_event);
                                 nodes.AddChild(node, _event);
+                                _event.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Character + (gameEvent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gameEvent.Option2 == 0 ? "(False) " : "(True) ") + gameEvent.Value;
                             break;
                         }
                         case GameEvents.Item:
@@ -630,19 +645,21 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!, nodes.Positions)
+                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
                                 {
                                     FileName = FileName!
                                 };
                                 searchIn.Add(item);
                                 nodes.AddChild(node, item);
+                                item.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Key!.ToString() + " " + ((ItemEventAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
                             break;
                         }
                         case GameEvents.ItemFromItemGroup:
@@ -650,19 +667,21 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!, nodes.Positions)
+                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
                                 {
                                     FileName = FileName!
                                 };
                                 searchIn.Add(item);
                                 nodes.AddChild(node, item);
+                                item.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Key!.ToString() + " " + ((ItemGroupAction)gameEvent.Option).ToString() + " (" + gameEvent.Value + ") " + " (" + (gameEvent.Option2 == 1 ? "True" : "False") + ") ";
                             break;
                         }
                         case GameEvents.Personality:
@@ -670,16 +689,18 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Personality && n.FileName == gameEvent.Character && n.ID == ((PersonalityTraits)gameEvent.Option).ToString());
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add new personality, should be from someone else
-                                var item = new Node(((PersonalityTraits)gameEvent.Option).ToString(), NodeType.Personality, gameEvent.Character + "'s Personality " + ((PersonalityTraits)gameEvent.Option).ToString(), nodes.Positions) { FileName = gameEvent.Character! };
+                                var item = new Node(((PersonalityTraits)gameEvent.Option).ToString(), NodeType.Personality, gameEvent.Character + "'s Personality " + ((PersonalityTraits)gameEvent.Option).ToString()) { FileName = gameEvent.Character! };
                                 searchIn.Add(item);
                                 nodes.AddChild(node, item);
+                                item.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Character + " " + ((PersonalityTraits)gameEvent.Option).ToString() + " " + ((PersonalityAction)gameEvent.Option2).ToString() + " " + gameEvent.Value;
                             break;
                         }
                         case GameEvents.Property:
@@ -687,16 +708,18 @@ namespace CSC.Nodestuff
                             result = Properties.Find((n) => n.Type == NodeType.Property && n.ID == gameEvent.Character + "Property" + gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var property = new Node(gameEvent.Character + "Property" + gameEvent.Value, NodeType.Property, gameEvent.Character + Enum.Parse<InteractiveProperties>(gameEvent.Value!).ToString(), nodes.Positions) { FileName = gameEvent.Character! };
+                                var property = new Node(gameEvent.Character + "Property" + gameEvent.Value, NodeType.Property, gameEvent.Character + EEnum.StringParse<InteractiveProperties>(gameEvent.Value!)) { FileName = gameEvent.Character! };
                                 Properties.Add(property);
                                 nodes.AddChild(node, property);
+                                property.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Character + " " + Enum.Parse<InteractiveProperties>(gameEvent.Value!).ToString() + " " + (gameEvent.Option2 == 1 ? "True" : "False");
                             break;
                         }
                         case GameEvents.MatchValue:
@@ -704,28 +727,33 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key, nodes.Positions) { FileName = gameEvent.Character ?? string.Empty };
+                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddChild(node, value);
+                                value.DupeToOtherSorting(node.FileName);
                             }
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value, nodes.Positions) { FileName = gameEvent.Character2 ?? string.Empty };
+                                var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddParent(node, value);
+                                value.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = "set " + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Character2 + ":" + gameEvent.Value;
                             break;
                         }
                         case GameEvents.ModifyValue:
@@ -733,16 +761,18 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key, nodes.Positions) { FileName = gameEvent.Character ?? string.Empty };
+                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddChild(node, value);
+                                value.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = (gameEvent.Option == 0 ? "Equals" : "Add") + gameEvent.Character + ":" + gameEvent.Key + " to " + gameEvent.Value;
                             break;
                         }
                         case GameEvents.Player:
@@ -750,26 +780,30 @@ namespace CSC.Nodestuff
                             result = InventoryItems.Find((n) => n.Type == NodeType.Inventory && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddParent(node, result);
                                 break;
                             }
                             else
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value, nodes.Positions)
+                                var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value)
                                 {
                                     FileName = FileName!
                                 };
                                 InventoryItems.Add(item);
                                 nodes.AddParent(node, item);
+                                item.DupeToOtherSorting(node.FileName);
                             }
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
 
-                            node.StaticText = ((PlayerActions)gameEvent.Option).ToString() + (gameEvent.Option == 0 ? gameEvent.Option2 == 0 ? " Add " : " Remove " : " ") + gameEvent.Value + "/" + gameEvent.Character;
                             break;
                         }
                         case GameEvents.Pose:
@@ -777,36 +811,54 @@ namespace CSC.Nodestuff
                             result = Poses.Find((n) => n.Type == NodeType.Pose && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add pose node, hasnt been referenced yet
-                                var pose = new Node(gameEvent.Value!, NodeType.Pose, "Pose number " + gameEvent.Value, nodes.Positions)
+                                var pose = new Node(gameEvent.Value!, NodeType.Pose, "Pose number " + gameEvent.Value)
                                 {
                                     FileName = FileName!
                                 };
                                 Poses.Add(pose);
                                 nodes.AddChild(node, pose);
+                                pose.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = "Set " + gameEvent.Character + " Pose no. " + gameEvent.Value + " " + (gameEvent.Option == 0 ? " False" : " True");
                             break;
                         }
                         case GameEvents.Quest:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Value);
+                            if (string.IsNullOrEmpty(gameEvent.Character))
+                            {
+                                foreach (string key in Main.Stories.Keys)
+                                {
+                                    for (int i = 0; i < Main.Stories[key].Quests!.Count; i++)
+                                    {
+                                        if (Main.Stories[key].Quests![i].ID == gameEvent.Key)
+                                        {
+                                            gameEvent.Character = key;
+                                            gameEvent.Value = Main.Stories[key].Quests![i].Name;
+                                        }
+                                    }
+                                }
+                            }
+                            result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var quest = new Node(gameEvent.Value!, NodeType.Quest, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files", nodes.Positions) { FileName = gameEvent.Character! };
+                                var quest = new Node(gameEvent.Key!, NodeType.Quest, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files") { FileName = gameEvent.Character! };
                                 searchIn.Add(quest);
                                 nodes.AddChild(node, quest);
+                                quest.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = ((QuestActions)gameEvent.Option).ToString() + " the quest " + gameEvent.Value + " from " + gameEvent.Character;
                             break;
                         }
                         case GameEvents.RandomizeIntValue:
@@ -814,21 +866,18 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key, nodes.Positions) { FileName = gameEvent.Character ?? string.Empty };
+                                var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddChild(node, value);
+                                value.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = "set " + gameEvent.Character + ":" + gameEvent.Key + " to a random value between " + gameEvent.Value + " and " + gameEvent.Value2;
-                            break;
-                        }
-                        case GameEvents.SendEvent:
-                        {
-                            node.StaticText = gameEvent.Character + " " + ((SendEvents)gameEvent.Option).ToString();
                             break;
                         }
                         case GameEvents.Social:
@@ -836,16 +885,18 @@ namespace CSC.Nodestuff
                             result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var social = new Node(gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2, NodeType.Social, gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2, nodes.Positions) { FileName = gameEvent.Character! };
+                                var social = new Node(gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2, NodeType.Social, gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2) { FileName = gameEvent.Character! };
                                 Socials.Add(social);
                                 nodes.AddChild(node, social);
+                                //social.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2 + (gameEvent.Option2 == 0 ? " Equals " : " Add ") + gameEvent.Value;
                             break;
                         }
                         case GameEvents.State:
@@ -853,16 +904,18 @@ namespace CSC.Nodestuff
                             result = States.Find((n) => n.Type == NodeType.State && n.FileName == gameEvent.Character && n.StaticText.AsSpan()[..2].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add state node, hasnt been referenced yet
-                                var state = new Node(gameEvent.Character + "State" + gameEvent.Value, NodeType.State, gameEvent.Value + "|" + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString(), nodes.Positions) { FileName = gameEvent.Character! };
+                                var state = new Node(gameEvent.Character + "State" + gameEvent.Value, NodeType.State, gameEvent.Value + "|" + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString()) { FileName = gameEvent.Character! };
                                 States.Add(state);
                                 nodes.AddChild(node, state);
+                                state.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = (gameEvent.Option == 0 ? "Add " : "Remove ") + gameEvent.Character + " State " + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString();
                             break;
                         }
                         case GameEvents.TriggerBGC:
@@ -870,16 +923,18 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.BGC && n.ID == "BGC" + gameEvent.Value);
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add property node, hasnt been referenced yet
-                                var bgc = new Node("BGC" + gameEvent.Value, NodeType.BGC, gameEvent.Character + "'s BGC " + gameEvent.Value + ", not found in loaded story files", nodes.Positions) { FileName = gameEvent.Character! };
+                                var bgc = new Node("BGC" + gameEvent.Value, NodeType.BGC, gameEvent.Character + "'s BGC " + gameEvent.Value + ", not found in loaded story files") { FileName = gameEvent.Character! };
                                 searchIn.Add(bgc);
                                 nodes.AddChild(node, bgc);
+                                bgc.DupeToOtherSorting(node.FileName);
                             }
-                            node.StaticText = "trigger " + gameEvent.Character + "'s BGC " + gameEvent.Value + " as " + ((ImportanceSpecified)gameEvent.Option).ToString();
                             break;
                         }
                         default:
@@ -931,12 +986,14 @@ namespace CSC.Nodestuff
 
                     if (result is not null)
                     {
+                        result.DupeToOtherSorting(node.FileName);
+
                         nodes.AddChild(node, result);
                     }
                     else
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                        var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
+                        var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}") { FileName = NodeLinker.FileName };
                         searchIn.Add(dialogueNode);
                         nodes.AddChild(node, dialogueNode);
                     }
@@ -953,12 +1010,14 @@ namespace CSC.Nodestuff
 
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
+                                var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}") { FileName = NodeLinker.FileName };
                                 searchIn.Add(respNode);
                                 nodes.AddChild(node, respNode);
                             }
@@ -973,12 +1032,14 @@ namespace CSC.Nodestuff
 
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                             else
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}", nodes.Positions) { FileName = NodeLinker.FileName };
+                                var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}") { FileName = NodeLinker.FileName };
                                 searchIn.Add(_node);
                                 nodes.AddChild(node, _node);
                             }
@@ -1057,12 +1118,14 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
+                            result.DupeToOtherSorting(node.FileName);
+
                             nodes.AddChild(node, result);
                         }
                         else
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}", nodes.Positions) { FileName = NodeLinker.FileName };
+                            var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}") { FileName = NodeLinker.FileName };
                             searchIn.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
@@ -1121,12 +1184,14 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
+                            result.DupeToOtherSorting(node.FileName);
+
                             nodes.AddChild(node, result);
                         }
                         else
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var newNode = new Node(item, NodeType.StoryItem, item, nodes.Positions) { FileName = NodeLinker.FileName };
+                            var newNode = new Node(item, NodeType.StoryItem, item) { FileName = NodeLinker.FileName };
                             searchIn.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
@@ -1142,6 +1207,8 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
+                            result.DupeToOtherSorting(node.FileName);
+
                             nodes.AddChild(node, result);
                         }
                     }
@@ -1152,6 +1219,8 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
+                            result.DupeToOtherSorting(node.FileName);
+
                             nodes.AddChild(node, result);
                         }
                     }
@@ -1162,6 +1231,8 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
+                            result.DupeToOtherSorting(node.FileName);
+
                             nodes.AddChild(node, result);
                         }
 
@@ -1172,6 +1243,8 @@ namespace CSC.Nodestuff
 
                             if (result is not null)
                             {
+                                result.DupeToOtherSorting(node.FileName);
+
                                 nodes.AddChild(node, result);
                             }
                         }
@@ -1193,12 +1266,14 @@ namespace CSC.Nodestuff
                     result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
                     if (result is not null)
                     {
+                        result.DupeToOtherSorting(node.FileName);
+
                         nodes.AddChild(node, result);
                     }
                     else
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
+                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty) { FileName = NodeLinker.FileName };
                         searchIn.Add(newNode);
                         nodes.AddChild(node, newNode);
                     }
@@ -1212,12 +1287,14 @@ namespace CSC.Nodestuff
             Node? result = newList.Find((n) => n.Type == NodeType.UseWith && n.ID == _usewith.ItemName!);
             if (result is not null)
             {
+                result.DupeToOtherSorting(node.FileName);
+
                 nodes.AddChild(node, result);
             }
             else
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                var newNode = new Node(_usewith.ItemName ?? string.Empty, NodeType.UseWith, _usewith.CustomCantDoThatMessage ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
+                var newNode = new Node(_usewith.ItemName ?? string.Empty, NodeType.UseWith, _usewith.CustomCantDoThatMessage ?? string.Empty) { FileName = NodeLinker.FileName };
                 newList.Add(newNode);
                 nodes.AddChild(node, newNode);
             }
@@ -1228,12 +1305,14 @@ namespace CSC.Nodestuff
             Node? result = newList.Find((n) => n.Type == NodeType.ItemAction && n.ID == _action.ActionName!);
             if (result is not null)
             {
+                result.DupeToOtherSorting(node.FileName);
+
                 nodes.AddChild(node, result);
             }
             else
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                var newNode = new Node(_action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty, nodes.Positions) { FileName = NodeLinker.FileName };
+                var newNode = new Node(_action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
                 newList.Add(newNode);
                 nodes.AddChild(node, newNode);
             }
@@ -1244,6 +1323,8 @@ namespace CSC.Nodestuff
             Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
             if (result is not null)
             {
+                result.DupeToOtherSorting(node.FileName);
+
                 nodes.AddParent(node, result);
             }
             else
@@ -1257,12 +1338,14 @@ namespace CSC.Nodestuff
             Node? result = newList.Find((n) => n.Type == NodeType.GameEvent && n.ID == _event.Id);
             if (result is not null)
             {
+                result.DupeToOtherSorting(node.FileName);
+
                 nodes.AddChild(node, result);
             }
             else
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", nodes.Positions) { FileName = NodeLinker.FileName };
+                var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { FileName = NodeLinker.FileName };
                 newList.Add(eventNode);
                 nodes.AddChild(node, eventNode);
             }
@@ -1292,11 +1375,26 @@ namespace CSC.Nodestuff
                         {
                             var templist2 = nodeStore.Nodes;
 
-                            var result = templist2.Find(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName);
-                            if (result is not null)
+                            if (node.Type == NodeType.Dialogue && node.FileName == "Patrick")
                             {
-                                result.DupeToOtherSorting(store, node.CurrentPositionSorting);
-                                stores[store].Replace(node, result);
+                                if (node.ID == string.Empty)
+                                {
+                                    node.ID = 0.ToString();
+                                }
+                            }
+
+                            var result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                            foreach (var foundNode in result)
+                            {
+                                if (foundNode is not null)
+                                {
+                                    foundNode.DupeToOtherSorting(store);
+                                    stores[store].Replace(node, foundNode);
+                                    //foreach (var removeStore in stores.Keys)
+                                    //{
+                                    //    stores[removeStore].Remove(node);
+                                    //}
+                                }
                             }
                         }
                     }
@@ -1304,26 +1402,41 @@ namespace CSC.Nodestuff
             }
         }
 
+        public static void ClearLinkCache()
+        {
+            Doors.Clear();
+            Values.Clear();
+            Socials.Clear();
+            States.Clear();
+            Clothing.Clear();
+            Poses.Clear();
+            InventoryItems.Clear();
+            Properties.Clear();
+            CompareValuesToCheckAgain.Clear();
+        }
+
         private static void MergeDoors(NodeStore nodes)
         {
             Node? result;
             var newlist = nodes.KeyNodes().ToList();
-            foreach (Node door in Doors.ToArray())
+            foreach (Node node in Doors.ToArray())
             {
-                result = newlist.Find((n) => n.ID == door.ID);
+                result = newlist.Find((n) => n.ID == node.ID);
                 if (result is not null)
                 {
-                    foreach (Node parentNode in nodes.Parents(door).ToArray())
+                    result.DupeToOtherSorting(node.FileName);
+
+                    foreach (Node parentNode in nodes.Parents(node).ToArray())
                     {
                         nodes.AddChild(parentNode, result);
-                        nodes.RemoveChild(parentNode, door);
+                        nodes.RemoveChild(parentNode, node);
                     }
-                    foreach (Node childNode in nodes.Childs(door).ToArray())
+                    foreach (Node childNode in nodes.Childs(node).ToArray())
                     {
                         nodes.AddParent(childNode, result);
-                        nodes.RemoveParent(childNode, door);
+                        nodes.RemoveParent(childNode, node);
                     }
-                    Doors.Remove(door);
+                    Doors.Remove(node);
                 }
             }
         }
@@ -1339,12 +1452,16 @@ namespace CSC.Nodestuff
                     result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
                     if (result is not null)
                     {
+                        result.DupeToOtherSorting(node.FileName);
+
                         nodes.AddParent(node, result);
                     }
 
                     result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2);
                     if (result is not null)
                     {
+                        result.DupeToOtherSorting(node.FileName);
+
                         nodes.AddParent(node, result);
                     }
                 }

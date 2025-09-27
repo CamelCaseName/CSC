@@ -52,19 +52,6 @@
         {
             childs.Remove(node);
             parents.Remove(node);
-        }
-
-        public void Clear()
-        {
-            childs.Clear();
-            parents.Clear();
-            Positions.Clear();
-        }
-
-        public void Delete(Node node)
-        {
-            childs.Remove(node);
-            parents.Remove(node);
             Positions.ClearNode(node);
 
             foreach (var childs in childs.Values)
@@ -76,6 +63,18 @@
             {
                 parents.Remove(node);
             }
+        }
+
+        public void Clear()
+        {
+            childs.Clear();
+            parents.Clear();
+            Positions.Clear();
+        }
+
+        public void Delete(Node node)
+        {
+            Remove(node);
         }
 
         public bool Contains(Node node)

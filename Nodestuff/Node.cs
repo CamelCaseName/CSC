@@ -91,16 +91,109 @@ namespace CSC.Nodestuff
 
     public sealed class Node
     {
-        public static readonly Node NullNode = new(new());
+        public static readonly Node NullNode = new();
 
         public Gender Gender = Gender.None;
         public Guid Guid = Guid.NewGuid();
-        public int Mass = 1;
-        public NodeType Type;
-        private object? data = null;
-        public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
         public string ID;
+        public int Mass = 1;
+        public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
         public string StaticText;
+        public NodeType Type;
+        private readonly Dictionary<string, PointF> Positions = [];
+        private object? data = null;
+        private Type dataType = typeof(MissingReferenceInfo);
+
+        private string fileName = Main.NoCharacter;
+
+        public Node(string iD, NodeType type, string text)
+        {
+            ID = iD;
+            StaticText = text;
+            Type = type;
+            Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
+            Main.SetNodePos(this);
+        }
+
+        public Node(string iD, NodeType type, string text, object data)
+        {
+            ID = iD;
+            StaticText = text;
+            Type = type;
+            RawData = data;
+            DataType = data.GetType();
+            Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
+            Main.SetNodePos(this);
+        }
+
+        public Node()
+        {
+            ID = string.Empty;
+            StaticText = string.Empty;
+            Type = NodeType.Null;
+            Main.SetNodePos(this);
+        }
+
+        public Type DataType { get => dataType; private set => dataType = value; }
+
+        public string FileName
+        {
+            get
+            {
+                return fileName;
+            }
+
+            set
+            {
+                fileName = value;
+            }
+        }
+
+        public PointF Position
+        {
+            get
+            {
+                if (Positions.TryGetValue(Main.SelectedCharacter, out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    Positions.Add(Main.SelectedCharacter, PointF.Empty);
+                    return PointF.Empty;
+                }
+            }
+
+            set
+            {
+                Main.ClearNodePos(this);
+                Positions[Main.SelectedCharacter] = value;
+                Main.SetNodePos(this);
+            }
+        }
+
+        public object? RawData
+        {
+            get
+            {
+                return data ?? new MissingReferenceInfo(Text);
+            }
+            set
+            {
+                data = value;
+                DataType = value?.GetType() ?? typeof(object);
+
+                if (DataType == typeof(Dialogue) || DataType == typeof(ItemInteraction) || DataType == typeof(ItemGroupInteraction))
+                {
+                    Size.Height *= 2;
+                }
+            }
+        }
+
+        public RectangleF Rectangle { get => new(Position, Size); }
+
+        public Rectangle RectangleNonF { get => new((int)Position.X, (int)Position.Y, (int)Size.Width, (int)Size.Height); }
+
         public string Text
         {
             get
@@ -365,200 +458,212 @@ namespace CSC.Nodestuff
                     }
                     case NodeType.GameEvent:
                     {
-                        //todo
-                        switch (Data<GameEvent>()?.EventType)
+                        GameEvent gevent = Data<GameEvent>()!;
+                        try
                         {
-                            case GameEvents.AddForce:
+                            //todo
+                            switch (Data<GameEvent>()?.EventType)
                             {
-                                break;
+                                case GameEvents.AddForce:
+                                {
+                                    break;
+                                }
+                                case GameEvents.AllowPlayerSave:
+                                {
+                                    break;
+                                }
+                                case GameEvents.ChangeBodyScale:
+                                {
+                                    break;
+                                }
+                                case GameEvents.CharacterFromCharacterGroup:
+                                {
+                                    break;
+                                }
+                                case GameEvents.CharacterFunction:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Clothing:
+                                {
+                                    return gevent.Character + "'s  " + ((Clothes)int.Parse(gevent.Value!)).ToString() + " in set " + (gevent.Option == 0 ? "any" : (gevent.Option - 1).ToString());
+                                }
+                                case GameEvents.Combat:
+                                {
+                                    break;
+                                }
+                                case GameEvents.CombineValue:
+                                {
+                                    return "Add " + gevent.Character + ":" + gevent.Key + " to " + gevent.Character2 + ":" + gevent.Value;
+                                }
+                                case GameEvents.CutScene:
+                                {
+                                    return ((CutsceneAction)gevent.Option).ToString() + " " + gevent.Key + " with " + gevent.Character + ", " + gevent.Value + ", " + gevent.Value2 + ", " + gevent.Character2 + " (location: " + gevent.Option2 + ")";
+                                }
+                                case GameEvents.Dialogue:
+                                {
+                                    return ((DialogueAction)gevent.Option).ToString() + " " + gevent.Character + "'s Dialogue " + gevent.Value;
+                                }
+                                case GameEvents.DisableNPC:
+                                {
+                                    return "Disable NPC " + gevent.Character;
+                                }
+                                case GameEvents.DisplayGameMessage:
+                                {
+                                    return "Display Message: " + gevent.Value;
+                                }
+                                case GameEvents.Door:
+                                {
+                                    return ((DoorAction)gevent.Option).ToString() + " " + gevent.Key!.ToString();
+                                }
+                                case GameEvents.Emote:
+                                {
+                                    break;
+                                }
+                                case GameEvents.EnableNPC:
+                                {
+                                    return "Enable NPC " + gevent.Character;
+                                }
+                                case GameEvents.EventTriggers:
+                                {
+                                    return gevent.Character + (gevent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gevent.Option2 == 0 ? "(False) " : "(True) ") + gevent.Value;
+                                }
+                                case GameEvents.FadeIn:
+                                {
+                                    return "Fade in over " + gevent.Value + "s";
+                                }
+                                case GameEvents.FadeOut:
+                                {
+                                    return "Fade out over " + gevent.Value + "s";
+                                }
+                                case GameEvents.IKReach:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Intimacy:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Item:
+                                {
+                                    return gevent.Key!.ToString() + " " + ((ItemEventAction)gevent.Option).ToString() + " (" + gevent.Value + ") " + " (" + (gevent.Option2 == 1 ? "True" : "False") + ") ";
+                                }
+                                case GameEvents.ItemFromItemGroup:
+                                {
+                                    return gevent.Key!.ToString() + " " + ((ItemGroupAction)gevent.Option).ToString() + " (" + gevent.Value + ") " + " (" + (gevent.Option2 == 1 ? "True" : "False") + ") ";
+                                }
+                                case GameEvents.LookAt:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Personality:
+                                {
+                                    return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((PersonalityAction)gevent.Option2).ToString() + " " + gevent.Value;
+                                }
+                                case GameEvents.Property:
+                                {
+                                    return gevent.Character + " " + EEnum.StringParse<InteractiveProperties>(gevent.Value!).ToString() + " " + (gevent.Option2 == 1 ? "True" : "False");
+                                }
+                                case GameEvents.MatchValue:
+                                {
+                                    return "set " + gevent.Character + ":" + gevent.Key + " to " + gevent.Character2 + ":" + gevent.Value;
+                                }
+                                case GameEvents.ModifyValue:
+                                {
+                                    return (gevent.Option == 0 ? "Equals" : "Add") + gevent.Character + ":" + gevent.Key + " to " + gevent.Value;
+                                }
+                                case GameEvents.Player:
+                                {
+                                    return ((PlayerActions)gevent.Option).ToString() + (gevent.Option == 0 ? gevent.Option2 == 0 ? " Add " : " Remove " : " ") + gevent.Value + "/" + gevent.Character;
+                                }
+                                case GameEvents.PlaySoundboardClip:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Pose:
+                                {
+                                    return "Set " + gevent.Character + " Pose no. " + gevent.Value + " " + (gevent.Option == 0 ? " False" : " True");
+                                }
+                                case GameEvents.Quest:
+                                {
+                                    return ((QuestActions)gevent.Option).ToString() + " the quest " + gevent.Value + " from " + gevent.Character;
+                                }
+                                case GameEvents.RandomizeIntValue:
+                                {
+                                    return "set " + gevent.Character + ":" + gevent.Key + " to a random value between " + gevent.Value + " and " + gevent.Value2;
+                                }
+                                case GameEvents.ResetReactionCooldown:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Roaming:
+                                {
+                                    break;
+                                }
+                                case GameEvents.SendEvent:
+                                {
+                                    return gevent.Character + " " + ((SendEvents)gevent.Option).ToString();
+                                }
+                                case GameEvents.SetPlayerPref:
+                                {
+                                    break;
+                                }
+                                case GameEvents.Social:
+                                {
+                                    return gevent.Character + " " + ((SocialStatuses)gevent.Option).ToString() + " " + gevent.Character2 + (gevent.Option2 == 0 ? " Equals " : " Add ") + gevent.Value;
+                                }
+                                case GameEvents.State:
+                                {
+                                    return (gevent.Option == 0 ? "Add " : "Remove ") + gevent.Character + " State " + ((InteractiveStates)int.Parse(gevent.Value!)).ToString();
+                                }
+                                case GameEvents.TriggerBGC:
+                                {
+                                    return "trigger " + gevent.Character + "'s BGC " + gevent.Value + " as " + ((ImportanceSpecified)gevent.Option).ToString();
+                                }
+                                case GameEvents.Turn:
+                                {
+                                    break;
+                                }
+                                case GameEvents.TurnInstantly:
+                                {
+                                    break;
+                                }
+                                case GameEvents.UnlockAchievement:
+                                {
+                                    break;
+                                }
+                                case GameEvents.WalkTo:
+                                {
+                                    break;
+                                }
+                                case GameEvents.WarpOverTime:
+                                {
+                                    break;
+                                }
+                                case GameEvents.WarpTo:
+                                {
+                                    break;
+                                }
+                                case GameEvents.None:
+                                {
+                                    return "None";
+                                }
+                                default:
+                                {
+                                    break;
+                                }
                             }
-                            case GameEvents.AllowPlayerSave:
                             {
-                                break;
-                            }
-                            case GameEvents.ChangeBodyScale:
-                            {
-                                break;
-                            }
-                            case GameEvents.CharacterFromCharacterGroup:
-                            {
-                                break;
-                            }
-                            case GameEvents.CharacterFunction:
-                            {
-                                break;
-                            }
-                            case GameEvents.Clothing:
-                            {
-                                break;
-                            }
-                            case GameEvents.Combat:
-                            {
-                                break;
-                            }
-                            case GameEvents.CombineValue:
-                            {
-                                break;
-                            }
-                            case GameEvents.CutScene:
-                            {
-                                break;
-                            }
-                            case GameEvents.Dialogue:
-                            {
-                                break;
-                            }
-                            case GameEvents.DisableNPC:
-                            {
-                                break;
-                            }
-                            case GameEvents.DisplayGameMessage:
-                            {
-                                break;
-                            }
-                            case GameEvents.Door:
-                            {
-                                break;
-                            }
-                            case GameEvents.Emote:
-                            {
-                                break;
-                            }
-                            case GameEvents.EnableNPC:
-                            {
-                                break;
-                            }
-                            case GameEvents.EventTriggers:
-                            {
-                                break;
-                            }
-                            case GameEvents.FadeIn:
-                            {
-                                break;
-                            }
-                            case GameEvents.FadeOut:
-                            {
-                                break;
-                            }
-                            case GameEvents.IKReach:
-                            {
-                                break;
-                            }
-                            case GameEvents.Intimacy:
-                            {
-                                break;
-                            }
-                            case GameEvents.Item:
-                            {
-                                break;
-                            }
-                            case GameEvents.ItemFromItemGroup:
-                            {
-                                break;
-                            }
-                            case GameEvents.LookAt:
-                            {
-                                break;
-                            }
-                            case GameEvents.Personality:
-                            {
-                                break;
-                            }
-                            case GameEvents.Property:
-                            {
-                                break;
-                            }
-                            case GameEvents.MatchValue:
-                            {
-                                break;
-                            }
-                            case GameEvents.ModifyValue:
-                            {
-                                break;
-                            }
-                            case GameEvents.Player:
-                            {
-                                break;
-                            }
-                            case GameEvents.PlaySoundboardClip:
-                            {
-                                break;
-                            }
-                            case GameEvents.Pose:
-                            {
-                                break;
-                            }
-                            case GameEvents.Quest:
-                            {
-                                break;
-                            }
-                            case GameEvents.RandomizeIntValue:
-                            {
-                                break;
-                            }
-                            case GameEvents.ResetReactionCooldown:
-                            {
-                                break;
-                            }
-                            case GameEvents.Roaming:
-                            {
-                                break;
-                            }
-                            case GameEvents.SendEvent:
-                            {
-                                break;
-                            }
-                            case GameEvents.SetPlayerPref:
-                            {
-                                break;
-                            }
-                            case GameEvents.Social:
-                            {
-                                break;
-                            }
-                            case GameEvents.State:
-                            {
-                                break;
-                            }
-                            case GameEvents.TriggerBGC:
-                            {
-                                break;
-                            }
-                            case GameEvents.Turn:
-                            {
-                                break;
-                            }
-                            case GameEvents.TurnInstantly:
-                            {
-                                break;
-                            }
-                            case GameEvents.UnlockAchievement:
-                            {
-                                break;
-                            }
-                            case GameEvents.WalkTo:
-                            {
-                                break;
-                            }
-                            case GameEvents.WarpOverTime:
-                            {
-                                break;
-                            }
-                            case GameEvents.WarpTo:
-                            {
-                                break;
-                            }
-                            case GameEvents.None:
-                            {
-                                break;
-                            }
-                            default:
-                            {
-                                break;
+                                return StaticText;
                             }
                         }
+                        catch (Exception ex)
                         {
-                            return StaticText;
+                            Debug.WriteLine(ex.Message);
+                            gevent.Value = "";
+                            gevent.Key = "";
+                            gevent.Value2 = "";
+                            return Text;
                         }
                     }
                     case NodeType.EventTrigger:
@@ -848,7 +953,7 @@ namespace CSC.Nodestuff
                     }
                     case NodeType.Quest:
                     {
-                        return $"{Data<Quest>()?.ID ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
+                        return $"{Data<Quest>()?.Name ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
                     }
                     case NodeType.Response:
                     {
@@ -862,13 +967,23 @@ namespace CSC.Nodestuff
                     {
                         return $"{Data<UseWith>()?.ItemName} -> {Data<UseWith>()?.CustomCantDoThatMessage}";
                     }
+                    case NodeType.Pose:
+                    {
+                        if (int.TryParse(ID, out int res))
+                        {
+                            return ((Poses)res).ToString();
+                        }
+                        else
+                        {
+                            return "Pose" + ID;
+                        }
+                    }
                     case NodeType.Inventory:
                     case NodeType.StoryItem:
                     case NodeType.ItemInteraction:
                     case NodeType.Property:
                     case NodeType.Social:
                     case NodeType.State:
-                    case NodeType.Pose:
                     case NodeType.Door:
                     case NodeType.Clothing:
                     case NodeType.Cutscene:
@@ -886,165 +1001,8 @@ namespace CSC.Nodestuff
                 }
             }
         }
-        private string fileName = Main.NoCharacter;
-        private Type dataType = typeof(MissingReferenceInfo);
-
-        public NodePositionSorting CurrentPositionSorting
-        {
-            get
-            {
-                if (SortingList.TryGetValue(Main.SelectedCharacter, out var result))
-                {
-                    return result;
-                }
-                else
-                {
-                    return SortingList[FileName];
-                }
-            }
-        }
-
-        private readonly Dictionary<string, NodePositionSorting> SortingList;
-        private readonly Dictionary<string, PointF> Positions = new() { { Main.NoCharacter, new() } };
-
-        public PointF Position
-        {
-            get
-            {
-                if (Positions.TryGetValue(Main.SelectedCharacter, out var result))
-                {
-                    return result;
-                }
-                else
-                {
-                    return Positions[FileName];
-                }
-            }
-
-            set
-            {
-                CurrentPositionSorting.ClearNode(this);
-                Positions[Main.SelectedCharacter] = value;
-                CurrentPositionSorting.SetNode(this);
-            }
-        }
-
-        public void DupeToOtherSorting(string filename, NodePositionSorting sorting)
-        {
-            SortingList[filename] = sorting;
-            Positions[filename] = new();
-            sorting.SetNode(this);
-        }
 
         public bool Visited { get; internal set; }
-        private bool firstTimeSettingFilename = true;
-
-        public RectangleF Rectangle { get => new(Position, Size); }
-
-        public Rectangle RectangleNonF { get => new((int)Position.X, (int)Position.Y, (int)Size.Width, (int)Size.Height); }
-
-        public object? rawData
-        {
-            get
-            {
-                return data ?? new MissingReferenceInfo(Text);
-            }
-            set
-            {
-                data = value;
-                DataType = value?.GetType() ?? typeof(object);
-
-                if (DataType == typeof(Dialogue) || DataType == typeof(ItemInteraction) || DataType == typeof(ItemGroupInteraction))
-                {
-                    Size.Height *= 2;
-                }
-            }
-        }
-
-        public T? Data<T>() where T : class, new()
-        {
-            if (typeof(T) == DataType && rawData is not null)
-            {
-                return (T)rawData;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public string FileName
-        {
-            get
-            {
-                return fileName;
-            }
-
-            set
-            {
-                fileName = value;
-                if (firstTimeSettingFilename)
-                {
-                    if (value != Main.NoCharacter)
-                    {
-                        firstTimeSettingFilename = false;
-                        SortingList.Add(fileName, SortingList[Main.NoCharacter]);
-                        SortingList.Remove(Main.NoCharacter);
-                        Positions.Add(fileName, Positions[Main.NoCharacter]);
-                        Positions.Remove(Main.NoCharacter);
-                    }
-                }
-            }
-        }
-
-        public Type DataType { get => dataType; private set => dataType = value; }
-
-        public Node(string iD, NodeType type, string text, NodePositionSorting sorting)
-        {
-            SortingList = new()
-            {
-                { Main.NoCharacter, sorting }
-            };
-            ID = iD;
-            StaticText = text;
-            Type = type;
-            Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
-        }
-
-        public Node(string iD, NodeType type, string text, object data, NodePositionSorting sorting)
-        {
-            SortingList = new()
-            {
-                { Main.NoCharacter, sorting }
-            };
-            ID = iD;
-            StaticText = text;
-            Type = type;
-            rawData = data;
-            DataType = data.GetType();
-            Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
-        }
-
-        public Node(NodePositionSorting sorting)
-        {
-            SortingList = new()
-            {
-                { Main.NoCharacter, sorting }
-            };
-            ID = string.Empty;
-            StaticText = string.Empty;
-            Type = NodeType.Null;
-        }
-
-        public override string ToString()
-        {
-            return $"{Type} | {ID} | {Text}";
-        }
-
-        public string ToOutputFormat()
-        {
-            return $"{ID}|{Text}";
-        }
 
         public static Node CreateCriteriaNode(Criterion criterion, Node node, NodeStore nodes)
         {
@@ -1059,7 +1017,7 @@ namespace CSC.Nodestuff
                 return new Node(
                     $"{criterion.Character}{criterion.CompareType}{criterion.Value}",
                     NodeType.Criterion,
-                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}", node.CurrentPositionSorting)
+                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}")
                 { FileName = node.FileName };
             }
         }
@@ -1069,7 +1027,7 @@ namespace CSC.Nodestuff
             foreach (Criterion criterion in criteria)
             {
                 Node tempNode = CreateCriteriaNode(criterion, this, nodes);
-                tempNode.rawData = criterion;
+                tempNode.RawData = criterion;
                 if (criterion.CompareType == CompareTypes.PlayerGender)
                 {
                     tempNode.Gender = criterion.Value == "Female" ? Gender.Female : criterion.Value == "Male" ? Gender.Male : Gender.None;
@@ -1083,9 +1041,9 @@ namespace CSC.Nodestuff
         {
             foreach (GameEvent _event in events)
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", this, CurrentPositionSorting)
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", this)
                 {
-                    rawData = _event,
+                    RawData = _event,
                     DataType = typeof(GameEvent),
                     FileName = this.FileName
                 };
@@ -1094,6 +1052,43 @@ namespace CSC.Nodestuff
 
                 nodes.AddChild(this, nodeEvent);
             }
+        }
+
+        public T? Data<T>() where T : class, new()
+        {
+            if (typeof(T) == DataType && RawData is not null)
+            {
+                return (T)RawData;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public void DupeToOtherSorting(string filename)
+        {
+            if (!Positions.ContainsKey(filename))
+            {
+                Positions[filename] = new();
+                Main.SetNodePos(this, filename);
+            }
+        }
+
+        public void RemoveFromSorting(string filename)
+        {
+            Positions.Remove(filename);
+            Main.ClearNodePos(this, filename);
+        }
+
+        public string ToOutputFormat()
+        {
+            return $"{ID}|{Text}";
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} | {ID} | {Text}";
         }
     }
 }

@@ -1,8 +1,10 @@
-﻿namespace CSC.Nodestuff
+﻿using System.Diagnostics;
+
+namespace CSC.Nodestuff
 {
     public class NodePositionSorting
     {
-        private const int GridSize = 1000;
+        private const int GridSize = 500;
         public int ID = counter++;
         private static int counter = 0;
         //4 lists for each quadrant so we can deal with negative coordinates

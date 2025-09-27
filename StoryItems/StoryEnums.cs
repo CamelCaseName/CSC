@@ -516,8 +516,8 @@ namespace CSC.StoryItems
         {
             Trigger,
             Overhear,
-            SetStartDialogue,
-            TriggerStartDialogue
+            SetStartDialogue = 5,
+            TriggerStartDialogue = 10
         }
         [JsonConverter(typeof(StringEnumConverter))]
         public enum CutsceneAction
@@ -833,6 +833,7 @@ namespace CSC.StoryItems
             None,
             ApartmentZone
         }
+
         public enum Poses
         {
             HandsBehindHead,

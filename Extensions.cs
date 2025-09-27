@@ -1,6 +1,7 @@
 using CSC.Nodestuff;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace CSC
@@ -41,7 +42,67 @@ namespace CSC
             var g = color.G;
             var b = color.B;
             return Color.FromArgb(255, (int)(r * f), (int)(g * f), (int)(b * f));
+        }
 
+        public static void AddComboBoxHandler(this ComboBox box, Node node, NodeStore nodes, EventHandler handler)
+        {
+            box.SelectedIndexChanged += handler;
+            box.SelectedIndexChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes); Main.RedrawGraph(); };
+        }
+    }
+
+    public static class EEnum
+    {
+        public static string StringParse<T>(string value) where T : struct, Enum
+        {
+            if (Enum.TryParse<T>(value, out T result))
+            {
+                return result.ToString()!;
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
+        public static T CastParse<T>(string value) where T : struct, Enum
+        {
+            if (Enum.TryParse<T>(value, out T result))
+            {
+                return result;
+            }
+            else
+            {
+                return default;
+            }
+        }
+        public static string StringParse<T>(int value) where T : struct, Enum
+        {
+            if (Enum.IsDefined(typeof(T), value))
+            {
+                return Enum.GetName(typeof(T), value) ?? string.Empty;
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
+        public static T CastParse<T>(int value) where T : struct, Enum
+        {
+            if (Enum.IsDefined(typeof(T), value))
+            {
+                var name = Enum.GetName(typeof(T), value) ?? string.Empty;
+                if (!string.IsNullOrEmpty(name))
+                {
+                    return Enum.Parse<T>(name);
+                }
+                return default;
+            }
+            else
+            {
+                return default;
+            }
         }
     }
 
