@@ -1321,11 +1321,11 @@ namespace CSC.Nodestuff
                                 case NodeType.Cutscene:
                                     break;
                                 case NodeType.Dialogue:
-                                    var result = templist2.Find(newRefNode => newRefNode.Type == node.Type && newRefNode.ID == node.ID && newRefNode.FileName == node.FileName);
+                                    var result = templist2.Find(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName);
                                     if (result is not null)
                                     {
-                                        stores[store].Replace(node, result);
                                         result.DupeToOtherSorting(store, node.CurrentPositionSorting);
+                                        stores[store].Replace(node, result);
                                     }
                                     break;
                                 case NodeType.AlternateText:

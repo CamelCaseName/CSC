@@ -311,6 +311,7 @@
 
         public void Replace(Node node, Node replacement)
         {
+            Add(replacement);
             List<Node> childs = [..Childs(node)];
             List<Node> parents = [..Parents(node)];
 
@@ -319,6 +320,8 @@
 
             AddChilds(replacement, childs);
             AddParents(replacement, parents);
+
+            Remove(node);
         }
     }
 
