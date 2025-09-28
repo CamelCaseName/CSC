@@ -1,4 +1,5 @@
-﻿namespace CSC.Nodestuff
+﻿
+namespace CSC.Nodestuff
 {
     public sealed class NodeStore
     {
@@ -311,8 +312,8 @@
         public void Replace(Node node, Node replacement)
         {
             Add(replacement);
-            List<Node> childs = [..Childs(node)];
-            List<Node> parents = [..Parents(node)];
+            List<Node> childs = [.. Childs(node)];
+            List<Node> parents = [.. Parents(node)];
 
             ClearChilds(node);
             ClearParents(node);
@@ -321,6 +322,27 @@
             AddParents(replacement, parents);
 
             Remove(node);
+        }
+
+        internal bool AreConnected(Node node1, Node node2)
+        {
+            if (Childs(node1).Contains(node2))
+            {
+                return true;
+            }
+            if (Parents(node1).Contains(node2))
+            {
+                return true;
+            }
+            if (Childs(node2).Contains(node1))
+            {
+                return true;
+            }
+            if (Parents(node2).Contains(node1))
+            {
+                return true;
+            }
+            return false;
         }
     }
 

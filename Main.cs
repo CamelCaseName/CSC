@@ -265,7 +265,6 @@ public partial class Main : Form
 
     //todo add deletion and line removal :)
     //todo add selection
-    //todo stop nodes pulling in their childs from other files if they are themselves already imported
     //todo add option to isolate/pull all childs and parents close
     //todo add info when trying to link incompatible notes
     //todo add search
@@ -1399,7 +1398,14 @@ public partial class Main : Form
             }
             else if (!IsCtrlPressed && nodeToLinkNext != Node.NullNode)
             {
-                LinkTwoNodes(nodeToLinkNext, node);
+                if (nodes[SelectedCharacter].AreConnected(nodeToLinkNext, node))
+                {
+                    Unlink(nodeToLinkNext, node);
+                }
+                else
+                {
+                    Link(nodeToLinkNext, node);
+                }
 
                 nodeToLinkNext = Node.NullNode;
                 oldMousePosBeforeSpawnWindow = Point.Empty;
@@ -1423,7 +1429,7 @@ public partial class Main : Form
                 }
                 else if (nodeToLinkNext != Node.NullNode)
                 {
-                    LinkTwoNodes(nodeToLinkNext, circleNode);
+                    Link(nodeToLinkNext, circleNode);
 
                     nodeToLinkNext = Node.NullNode;
                     oldMousePosBeforeSpawnWindow = Point.Empty;
@@ -1471,8 +1477,8 @@ public partial class Main : Form
         NodeContext.Show(Graph, ScreenPos);
     }
 
-    //todo needs some more linking for criteria or events with other node types so we auto populate. should reuse the code from the node spawning
-    private void LinkTwoNodes(Node addFrom, Node addToThis)
+    //todo needs some more linking for criteria or events with other node types so we auto populate. should reuse the code from the node spawning#
+    private void Link(Node addFrom, Node addToThis)
     {
         if (addToThis.DataType == typeof(MissingReferenceInfo))
         {
@@ -1865,6 +1871,401 @@ public partial class Main : Form
         NodeLinker.UpdateLinks(addToThis, SelectedCharacter, nodes[selectedCharacter]);
 
         addFrom = Node.NullNode;
+    }
+    
+    private void Unlink(Node removeFrom, Node removeThis)
+    {
+        if (removeThis.DataType == typeof(MissingReferenceInfo))
+        {
+            return;
+        }
+
+        bool linked = false;
+
+        if (removeFrom.DataType == typeof(Criterion))
+        {
+            if (removeThis.DataType == typeof(ItemAction))
+            {
+                removeThis.Data<ItemAction>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(UseWith))
+            {
+                removeThis.Data<UseWith>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(CriteriaList1))
+            {
+                removeThis.Data<CriteriaList1>()!.CriteriaList!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(GameEvent))
+            {
+                removeThis.Data<GameEvent>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(EventTrigger))
+            {
+                removeThis.Data<EventTrigger>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(AlternateText))
+            {
+                removeThis.Data<AlternateText>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(Response))
+            {
+                removeThis.Data<Response>()!.ResponseCriteria!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(BackgroundChatter))
+            {
+                removeThis.Data<BackgroundChatter>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(ItemInteraction))
+            {
+                removeThis.Data<ItemInteraction>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(ItemGroupInteraction))
+            {
+                removeThis.Data<ItemGroupInteraction>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
+                linked = true;
+            }
+
+            if (linked)
+            {
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(GameEvent))
+        {
+            if (removeThis.DataType == typeof(ItemAction))
+            {
+                removeThis.Data<ItemAction>()!.OnTakeActionEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(UseWith))
+            {
+                removeThis.Data<UseWith>()!.OnSuccessEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(EventTrigger))
+            {
+                removeThis.Data<EventTrigger>()!.Events!.Remove(removeFrom.Data<GameEvent>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(MainStory))
+            {
+                removeThis.Data<MainStory>()!.GameStartEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(Response))
+            {
+                removeThis.Data<Response>()!.ResponseEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(Dialogue))
+            {
+                var result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    removeThis.Data<Dialogue>()!.StartEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                    linked = true;
+                }
+                else if (result == DialogResult.No)
+                {
+                    removeThis.Data<Dialogue>()!.CloseEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                    linked = true;
+                }
+            }
+            else if (removeThis.DataType == typeof(BackgroundChatter))
+            {
+                removeThis.Data<BackgroundChatter>()!.StartEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                linked = true;
+            }
+            else if (removeThis.DataType == typeof(ItemInteraction))
+            {
+                var result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    removeThis.Data<ItemInteraction>()!.OnAcceptEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                    linked = true;
+                }
+                else if (result == DialogResult.No)
+                {
+                    removeThis.Data<ItemInteraction>()!.OnRefuseEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                    linked = true;
+                }
+            }
+            else if (removeThis.DataType == typeof(ItemGroupInteraction))
+            {
+                var result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    removeThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                    linked = true;
+                }
+                else if (result == DialogResult.No)
+                {
+                    removeThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Remove(removeFrom.Data<GameEvent>()!);
+                    linked = true;
+                }
+            }
+            else if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<GameEvent>()!.Criteria.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+
+            if (linked)
+            {
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(ItemAction))
+        {
+            if (removeThis.DataType == typeof(ItemOverride))
+            {
+                removeThis.Data<ItemOverride>()!.ItemActions.Remove(removeFrom.Data<ItemAction>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(ItemGroupBehavior))
+            {
+                removeThis.Data<ItemGroupBehavior>()!.ItemActions.Remove(removeFrom.Data<ItemAction>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<ItemAction>()!.Criteria.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(GameEvent))
+            {
+                removeFrom.Data<ItemAction>()!.OnTakeActionEvents.Remove(removeThis.Data<GameEvent>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(UseWith))
+        {
+            if (removeThis.DataType == typeof(ItemOverride))
+            {
+                removeThis.Data<ItemOverride>()!.UseWiths.Remove(removeFrom.Data<UseWith>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(ItemGroupBehavior))
+            {
+                removeThis.Data<ItemGroupBehavior>()!.UseWiths.Remove(removeFrom.Data<UseWith>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<UseWith>()!.Criteria.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(GameEvent))
+            {
+                removeFrom.Data<UseWith>()!.OnSuccessEvents.Remove(removeThis.Data<GameEvent>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(ItemOverride))
+        {
+            if (removeThis.DataType == typeof(ItemAction))
+            {
+                removeFrom.Data<ItemOverride>()!.ItemActions.Remove(removeThis.Data<ItemAction>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(UseWith))
+            {
+                removeFrom.Data<ItemOverride>()!.UseWiths.Remove(removeThis.Data<UseWith>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(ItemGroupBehavior))
+        {
+            if (removeThis.DataType == typeof(ItemAction))
+            {
+                removeFrom.Data<ItemGroupBehavior>()!.ItemActions.Remove(removeThis.Data<ItemAction>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(UseWith))
+            {
+                removeFrom.Data<ItemGroupBehavior>()!.UseWiths.Remove(removeThis.Data<UseWith>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(Achievement))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(CriteriaList1))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(CriteriaGroup))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(ItemGroup))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(EventTrigger))
+        {
+            if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<EventTrigger>()!.Critera.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(GameEvent))
+            {
+                removeFrom.Data<EventTrigger>()!.Events.Remove(removeThis.Data<GameEvent>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(CharacterGroup))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(AlternateText))
+        {
+            if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<AlternateText>()!.Critera.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(Dialogue))
+            {
+                removeThis.Data<Dialogue>()!.AlternateTexts.Remove(removeFrom.Data<AlternateText>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(Response))
+        {
+            if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<Response>()!.ResponseCriteria.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(GameEvent))
+            {
+                removeFrom.Data<Response>()!.ResponseEvents.Remove(removeThis.Data<GameEvent>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(Dialogue))
+            {
+                var result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to Remove the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    removeFrom.Data<Response>()!.Next = 0;
+                    nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+                }
+                else if (result == DialogResult.No)
+                {
+                    removeThis.Data<Dialogue>()!.Responses.Remove(removeFrom.Data<Response>()!);
+                    nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+                }
+            }
+        }
+        else if (removeFrom.DataType == typeof(Dialogue))
+        {
+            if (removeThis.DataType == typeof(GameEvent))
+            {
+                var result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    removeFrom.Data<Dialogue>()!.StartEvents!.Remove(removeThis.Data<GameEvent>()!);
+                    nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+                }
+                else if (result == DialogResult.No)
+                {
+                    removeFrom.Data<Dialogue>()!.CloseEvents!.Remove(removeThis.Data<GameEvent>()!);
+                    nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+                }
+            }
+            else if (removeThis.DataType == typeof(Response))
+            {
+                var result = MessageBox.Show("Remove as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    removeFrom.Data<Dialogue>()!.Responses.Remove(removeThis.Data<Response>()!);
+                    nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+                }
+                else if (result == DialogResult.No)
+                {
+                    removeThis.Data<Response>()!.Next = 0;
+                    nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+                }
+            }
+            else if (removeThis.DataType == typeof(AlternateText))
+            {
+                removeFrom.Data<Dialogue>()!.AlternateTexts.Remove(removeThis.Data<AlternateText>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(BackgroundChatter))
+        {
+            if (removeThis.DataType == typeof(Criterion))
+            {
+                removeFrom.Data<BackgroundChatter>()!.Critera.Remove(removeThis.Data<Criterion>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(GameEvent))
+            {
+                removeFrom.Data<BackgroundChatter>()!.StartEvents.Remove(removeThis.Data<GameEvent>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+            else if (removeThis.DataType == typeof(BackgroundChatterResponse))
+            {
+                removeFrom.Data<BackgroundChatter>()!.Responses.Remove(removeThis.Data<BackgroundChatterResponse>()!);
+                nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(BackgroundChatterResponse))
+        {
+            if (removeThis.DataType == typeof(BackgroundChatter))
+            {
+                removeThis.Data<BackgroundChatter>()!.Responses.Remove(removeFrom.Data<BackgroundChatterResponse>()!);
+                nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
+            }
+        }
+        else if (removeFrom.DataType == typeof(Trait))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(ExtendedDetail))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(Quest))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(ItemInteraction))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(ItemGroupInteraction))
+        {
+            //todo
+        }
+        else if (removeFrom.DataType == typeof(Value))
+        {
+            //todo
+        }
+
+        NodeLinker.UpdateLinks(removeThis, SelectedCharacter, nodes[selectedCharacter]);
+
+        removeFrom = Node.NullNode;
     }
 
     //todo implement drag/drop setting of node data like item name or sth
@@ -3849,7 +4250,7 @@ public partial class Main : Form
 
         if (nodeToLinkNext != Node.NullNode)
         {
-            LinkTwoNodes(nodeToLinkNext, newNode);
+            Link(nodeToLinkNext, newNode);
             ShowProperties(newNode);
             nodeToLinkNext = Node.NullNode;
             oldMousePosBeforeSpawnWindow = Point.Empty;
@@ -3924,7 +4325,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -3940,7 +4341,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -3956,7 +4357,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -3971,7 +4372,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -3986,7 +4387,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4002,7 +4403,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4021,7 +4422,7 @@ public partial class Main : Form
 
                     if (clickedNode != Node.NullNode)
                     {
-                        LinkTwoNodes(clickedNode, newNode);
+                        Link(clickedNode, newNode);
                     }
                 break;
             }
@@ -4037,7 +4438,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4053,7 +4454,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4069,7 +4470,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4085,7 +4486,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4101,7 +4502,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4117,7 +4518,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4133,7 +4534,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4149,7 +4550,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4165,7 +4566,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }
@@ -4181,7 +4582,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 if (character == Player)
                 {
@@ -4205,7 +4606,7 @@ public partial class Main : Form
 
                 if (clickedNode != Node.NullNode)
                 {
-                    LinkTwoNodes(clickedNode, newNode);
+                    Link(clickedNode, newNode);
                 }
                 break;
             }

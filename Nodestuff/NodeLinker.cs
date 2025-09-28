@@ -71,7 +71,7 @@ namespace CSC.Nodestuff
             }
             var nodes = store.KeyNodes().ToList();
 
-            AnalyzeAndConnectNode(store, node, nodes, true);
+            AnalyzeAndConnectNode(store, node, nodes, false);
             foreach (var child in childs)
             {
                 AnalyzeAndConnectNode(store, child, nodes, false);
@@ -121,7 +121,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString())) { FileName = criterion.Character! };
@@ -142,7 +142,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddParent(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 CompareValuesToCheckAgain.Add(node);
                             }
@@ -156,7 +156,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddParent(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 CompareValuesToCheckAgain.Add(node);
                             }
@@ -189,7 +189,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddParent(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //add cutscene
                                 var item = new Node(criterion.Key!, NodeType.Cutscene, criterion.Key!)
@@ -216,7 +216,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add new personality, should be from someone else
                                 var item = new Node(criterion.Value!, NodeType.Dialogue, criterion.Character + " dialogue " + criterion.Value) { FileName = criterion.Character! };
@@ -238,7 +238,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!)
@@ -263,7 +263,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
@@ -288,7 +288,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
@@ -313,7 +313,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
@@ -338,7 +338,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
@@ -363,7 +363,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add new personality, should be from someone else
                                 var item = new Node(((PersonalityTraits)int.Parse(criterion.Key!)).ToString(), NodeType.Personality, criterion.Character + "'s Personality " + ((PersonalityTraits)int.Parse(criterion.Key!)).ToString()) { FileName = criterion.Character! };
@@ -386,7 +386,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key)
@@ -428,7 +428,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add pose node, hasnt been referenced yet
                                 var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value)
@@ -453,7 +453,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var property = new Node(criterion.Character + "Property" + criterion.Value, NodeType.Property, criterion.Character + ((InteractiveProperties)int.Parse(criterion.Value!)).ToString()) { FileName = criterion.Character! };
@@ -490,7 +490,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var social = new Node(criterion.Character + criterion.SocialStatus + criterion.Character2, NodeType.Social, criterion.Character + " " + criterion.SocialStatus + " " + criterion.Character2) { FileName = criterion.Character! };
@@ -512,7 +512,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add state node, hasnt been referenced yet
                                 var state = new Node(criterion.Character + "State" + criterion.Value, NodeType.State, criterion.Value + "|" + ((InteractiveStates)int.Parse(criterion.Value!)).ToString()) { FileName = criterion.Character! };
@@ -539,7 +539,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
@@ -570,7 +570,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
@@ -592,7 +592,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
@@ -610,7 +610,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddParent(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
@@ -632,7 +632,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //add cutscene
                                 var item = new Node(gameEvent.Key!, NodeType.Cutscene, gameEvent.Key!)
@@ -659,7 +659,7 @@ namespace CSC.Nodestuff
                                 //dialogue influences this criteria
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add new dialogue, should be from someone else
                                 var item = new Node(gameEvent.Value!, NodeType.Dialogue, ((DialogueAction)gameEvent.Option).ToString() + " " + gameEvent.Character + "'s Dialogue " + gameEvent.Value) { FileName = gameEvent.Character! };
@@ -681,7 +681,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!)
@@ -711,7 +711,7 @@ namespace CSC.Nodestuff
                                     nodes.AddChild(node, result);
                                 }
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                                 var _event = new Node("NA-" + gameEvent.Value, NodeType.GameEvent, gameEvent.Value!)
@@ -736,7 +736,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
@@ -761,7 +761,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
@@ -786,7 +786,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add new personality, should be from someone else
                                 var item = new Node(((PersonalityTraits)gameEvent.Option).ToString(), NodeType.Personality, gameEvent.Character + "'s Personality " + ((PersonalityTraits)gameEvent.Option).ToString()) { FileName = gameEvent.Character! };
@@ -808,7 +808,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var property = new Node(gameEvent.Character + "Property" + gameEvent.Value, NodeType.Property, gameEvent.Character + EEnum.StringParse<InteractiveProperties>(gameEvent.Value!)) { FileName = gameEvent.Character! };
@@ -830,7 +830,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
@@ -848,7 +848,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddParent(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
@@ -870,7 +870,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
@@ -893,7 +893,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, result);
                                 break;
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value)
@@ -929,7 +929,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add pose node, hasnt been referenced yet
                                 var pose = new Node(gameEvent.Value!, NodeType.Pose, "Pose number " + gameEvent.Value)
@@ -968,7 +968,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var quest = new Node(gameEvent.Key!, NodeType.Quest, gameEvent.Character + "'s quest " + gameEvent.Value + ", not found in loaded story files") { FileName = gameEvent.Character! };
@@ -990,7 +990,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
@@ -1012,7 +1012,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var social = new Node(gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2, NodeType.Social, gameEvent.Character + " " + ((SocialStatuses)gameEvent.Option).ToString() + " " + gameEvent.Character2) { FileName = gameEvent.Character! };
@@ -1034,7 +1034,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add state node, hasnt been referenced yet
                                 var state = new Node(gameEvent.Character + "State" + gameEvent.Value, NodeType.State, gameEvent.Value + "|" + ((InteractiveStates)int.Parse(gameEvent.Value!)).ToString()) { FileName = gameEvent.Character! };
@@ -1056,7 +1056,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add property node, hasnt been referenced yet
                                 var bgc = new Node("BGC" + gameEvent.Value, NodeType.BGC, gameEvent.Character + "'s BGC " + gameEvent.Value + ", not found in loaded story files") { FileName = gameEvent.Character! };
@@ -1122,7 +1122,7 @@ namespace CSC.Nodestuff
 
                         nodes.AddChild(node, result);
                     }
-                    else
+                    else if (dupeTo)
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                         var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}") { FileName = NodeLinker.FileName };
@@ -1149,7 +1149,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                                 var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}") { FileName = NodeLinker.FileName };
@@ -1174,7 +1174,7 @@ namespace CSC.Nodestuff
 
                                 nodes.AddChild(node, result);
                             }
-                            else
+                            else if (dupeTo)
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                                 var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}") { FileName = NodeLinker.FileName };
@@ -1263,7 +1263,7 @@ namespace CSC.Nodestuff
 
                             nodes.AddChild(node, result);
                         }
-                        else
+                        else if (dupeTo)
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                             var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}") { FileName = NodeLinker.FileName };
@@ -1332,7 +1332,7 @@ namespace CSC.Nodestuff
 
                             nodes.AddChild(node, result);
                         }
-                        else
+                        else if (dupeTo)
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                             var newNode = new Node(item, NodeType.StoryItem, item) { FileName = NodeLinker.FileName };
@@ -1429,7 +1429,7 @@ namespace CSC.Nodestuff
 
                         nodes.AddChild(node, result);
                     }
-                    else
+                    else if (dupeTo)
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                         var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty) { FileName = NodeLinker.FileName };
@@ -1453,7 +1453,7 @@ namespace CSC.Nodestuff
 
                 nodes.AddChild(node, result);
             }
-            else
+            else if (dupeTo)
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                 var newNode = new Node(_usewith.ItemName ?? string.Empty, NodeType.UseWith, _usewith.CustomCantDoThatMessage ?? string.Empty) { FileName = NodeLinker.FileName };
@@ -1474,7 +1474,7 @@ namespace CSC.Nodestuff
 
                 nodes.AddChild(node, result);
             }
-            else
+            else if (dupeTo)
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                 var newNode = new Node(_action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
@@ -1495,7 +1495,7 @@ namespace CSC.Nodestuff
 
                 nodes.AddParent(node, result);
             }
-            else
+            else if (dupeTo)
             {
                 newList.Add(Node.CreateCriteriaNode(_criterion, node, nodes));
             }
@@ -1513,7 +1513,7 @@ namespace CSC.Nodestuff
 
                 nodes.AddChild(node, result);
             }
-            else
+            else if (dupeTo)
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                 var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { FileName = NodeLinker.FileName };
