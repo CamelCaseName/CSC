@@ -1068,7 +1068,7 @@ namespace CSC.Nodestuff
 
         public void DupeToOtherSorting(string filename)
         {
-            if (!Positions.ContainsKey(filename))
+            if (!Positions.ContainsKey(filename) && fileName != Main.SelectedCharacter)
             {
                 Positions[filename] = new();
                 Main.SetNodePos(this, filename);

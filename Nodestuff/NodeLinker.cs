@@ -35,7 +35,7 @@ namespace CSC.Nodestuff
                     for (int i = 0; i < count; i++)
                     {
                         //link all useful criteria and add influencing values as parents
-                        AnalyzeAndConnectNode(store, nodes[i], nodes);
+                        AnalyzeAndConnectNode(store, nodes[i], nodes, true);
                     }
                 }
             }
@@ -46,10 +46,10 @@ namespace CSC.Nodestuff
             }
 
             //check some comparevaluenodes.again because the referenced values havent been added yet
-            RecheckCompareValues(CompareValuesToCheckAgain, store);
+            RecheckCompareValues(CompareValuesToCheckAgain, store, true);
 
             //merge doors with items if applicable
-            MergeDoors(store);
+            MergeDoors(store, true);
 
             Debug.WriteLine($"completed for {FileName}/{store.Count} nodes in {(DateTime.UtcNow - start).Milliseconds}ms");
         }
@@ -71,18 +71,18 @@ namespace CSC.Nodestuff
             }
             var nodes = store.KeyNodes().ToList();
 
-            AnalyzeAndConnectNode(store, node, nodes);
+            AnalyzeAndConnectNode(store, node, nodes, true);
             foreach (var child in childs)
             {
-                AnalyzeAndConnectNode(store, child, nodes);
+                AnalyzeAndConnectNode(store, child, nodes, false);
             }
             foreach (var parent in parents)
             {
-                AnalyzeAndConnectNode(store, parent, nodes);
+                AnalyzeAndConnectNode(store, parent, nodes, false);
             }
         }
 
-        private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn)
+        private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn, bool dupeTo = false)
         {
             AlternateText alternateText;
             BackgroundChatter chatter;
@@ -113,7 +113,10 @@ namespace CSC.Nodestuff
                             result = Clothing.Find((n) => n.Type == NodeType.Clothing && n.FileName == criterion.Character && n.ID == criterion.Option + criterion.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -132,7 +135,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                             }
@@ -143,7 +149,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                             }
@@ -158,7 +167,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.CriteriaGroup && n.ID == criterion.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -170,7 +182,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Cutscene && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                             }
@@ -191,7 +206,11 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.FileName == criterion.Character && n.ID == criterion.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
+
 
                                 //dialogue influences this criteria
                                 nodes.AddParent(node, result);
@@ -211,7 +230,10 @@ namespace CSC.Nodestuff
                             result = Doors.Find((n) => n.Type == NodeType.Door && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -233,7 +255,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -255,7 +280,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -277,7 +305,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -299,7 +330,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -321,7 +355,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Personality && n.FileName == criterion.Character && n.ID == ((PersonalityTraits)int.Parse(criterion.Key!)).ToString());
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -341,7 +378,10 @@ namespace CSC.Nodestuff
                             result = InventoryItems.Find((n) => n.Type == NodeType.Inventory && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -360,7 +400,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -377,7 +420,10 @@ namespace CSC.Nodestuff
                             result = Poses.Find((n) => n.Type == NodeType.Pose && n.ID == criterion.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -399,7 +445,10 @@ namespace CSC.Nodestuff
                             result = Properties.Find((n) => n.Type == NodeType.Property && n.ID == criterion.Character + "Property" + criterion.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -418,7 +467,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == criterion.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -430,7 +482,10 @@ namespace CSC.Nodestuff
                             result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == criterion.Character + criterion.SocialStatus + criterion.Character2);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -449,7 +504,10 @@ namespace CSC.Nodestuff
                             result = States.Find((n) => n.Type == NodeType.State && n.FileName == criterion.Character && n.StaticText.AsSpan()[..2].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -468,7 +526,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key && n.FileName == criterion.Character);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 if (!result.StaticText.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value))
                                 {
@@ -502,7 +563,10 @@ namespace CSC.Nodestuff
                             result = Clothing.Find((n) => n.Type == NodeType.Clothing && n.FileName == gameEvent.Character && n.ID == gameEvent.Option + gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -521,7 +585,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -536,7 +603,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                             }
@@ -555,7 +625,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Cutscene && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -577,7 +650,11 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Dialogue && n.FileName == gameEvent.Character && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
+
 
                                 //dialogue influences this criteria
                                 nodes.AddChild(node, result);
@@ -597,7 +674,10 @@ namespace CSC.Nodestuff
                             result = Doors.Find((n) => n.Type == NodeType.Door && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -619,7 +699,11 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.GameEvent && n.StaticText == gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
+
 
                                 //stop 0 step cyclic self reference as it is not allowed
                                 if (node != result)
@@ -645,7 +729,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -667,7 +754,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -689,7 +779,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Personality && n.FileName == gameEvent.Character && n.ID == ((PersonalityTraits)gameEvent.Option).ToString());
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -708,7 +801,10 @@ namespace CSC.Nodestuff
                             result = Properties.Find((n) => n.Type == NodeType.Property && n.ID == gameEvent.Character + "Property" + gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -727,7 +823,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -742,7 +841,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                             }
@@ -761,7 +863,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -780,7 +885,10 @@ namespace CSC.Nodestuff
                             result = InventoryItems.Find((n) => n.Type == NodeType.Inventory && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddParent(node, result);
                                 break;
@@ -799,7 +907,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -811,7 +922,10 @@ namespace CSC.Nodestuff
                             result = Poses.Find((n) => n.Type == NodeType.Pose && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -847,7 +961,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.Quest && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -866,7 +983,10 @@ namespace CSC.Nodestuff
                             result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -885,7 +1005,10 @@ namespace CSC.Nodestuff
                             result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == gameEvent.Character + ((SocialStatuses)gameEvent.Option).ToString() + gameEvent.Character2);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -904,7 +1027,10 @@ namespace CSC.Nodestuff
                             result = States.Find((n) => n.Type == NodeType.State && n.FileName == gameEvent.Character && n.StaticText.AsSpan()[..2].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -923,7 +1049,10 @@ namespace CSC.Nodestuff
                             result = searchIn.Find((n) => n.Type == NodeType.BGC && n.ID == "BGC" + gameEvent.Value);
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -943,7 +1072,7 @@ namespace CSC.Nodestuff
 
                     foreach (var _criterion in gameEvent.Criteria)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
                     break;
@@ -953,12 +1082,12 @@ namespace CSC.Nodestuff
                     //link against events
                     foreach (GameEvent _event in trigger.Events!)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
                     //link against criteria
                     foreach (Criterion _criterion in trigger.Critera!)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
                     node.StaticText = trigger.Critera.Count == 0
                         ? trigger.Name + " " + trigger.Type
@@ -969,12 +1098,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (GameEvent _event in response.ResponseEvents!)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
                     foreach (Criterion _criterion in response.ResponseCriteria!)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
                     if (response.Next == 0)
@@ -986,7 +1115,10 @@ namespace CSC.Nodestuff
 
                     if (result is not null)
                     {
-                        result.DupeToOtherSorting(node.FileName);
+                        if (dupeTo)
+                        {
+                            result.DupeToOtherSorting(node.FileName);
+                        }
 
                         nodes.AddChild(node, result);
                     }
@@ -1010,7 +1142,10 @@ namespace CSC.Nodestuff
 
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -1032,7 +1167,10 @@ namespace CSC.Nodestuff
 
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -1050,7 +1188,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _event in dialogue.StartEvents)
                         {
-                            HandleEvent(nodes, node, searchIn, _event);
+                            HandleEvent(nodes, node, searchIn, _event, dupeTo);
                         }
                     }
 
@@ -1058,7 +1196,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _event in dialogue.CloseEvents)
                         {
-                            HandleEvent(nodes, node, searchIn, _event);
+                            HandleEvent(nodes, node, searchIn, _event, dupeTo);
                         }
                     }
 
@@ -1068,12 +1206,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (GameEvent _event in itemAction.OnTakeActionEvents!)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
                     foreach (Criterion _criterion in itemAction.Criteria!)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
                     break;
@@ -1082,12 +1220,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _action in itemGroupBehavior.ItemActions)
                     {
-                        HandleItemAction(nodes, node, searchIn, _action);
+                        HandleItemAction(nodes, node, searchIn, _action, dupeTo);
                     }
 
                     foreach (var _usewith in itemGroupBehavior.UseWiths)
                     {
-                        HandleUseWith(nodes, node, searchIn, _usewith);
+                        HandleUseWith(nodes, node, searchIn, _usewith, dupeTo);
                     }
                     break;
                 }
@@ -1095,17 +1233,17 @@ namespace CSC.Nodestuff
                 {
                     foreach (GameEvent _event in itemGroupInteraction.OnAcceptEvents!)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
                     foreach (GameEvent _event in itemGroupInteraction.OnRefuseEvents!)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
                     foreach (Criterion _criterion in itemGroupInteraction.Critera!)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
                     break;
@@ -1118,7 +1256,10 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
-                            result.DupeToOtherSorting(node.FileName);
+                            if (dupeTo)
+                            {
+                                result.DupeToOtherSorting(node.FileName);
+                            }
 
                             nodes.AddChild(node, result);
                         }
@@ -1133,12 +1274,12 @@ namespace CSC.Nodestuff
 
                     foreach (var _event in chatter.StartEvents)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
                     foreach (var _criterion in chatter.Critera)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
                     break;
@@ -1150,7 +1291,7 @@ namespace CSC.Nodestuff
                     {
                         foreach (var _criterion in list.CriteriaList)
                         {
-                            HandleCriterion(nodes, node, searchIn, _criterion);
+                            HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                         }
                     }
                     break;
@@ -1159,7 +1300,7 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _criterion in alternateText.Critera)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
                     break;
                 }
@@ -1167,12 +1308,12 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _action in itemOverride.ItemActions)
                     {
-                        HandleItemAction(nodes, node, searchIn, _action);
+                        HandleItemAction(nodes, node, searchIn, _action, dupeTo);
                     }
 
                     foreach (var _usewith in itemOverride.UseWiths)
                     {
-                        HandleUseWith(nodes, node, searchIn, _usewith);
+                        HandleUseWith(nodes, node, searchIn, _usewith, dupeTo);
                     }
                     break;
                 }
@@ -1184,7 +1325,10 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
-                            result.DupeToOtherSorting(node.FileName);
+                            if (dupeTo)
+                            {
+                                result.DupeToOtherSorting(node.FileName);
+                            }
 
                             nodes.AddChild(node, result);
                         }
@@ -1207,7 +1351,10 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
-                            result.DupeToOtherSorting(node.FileName);
+                            if (dupeTo)
+                            {
+                                result.DupeToOtherSorting(node.FileName);
+                            }
 
                             nodes.AddChild(node, result);
                         }
@@ -1219,7 +1366,10 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
-                            result.DupeToOtherSorting(node.FileName);
+                            if (dupeTo)
+                            {
+                                result.DupeToOtherSorting(node.FileName);
+                            }
 
                             nodes.AddChild(node, result);
                         }
@@ -1231,7 +1381,10 @@ namespace CSC.Nodestuff
 
                         if (result is not null)
                         {
-                            result.DupeToOtherSorting(node.FileName);
+                            if (dupeTo)
+                            {
+                                result.DupeToOtherSorting(node.FileName);
+                            }
 
                             nodes.AddChild(node, result);
                         }
@@ -1243,7 +1396,10 @@ namespace CSC.Nodestuff
 
                             if (result is not null)
                             {
-                                result.DupeToOtherSorting(node.FileName);
+                                if (dupeTo)
+                                {
+                                    result.DupeToOtherSorting(node.FileName);
+                                }
 
                                 nodes.AddChild(node, result);
                             }
@@ -1255,18 +1411,21 @@ namespace CSC.Nodestuff
                 {
                     foreach (var _event in useWith.OnSuccessEvents)
                     {
-                        HandleEvent(nodes, node, searchIn, _event);
+                        HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
                     foreach (var _criterion in useWith.Criteria)
                     {
-                        HandleCriterion(nodes, node, searchIn, _criterion);
+                        HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
                     result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
                     if (result is not null)
                     {
-                        result.DupeToOtherSorting(node.FileName);
+                        if (dupeTo)
+                        {
+                            result.DupeToOtherSorting(node.FileName);
+                        }
 
                         nodes.AddChild(node, result);
                     }
@@ -1282,12 +1441,15 @@ namespace CSC.Nodestuff
             }
         }
 
-        private static void HandleUseWith(NodeStore nodes, Node node, List<Node> newList, UseWith _usewith)
+        private static void HandleUseWith(NodeStore nodes, Node node, List<Node> newList, UseWith _usewith, bool dupeTo = false)
         {
             Node? result = newList.Find((n) => n.Type == NodeType.UseWith && n.ID == _usewith.ItemName!);
             if (result is not null)
             {
-                result.DupeToOtherSorting(node.FileName);
+                if (dupeTo)
+                {
+                    result.DupeToOtherSorting(node.FileName);
+                }
 
                 nodes.AddChild(node, result);
             }
@@ -1300,12 +1462,15 @@ namespace CSC.Nodestuff
             }
         }
 
-        private static void HandleItemAction(NodeStore nodes, Node node, List<Node> newList, ItemAction _action)
+        private static void HandleItemAction(NodeStore nodes, Node node, List<Node> newList, ItemAction _action, bool dupeTo = false)
         {
             Node? result = newList.Find((n) => n.Type == NodeType.ItemAction && n.ID == _action.ActionName!);
             if (result is not null)
             {
-                result.DupeToOtherSorting(node.FileName);
+                if (dupeTo)
+                {
+                    result.DupeToOtherSorting(node.FileName);
+                }
 
                 nodes.AddChild(node, result);
             }
@@ -1318,12 +1483,15 @@ namespace CSC.Nodestuff
             }
         }
 
-        private static void HandleCriterion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion)
+        private static void HandleCriterion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion, bool dupeTo = false)
         {
             Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
             if (result is not null)
             {
-                result.DupeToOtherSorting(node.FileName);
+                if (dupeTo)
+                {
+                    result.DupeToOtherSorting(node.FileName);
+                }
 
                 nodes.AddParent(node, result);
             }
@@ -1333,12 +1501,15 @@ namespace CSC.Nodestuff
             }
         }
 
-        private static void HandleEvent(NodeStore nodes, Node node, List<Node> newList, GameEvent _event)
+        private static void HandleEvent(NodeStore nodes, Node node, List<Node> newList, GameEvent _event, bool dupeTo = false)
         {
             Node? result = newList.Find((n) => n.Type == NodeType.GameEvent && n.ID == _event.Id);
             if (result is not null)
             {
-                result.DupeToOtherSorting(node.FileName);
+                if (dupeTo)
+                {
+                    result.DupeToOtherSorting(node.FileName);
+                }
 
                 nodes.AddChild(node, result);
             }
@@ -1415,7 +1586,7 @@ namespace CSC.Nodestuff
             CompareValuesToCheckAgain.Clear();
         }
 
-        private static void MergeDoors(NodeStore nodes)
+        private static void MergeDoors(NodeStore nodes, bool dupeTo = false)
         {
             Node? result;
             var newlist = nodes.KeyNodes().ToList();
@@ -1424,7 +1595,10 @@ namespace CSC.Nodestuff
                 result = newlist.Find((n) => n.ID == node.ID);
                 if (result is not null)
                 {
-                    result.DupeToOtherSorting(node.FileName);
+                    if (dupeTo)
+                    {
+                        result.DupeToOtherSorting(node.FileName);
+                    }
 
                     foreach (Node parentNode in nodes.Parents(node).ToArray())
                     {
@@ -1441,7 +1615,7 @@ namespace CSC.Nodestuff
             }
         }
 
-        private static void RecheckCompareValues(List<Node> CompareValuesToCheckAgain, NodeStore nodes)
+        private static void RecheckCompareValues(List<Node> CompareValuesToCheckAgain, NodeStore nodes, bool dupeTo = false)
         {
             Node? result;
             foreach (Node node in CompareValuesToCheckAgain)
@@ -1452,7 +1626,10 @@ namespace CSC.Nodestuff
                     result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key);
                     if (result is not null)
                     {
-                        result.DupeToOtherSorting(node.FileName);
+                        if (dupeTo)
+                        {
+                            result.DupeToOtherSorting(node.FileName);
+                        }
 
                         nodes.AddParent(node, result);
                     }
@@ -1460,7 +1637,10 @@ namespace CSC.Nodestuff
                     result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2);
                     if (result is not null)
                     {
-                        result.DupeToOtherSorting(node.FileName);
+                        if (dupeTo)
+                        {
+                            result.DupeToOtherSorting(node.FileName);
+                        }
 
                         nodes.AddParent(node, result);
                     }

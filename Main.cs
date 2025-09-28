@@ -264,11 +264,9 @@ public partial class Main : Form
     }
 
     //todo add deletion and line removal :)
-    //todo add grouping
     //todo add selection
-    //todo add semicircles to nodes to start ctrl click linking from
+    //todo stop nodes pulling in their childs from other files if they are themselves already imported
     //todo add option to isolate/pull all childs and parents close
-    //todo fix linking link to some nodes at 0/0 for some items
     //todo add info when trying to link incompatible notes
     //todo add search
     //todo add new file creation
@@ -277,6 +275,7 @@ public partial class Main : Form
     //maybe turn it into a store where you put in the type and get out the relevant fields in order
     //this can then be used for linking as well
     //todo unify all node creation so its always the same
+    //todo add grouping
 
     public void HandleKeyBoard(object? sender, KeyEventArgs e)
     {
@@ -297,12 +296,13 @@ public partial class Main : Form
                 ShowNodeSpawnBox();
             }
         }
-        else if (e.KeyData == Keys.Escape && NodeSpawnBox.Enabled)
+        else if (e.KeyData == Keys.Escape)
         {
             NodeSpawnBox.Enabled = false;
             NodeSpawnBox.Visible = false;
             nodeToLinkNext = Node.NullNode;
             oldMousePosBeforeSpawnWindow = Point.Empty;
+            ClearOverlayBitmap();
             Graph.Focus();
             Graph.Invalidate();
         }
