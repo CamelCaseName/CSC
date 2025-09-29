@@ -195,7 +195,7 @@ namespace CSC
             // 
             GraphAndProperties.Panel2.Controls.Add(PropertyInspector);
             GraphAndProperties.Size = new Size(1241, 537);
-            GraphAndProperties.SplitterDistance = 439;
+            GraphAndProperties.SplitterDistance = 417;
             GraphAndProperties.TabIndex = 0;
             // 
             // Graph
@@ -204,7 +204,7 @@ namespace CSC
             Graph.Dock = DockStyle.Fill;
             Graph.Location = new Point(0, 0);
             Graph.Name = "Graph";
-            Graph.Size = new Size(1241, 439);
+            Graph.Size = new Size(1241, 417);
             Graph.TabIndex = 0;
             Graph.Paint += Main_Paint;
             Graph.MouseClick += HandleMouseEvents;
@@ -233,20 +233,14 @@ namespace CSC
             // PropertyInspector
             // 
             PropertyInspector.BackColor = Color.FromArgb(50, 50, 50);
-            PropertyInspector.ColumnCount = 3;
-            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 142F));
-            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
-            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
-            PropertyInspector.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            PropertyInspector.ColumnCount = 0;
             PropertyInspector.Dock = DockStyle.Fill;
             PropertyInspector.GrowStyle = TableLayoutPanelGrowStyle.AddColumns;
             PropertyInspector.Location = new Point(0, 0);
             PropertyInspector.Name = "PropertyInspector";
             PropertyInspector.RowCount = 2;
-            PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
-            PropertyInspector.Size = new Size(1241, 94);
+            PropertyInspector.RowStyles.Add(new RowStyle());
+            PropertyInspector.Size = new Size(1241, 116);
             PropertyInspector.TabIndex = 0;
             // 
             // NodeContext

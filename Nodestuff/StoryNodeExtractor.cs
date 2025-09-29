@@ -294,7 +294,7 @@ namespace CSC.Nodestuff
 
         public static void GetPersonality(CharacterStory story, NodeStore nodes)
         {
-            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", story.Personality!) { FileName = story.CharacterName! };
+            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", story.Personality!) { FileName = story.CharacterName!, RawData = story.Personality };
             nodes.Add(traitRoot);
             foreach (Trait valuee in story.Personality?.Values ?? [])
             {
@@ -372,7 +372,7 @@ namespace CSC.Nodestuff
 
         public static void GetValues(CharacterStory story, NodeStore nodes)
         {
-            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values") { FileName = story.CharacterName! };
+            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values") { FileName = story.CharacterName!, RawData = story.StoryValues };
             nodes.Add(ValueStore);
             foreach (string value in story.StoryValues ?? [])
             {
@@ -381,18 +381,20 @@ namespace CSC.Nodestuff
                     continue;
                 }
                 //add items to list
-                var nodeValue = new Node(value!, NodeType.Value, ", referenced values: ") { RawData = new Value() { value = value }, FileName = story.CharacterName! };
+                var nodeValue = new Node(value!, NodeType.Value, ", referenced values: ") { RawData = value, FileName = story.CharacterName! };
                 nodes.AddChild(ValueStore, nodeValue);
             }
         }
 
         public static void GetValues(MainStory story, NodeStore nodes)
         {
+            var ValueStore = new Node("Player Values", NodeType.Value, "Player Values") { FileName = Main.Player, RawData = story.PlayerValues };
+            nodes.Add(ValueStore);
             foreach (string value in story.PlayerValues ?? [])
             {
                 //add items to list
-                var nodeValue = new Node(value, NodeType.Value, ", referenced values: ") { RawData = new Value() { value = value } };
-                nodes.Add(nodeValue);
+                var nodeValue = new Node(value, NodeType.Value, ", referenced values: ") { RawData = value };
+                nodes.AddChild(ValueStore, nodeValue);
             }
         }
     }

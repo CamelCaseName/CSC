@@ -1439,6 +1439,14 @@ namespace CSC.Nodestuff
                     break;
                 }
             }
+
+            if (nodes.Childs(node).Count == 0
+                && nodes.Parents(node).Count == 0
+                && node.FileName != FileName)
+            {
+                nodes.Remove(node);
+                node.RemoveFromSorting(FileName);
+            }
         }
 
         private static void HandleUseWith(NodeStore nodes, Node node, List<Node> newList, UseWith _usewith, bool dupeTo = false)
