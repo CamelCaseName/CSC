@@ -106,11 +106,11 @@ public partial class Main : Form
     private RectangleF adjustedMouseClipBounds;
     private SizeF OffsetFromDragClick = SizeF.Empty;
     private SizeF CircleSize = new(15, 15);
-    CachedBitmap? oldGraph;
+    private CachedBitmap? oldGraph;
     private static MainStory Story = new();
     public static readonly Dictionary<string, CharacterStory> Stories = [];
     private static readonly Dictionary<string, NodeStore> nodes = [];
-    private static string selectedCharacter = NoCharacter;
+    private static string _selectedCharacter = NoCharacter;
     public bool MovingChild = false;
     public const int NodeSizeX = 200;
     public const int NodeSizeY = 50;
@@ -126,13 +126,13 @@ public partial class Main : Form
     {
         get
         {
-            if (selectedCharacter == NoCharacter || selectedCharacter == StoryName)
+            if (_selectedCharacter == NoCharacter || _selectedCharacter == StoryName)
             {
                 return Player;
             }
             else
             {
-                return selectedCharacter;
+                return _selectedCharacter;
             }
         }
 
@@ -141,16 +141,28 @@ public partial class Main : Form
 
             if (value == string.Empty || value is null)
             {
-                selectedCharacter = Player;
+                _selectedCharacter = Player;
             }
             else
             {
-                selectedCharacter = value;
+                _selectedCharacter = value;
             }
         }
     }
 
     public int RightClickFrameCounter { get; private set; } = 0;
+
+    //todo add selection
+    //todo add option to isolate/pull all childs and parents close
+    //todo add info when trying to link incompatible notes
+    //todo add search
+    //todo add new file creation
+    //todo add file export
+    //todo use the csc dll to populate the rest of the events and criteria i havent done yet, 
+    //maybe turn it into a store where you put in the type and get out the relevant fields in order
+    //this can then be used for linking as well
+    //todo unify all node creation so its always the same
+    //todo add grouping
 
     public Main()
     {
@@ -265,18 +277,6 @@ public partial class Main : Form
         movedNode = Node.NullNode;
         nodeToLinkFrom = Node.NullNode;
     }
-
-    //todo add selection
-    //todo add option to isolate/pull all childs and parents close
-    //todo add info when trying to link incompatible notes
-    //todo add search
-    //todo add new file creation
-    //todo add file export
-    //todo use the csc dll to populate the rest of the events and criteria i havent done yet, 
-    //maybe turn it into a store where you put in the type and get out the relevant fields in order
-    //this can then be used for linking as well
-    //todo unify all node creation so its always the same
-    //todo add grouping
 
     public void HandleKeyBoard(object? sender, KeyEventArgs e)
     {
@@ -1065,7 +1065,7 @@ public partial class Main : Form
 
     private void Main_Paint(object sender, PaintEventArgs e)
     {
-        if (selectedCharacter == NoCharacter)
+        if (_selectedCharacter == NoCharacter)
         {
             return;
         }
@@ -1533,7 +1533,16 @@ public partial class Main : Form
 
         NodeContext.Items.Clear();
 
-        foreach (var item in GetSpawnableNodeTypes())
+        var list = GetSpawnableNodeTypes();
+
+        if (clickedNode != Node.NullNode)
+        {
+            NodeContext.Items.Add(PullChildsMenu);
+            NodeContext.Items.Add(PullParentsMenu);
+            NodeContext.Items.Add(Seperator1);
+        }
+
+        foreach (var item in list)
         {
             var button = new ToolStripMenuItem(item.ToString(), null, onClick: (_, _) =>
             {
@@ -1946,7 +1955,7 @@ public partial class Main : Form
             //todo
         }
 
-        NodeLinker.UpdateLinks(addToThis, SelectedCharacter, nodes[selectedCharacter]);
+        NodeLinker.UpdateLinks(addToThis, SelectedCharacter, nodes[SelectedCharacter]);
 
         addFrom = Node.NullNode;
     }
@@ -2359,7 +2368,7 @@ public partial class Main : Form
             //todo
         }
 
-        NodeLinker.UpdateLinks(removeThis, SelectedCharacter, nodes[selectedCharacter]);
+        NodeLinker.UpdateLinks(removeThis, SelectedCharacter, nodes[SelectedCharacter]);
     }
 
     //todo implement drag/drop setting of node data like item name or sth
@@ -4396,6 +4405,7 @@ public partial class Main : Form
             PointF ScreenPos;
             if (oldPoint is null)
             {
+                //todo also add the same anti overlay code from the node child/parent pulling context menu here
                 var pos = Graph.PointToClient(Cursor.Position);
                 ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
                 ScreenPosX -= NodeSizeX / 2;
@@ -4415,6 +4425,7 @@ public partial class Main : Form
             newNode.Position = clickedNode.Position + new Size(scaleX, 0);
         }
 
+        Link(clickedNode, newNode);
         clickedNode = newNode;
         ShowProperties(newNode);
 
@@ -4731,5 +4742,73 @@ public partial class Main : Form
         }
 
         return newNode;
+    }
+
+    private void PullChildsClose(object sender, EventArgs e)
+    {
+        //clickednode is set when this is called
+        var childs = nodes[SelectedCharacter].Childs(clickedNode);
+        SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
+
+        for (int i = 0; i < childs.Count; i++)
+        {
+            var newPos = clickedNode.Position + new SizeF(scaleX, (i - (childs.Count / 2)) * scaleY);
+            var maybeNodePos = newPos;
+            Node maybeThere;
+            Node maybeNewSpot;
+
+            while ((maybeNewSpot = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeNewSpot != childs[i])
+            {
+                maybeNodePos = newPos;
+                while ((maybeThere = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeThere != childs[i])
+                {
+                    maybeNodePos += new SizeF(scaleX, 0);
+                    if (GetNodeAtPoint(maybeNodePos + NodeCenter) == Node.NullNode)
+                    {
+                        maybeThere.Position = maybeNodePos;
+                        break;
+                    }
+                }
+            }
+
+            childs[i].Position = newPos;
+        }
+
+        CenterOnNode(clickedNode, 0.3f);
+        Graph.Invalidate();
+    }
+
+    private void PullParentsClose(object sender, EventArgs e)
+    {
+        //clickednode is set when this is called
+        var parents = nodes[SelectedCharacter].Parents(clickedNode);
+        SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
+
+        for (int i = 0; i < parents.Count; i++)
+        {
+            var newPos = clickedNode.Position - new SizeF(scaleX, (i - (parents.Count / 2)) * scaleY);
+            var maybeNodePos = newPos;
+            Node maybeThere;
+            Node maybeNewSpot;
+
+            while ((maybeNewSpot = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeNewSpot != parents[i])
+            {
+                maybeNodePos = newPos;
+                while ((maybeThere = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeThere != parents[i])
+                {
+                    maybeNodePos -= new SizeF(scaleX, 0);
+                    if (GetNodeAtPoint(maybeNodePos + NodeCenter) == Node.NullNode)
+                    {
+                        maybeThere.Position = maybeNodePos;
+                        break;
+                    }
+                }
+            }
+
+            parents[i].Position = newPos;
+        }
+
+        CenterOnNode(clickedNode, 0.3f);
+        Graph.Invalidate();
     }
 }

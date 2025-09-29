@@ -32,8 +32,8 @@ namespace CSC
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            TreeNode treeNode1 = new TreeNode("Characters");
-            TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
+            TreeNode treeNode3 = new TreeNode("Characters");
+            TreeNode treeNode4 = new TreeNode("Story Root", new TreeNode[] { treeNode3 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -48,6 +48,9 @@ namespace CSC
             NodeSpawnBox = new ComboBox();
             PropertyInspector = new TableLayoutPanel();
             NodeContext = new ContextMenuStrip(components);
+            PullChildsMenu = new ToolStripMenuItem();
+            PullParentsMenu = new ToolStripMenuItem();
+            Seperator1 = new ToolStripSeparator();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
             HierarchyAndRest.Panel1.SuspendLayout();
@@ -58,6 +61,7 @@ namespace CSC
             GraphAndProperties.Panel2.SuspendLayout();
             GraphAndProperties.SuspendLayout();
             Graph.SuspendLayout();
+            NodeContext.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
@@ -150,14 +154,14 @@ namespace CSC
             StoryTree.HideSelection = false;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
-            treeNode1.Name = "Characters";
-            treeNode1.Text = "Characters";
-            treeNode1.ToolTipText = "You'll find all your Characters here";
-            treeNode2.Checked = true;
-            treeNode2.Name = "Story Name";
-            treeNode2.Text = "Story Root";
-            treeNode2.ToolTipText = "The Story itself and the Characters are in here";
-            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
+            treeNode3.Name = "Characters";
+            treeNode3.Text = "Characters";
+            treeNode3.ToolTipText = "You'll find all your Characters here";
+            treeNode4.Checked = true;
+            treeNode4.Name = "Story Name";
+            treeNode4.Text = "Story Root";
+            treeNode4.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode4 });
             StoryTree.ShowNodeToolTips = true;
             StoryTree.Size = new Size(186, 537);
             StoryTree.TabIndex = 1;
@@ -233,23 +237,45 @@ namespace CSC
             // PropertyInspector
             // 
             PropertyInspector.BackColor = Color.FromArgb(50, 50, 50);
-            PropertyInspector.ColumnCount = 0;
             PropertyInspector.Dock = DockStyle.Fill;
             PropertyInspector.GrowStyle = TableLayoutPanelGrowStyle.AddColumns;
             PropertyInspector.Location = new Point(0, 0);
             PropertyInspector.Name = "PropertyInspector";
             PropertyInspector.RowCount = 2;
             PropertyInspector.RowStyles.Add(new RowStyle());
+            PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             PropertyInspector.Size = new Size(1241, 116);
             PropertyInspector.TabIndex = 0;
             // 
             // NodeContext
             // 
             NodeContext.BackColor = Color.FromArgb(64, 64, 64);
+            NodeContext.Items.AddRange(new ToolStripItem[] { });
             NodeContext.Name = "contextMenuStrip1";
             NodeContext.ShowImageMargin = false;
-            NodeContext.Size = new Size(36, 4);
+            NodeContext.Size = new Size(156, 76);
             NodeContext.Text = "Spawn new Node:";
+            // 
+            // PullChildsMenu
+            // 
+            PullChildsMenu.Name = "PullChildsMenu";
+            PullChildsMenu.Size = new Size(155, 22);
+            PullChildsMenu.Text = "Pull Childs close";
+            PullChildsMenu.ForeColor = Color.LightGray;
+            PullChildsMenu.Click += PullChildsClose;
+            // 
+            // PullParentsMenu
+            // 
+            PullParentsMenu.Name = "PullParentsMenu";
+            PullParentsMenu.Size = new Size(155, 22);
+            PullParentsMenu.Text = "Pull Parents close";
+            PullParentsMenu.ForeColor = Color.LightGray;
+            PullParentsMenu.Click += PullParentsClose;
+            // 
+            // toolStripSeparator1
+            // 
+            Seperator1.Name = "toolStripSeparator1";
+            Seperator1.Size = new Size(152, 6);
             // 
             // Main
             // 
@@ -278,6 +304,7 @@ namespace CSC
             ((System.ComponentModel.ISupportInitialize)GraphAndProperties).EndInit();
             GraphAndProperties.ResumeLayout(false);
             Graph.ResumeLayout(false);
+            NodeContext.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -298,5 +325,8 @@ namespace CSC
         private TableLayoutPanel PropertyInspector;
         private ComboBox NodeSpawnBox;
         private ContextMenuStrip NodeContext;
+        private ToolStripMenuItem PullChildsMenu;
+        private ToolStripMenuItem PullParentsMenu;
+        private ToolStripSeparator Seperator1;
     }
 }
