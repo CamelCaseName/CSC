@@ -4,13 +4,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Media;
-using System.Security.Policy;
-using System.Windows.Forms;
-using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace CSC;
 
@@ -39,6 +33,7 @@ public partial class Main : Form
     private readonly int scaleY = (int)(NodeSizeY * 1.5f);
     private readonly List<int> maxYperX = [];
     private readonly List<Node> visited = [];
+    private readonly List<Node> selected = [];
     private readonly Pen clickedLinePen;
     private readonly Pen highlightPen;
     private readonly Pen linePen;
@@ -103,8 +98,11 @@ public partial class Main : Form
     private readonly SolidBrush darksocialNodeBrush;
     private readonly SolidBrush darkstateNodeBrush;
     private readonly SolidBrush darkvalueNodeBrush;
+    private readonly SolidBrush SelectionFill;
+    private readonly Pen SelectionEdge;
     private RectangleF adjustedMouseClipBounds;
     private SizeF OffsetFromDragClick = SizeF.Empty;
+    private readonly List<SizeF> SelectedNodeOffsets = [];
     private SizeF CircleSize = new(15, 15);
     private CachedBitmap? oldGraph;
     private static MainStory Story = new();
@@ -119,8 +117,10 @@ public partial class Main : Form
     private const string Anybody = "Anybody";
 
     public static string StoryName { get; private set; } = NoCharacter;
-    RectangleF adjustedVisibleClipBounds = new();
-    Point oldMousePosBeforeSpawnWindow = Point.Empty;
+    private RectangleF adjustedVisibleClipBounds = new();
+    private Point oldMousePosBeforeSpawnWindow = Point.Empty;
+    private bool selecting;
+    private Point startSelectingMousePos = Point.Empty;
 
     public static string SelectedCharacter
     {
@@ -151,9 +151,9 @@ public partial class Main : Form
     }
 
     public int RightClickFrameCounter { get; private set; } = 0;
+    public int LeftClickFrameCounter { get; private set; }
 
     //todo add selection
-    //todo add option to isolate/pull all childs and parents close
     //todo add info when trying to link incompatible notes
     //todo add search
     //todo add new file creation
@@ -175,6 +175,7 @@ public partial class Main : Form
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
         };
+        SelectionEdge = new Pen(Color.LightGray, 1f);
         circlePen = new Pen(Color.FromArgb(75, 75, 75), 0.5f)
         {
             EndCap = LineCap.Triangle,
@@ -258,6 +259,7 @@ public partial class Main : Form
         InterlinkedNodeBrush = new HatchBrush(HatchStyle.LightUpwardDiagonal, Color.DeepPink, BackColor);
         ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
         NodeToLinkNextBrush = new SolidBrush(Color.LightGray);
+        SelectionFill = new SolidBrush(Color.FromArgb(80, Color.Gray));
 
         NodeSpawnBox.Items.AddRange(Enum.GetNames<SpawnableNodeType>());
 
@@ -496,11 +498,23 @@ public partial class Main : Form
         ScreenToGraph(pos.X, pos.Y, out float GraphPosX, out float GraphPosY);
         var graphPos = new PointF(GraphPosX, GraphPosY);
 
-        if (MovingChild && movedNode != Node.NullNode)
+        if (MovingChild)
         {
-            movedNode.Position = graphPos + OffsetFromDragClick;
-            Cursor = Cursors.SizeAll;
-            Graph.Invalidate();
+            if (selected.Count > 0 && !selecting)
+            {
+                for (int i = 0; i < selected.Count; i++)
+                {
+                    selected[i].Position = graphPos + SelectedNodeOffsets[i];
+                }
+                Cursor = Cursors.SizeAll;
+                Graph.Invalidate();
+            }
+            else if (movedNode != Node.NullNode)
+            {
+                movedNode.Position = graphPos + OffsetFromDragClick;
+                Cursor = Cursors.SizeAll;
+                Graph.Invalidate();
+            }
         }
         else if (highlightNode != Node.NullNode)
         {
@@ -533,6 +547,12 @@ public partial class Main : Form
             UpdateRightClick(graphPos);
             return;
         }
+        else if (e.Button == MouseButtons.None && MouseButtons == MouseButtons.Left)
+        {
+            UpdateLeftClick(pos);
+            Graph.Invalidate();
+            return;
+        }
 
         //everything else, scrolling for example
         if (e.Delta != 0)
@@ -551,42 +571,27 @@ public partial class Main : Form
             {
                 Graph.Focus();
                 RightClickFrameCounter = 0;
-                if (e.Clicks > 1)
+                if (e.Clicks == 2)
                 {
                     //double click
                     UpdateDoubleClickTransition(graphPos);
                     Graph.Focus();
                 }
-                else if (e.Clicks == 1)
+                else
                 {
-                    _ = UpdateClickedNode(graphPos);
-                    Graph.Invalidate();
+                    UpdateLeftClick(pos);
                 }
                 break;
             }
             case MouseButtons.None:
             {
-                if (!MovingChild && RightClickFrameCounter > 0)
-                {
-                    _ = UpdateClickedNode(graphPos);
-                    //right click only no move, spawn context
-                    SpawnContextMenu(graphPos);
-                }
-                if (MouseButtons != MouseButtons.Right)
-                {
-                    RightClickFrameCounter = 0;
-                    MovingChild = false;
-                }
-
-                EndPan();
-                UpdateHighlightNode(graphPos);
-
-                //we are only moving the mouse so we can go ahead and cache the latest state and draw over that with the connecting line if we need to
-                TryCreateOverlayBitmap();
+                OnNone(graphPos);
             }
             break;
             case MouseButtons.Right:
             {
+                Graph.Focus();
+                LeftClickFrameCounter = 0;
                 if (e.Clicks > 0)
                 {
                     UpdateRightClick(graphPos);
@@ -608,43 +613,147 @@ public partial class Main : Form
                 break;
             default:
             {
-                if (!MovingChild && RightClickFrameCounter > 0)
-                {
-                    _ = UpdateClickedNode(graphPos);
-                    //right click only no move, spawn context
-                    SpawnContextMenu(graphPos);
-                }
-                if (MouseButtons != MouseButtons.Right)
-                {
-                    RightClickFrameCounter = 0;
-                    MovingChild = false;
-                }
-                EndPan();
-                UpdateHighlightNode(graphPos);
-                TryCreateOverlayBitmap();
+                OnNone(graphPos);
             }
             break;
         }
+    }
 
-        void UpdateRightClick(PointF graphPos)
+    private void OnNone(PointF graphPos)
+    {
+        UpdateLeftRightClickStates(graphPos);
+        EndPan();
+        UpdateHighlightNode(graphPos);
+        TryCreateOverlayBitmap();
+    }
+
+    private void UpdateLeftRightClickStates(PointF graphPos)
+    {
+        if (!MovingChild && RightClickFrameCounter > 0)
         {
-            RightClickFrameCounter++;
-            Debug.WriteLine(RightClickFrameCounter);
-            if (!MovingChild && RightClickFrameCounter > 1)
+            _ = UpdateClickedNode(graphPos);
+            //right click only no move, spawn context
+            SpawnContextMenu(graphPos);
+        }
+        else if (!selecting && LeftClickFrameCounter > 0)
+        {
+            if (LeftClickFrameCounter == 1)
+            {
+                _ = UpdateClickedNode(graphPos);
+                selected.Clear();
+                SelectedNodeOffsets.Clear();
+                LeftClickFrameCounter = 0;
+                Graph.Invalidate();
+            }
+        }
+        if (MouseButtons != MouseButtons.Right)
+        {
+            RightClickFrameCounter = 0;
+            MovingChild = false;
+        }
+        if (MouseButtons != MouseButtons.Left && LeftClickFrameCounter >= 2)
+        {
+            LeftClickFrameCounter = 0;
+            UpdateLeftClickSelection(graphPos);
+            selecting = false;
+        }
+    }
+
+    private void UpdateLeftClickSelection(PointF graphPos)
+    {
+        if (selecting)
+        {
+            selected.Clear();
+            var Pos1 = graphPos;
+            ScreenToGraph(startSelectingMousePos.X, startSelectingMousePos.Y, out float GraphPosX, out float GraphPosY);
+            var Pos2 = new PointF(GraphPosX, GraphPosY);
+            int MinX = (int)MathF.Min(Pos1.X, Pos2.X);
+            int MaxX = (int)MathF.Max(Pos1.X, Pos2.X);
+            int MinY = (int)MathF.Min(Pos1.Y, Pos2.Y);
+            int MaxY = (int)MathF.Max(Pos1.Y, Pos2.Y);
+
+            for (int x = MinX; x < MaxX; x += (NodeSizeX / 2))
+            {
+                for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
+                {
+                    var maybeNode = GetNodeAtPoint(new PointF(x, y));
+                    if (maybeNode != Node.NullNode && !selected.Contains(maybeNode))
+                    {
+                        selected.Add(maybeNode);
+                    }
+                }
+            }
+            //do rightmost edge
+            for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
+            {
+                var maybeNode = GetNodeAtPoint(new PointF(MaxX, y));
+                if (maybeNode != Node.NullNode && !selected.Contains(maybeNode))
+                {
+                    selected.Add(maybeNode);
+                }
+            }
+            //do bottom edge
+            for (int x = MinX; x < MaxX; x += (NodeSizeY / 2))
+            {
+                var maybeNode = GetNodeAtPoint(new PointF(x, MaxY));
+                if (maybeNode != Node.NullNode && !selected.Contains(maybeNode))
+                {
+                    selected.Add(maybeNode);
+                }
+            }
+        }
+        selecting = false;
+    }
+
+    private void UpdateLeftClick(PointF screenPos)
+    {
+        LeftClickFrameCounter++;
+        if (LeftClickFrameCounter > 2)
+        {
+            if (!selecting)
+            {
+                StartSelecting(screenPos);
+            }
+        }
+        Graph.Focus();
+    }
+
+    private void UpdateRightClick(PointF graphPos)
+    {
+        RightClickFrameCounter++;
+        if (!MovingChild && RightClickFrameCounter > 1)
+        {
+            if (selected.Count > 0 && !selecting)
+            {
+                SelectedNodeOffsets.Clear();
+                foreach (var node in selected)
+                {
+                    SelectedNodeOffsets.Add(new SizeF((node.Position.X - graphPos.X), (node.Position.Y - graphPos.Y)));
+                }
+            }
+            else
             {
                 Node node = UpdateClickedNode(graphPos);
                 movedNode = node;
-                MovingChild = true;
                 OffsetFromDragClick = new SizeF((movedNode.Position.X - graphPos.X), (movedNode.Position.Y - graphPos.Y));
-                Debug.WriteLine(MovingChild);
             }
-            Graph.Focus();
+            MovingChild = true;
         }
+        Graph.Focus();
+    }
+
+    private void StartSelecting(PointF screenPos)
+    {
+        selecting = true;
+        startSelectingMousePos = new((int)screenPos.X, (int)screenPos.Y);
+        selected.Clear();
+        SelectedNodeOffsets.Clear();
+        TryCreateOverlayBitmap();
     }
 
     private void TryCreateOverlayBitmap()
     {
-        if (nodeToLinkFrom != Node.NullNode)
+        if (nodeToLinkFrom != Node.NullNode || selecting)
         {
             if (oldGraph is null)
             {
@@ -936,6 +1045,10 @@ public partial class Main : Form
         }
 
         g.FillPath(brush, RoundedRect(node.Rectangle, 10f));
+        if (selected.Contains(node))
+        {
+            g.DrawRectangle(SelectionEdge, node.Rectangle);
+        }
 
         if (Scaling[SelectedCharacter] > 0.28f)
         {
@@ -1071,7 +1184,7 @@ public partial class Main : Form
         }
         var g = e.Graphics;
 
-        if (oldGraph is null || nodeToLinkFrom == Node.NullNode)
+        if (oldGraph is null || (nodeToLinkFrom == Node.NullNode && !selecting))
         {
             g.ToLowQuality();
 
@@ -1098,8 +1211,56 @@ public partial class Main : Form
         else
         {
             g.DrawCachedBitmap(oldGraph, 0, 0);
-            DrawLinkToNextEdge(g);
+            if (selecting)
+            {
+                DrawSelectionSquare(g);
+            }
+            else
+            {
+                DrawLinkToNextEdge(g);
+            }
         }
+    }
+
+    private void DrawSelectionSquare(Graphics g)
+    {
+        Point pos;
+        if (startSelectingMousePos != Point.Empty)
+        {
+            pos = startSelectingMousePos;
+        }
+        else
+        {
+            pos = Graph.PointToClient(Cursor.Position);
+        }
+        Point cursorNow = Graph.PointToClient(Cursor.Position);
+        Rectangle rect;
+
+        if (pos.X < cursorNow.X)
+        {
+            if (pos.Y < cursorNow.Y)
+            {
+                rect = new(pos, new Size(cursorNow.X - pos.X, cursorNow.Y - pos.Y));
+            }
+            else
+            {
+                rect = new(new(pos.X, cursorNow.Y), new Size(cursorNow.X - pos.X, pos.Y - cursorNow.Y));
+            }
+        }
+        else
+        {
+            if (pos.Y < cursorNow.Y)
+            {
+                rect = new(new(cursorNow.X, pos.Y), new Size(pos.X - cursorNow.X, cursorNow.Y - pos.Y));
+            }
+            else
+            {
+                rect = new(cursorNow, new Size(pos.X - cursorNow.X, pos.Y - cursorNow.Y));
+            }
+        }
+
+        g.FillRectangle(SelectionFill, rect);
+        g.DrawRectangle(SelectionEdge, rect);
     }
 
     private void DrawLinkToNextEdge(Graphics g)
