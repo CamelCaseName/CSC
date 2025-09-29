@@ -29,7 +29,7 @@ public partial class Main : Form
     private Node clickedNode;
     private Node highlightNode;
     private Node movedNode;
-    private Node nodeToLinkNext;
+    private Node nodeToLinkFrom;
     private readonly Dictionary<string, float> OffsetX = [];
     private readonly Dictionary<string, float> OffsetY = [];
     private readonly Dictionary<string, float> Scaling = [];
@@ -260,10 +260,9 @@ public partial class Main : Form
         clickedNode = Node.NullNode;
         highlightNode = Node.NullNode;
         movedNode = Node.NullNode;
-        nodeToLinkNext = Node.NullNode;
+        nodeToLinkFrom = Node.NullNode;
     }
 
-    //todo add deletion and line removal :)
     //todo add selection
     //todo add option to isolate/pull all childs and parents close
     //todo add info when trying to link incompatible notes
@@ -299,12 +298,79 @@ public partial class Main : Form
         {
             NodeSpawnBox.Enabled = false;
             NodeSpawnBox.Visible = false;
-            nodeToLinkNext = Node.NullNode;
+            nodeToLinkFrom = Node.NullNode;
             oldMousePosBeforeSpawnWindow = Point.Empty;
             ClearOverlayBitmap();
             Graph.Focus();
             Graph.Invalidate();
         }
+        else if (e.KeyData == Keys.Delete)
+        {
+            TryDeleteNode();
+        }
+    }
+
+    private void TryDeleteNode()
+    {
+        Node removedNode = Node.NullNode;
+        if (highlightNode != Node.NullNode)
+        {
+            if (MessageBox.Show("Delete " + highlightNode.Text[..Math.Min(highlightNode.Text.Length, 20)] + "[...]?", "Delete for real?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                if (nodeToLinkFrom == highlightNode)
+                {
+                    nodeToLinkFrom = Node.NullNode;
+                }
+                if (clickedNode == highlightNode)
+                {
+                    clickedNode = Node.NullNode;
+                }
+
+                removedNode = highlightNode;
+                highlightNode = Node.NullNode;
+            }
+        }
+        else if (clickedNode != Node.NullNode)
+        {
+            if (MessageBox.Show("Delete " + clickedNode.Text[..Math.Min(clickedNode.Text.Length, 20)] + "[...]?", "Delete for real?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                if (nodeToLinkFrom == clickedNode)
+                {
+                    nodeToLinkFrom = Node.NullNode;
+                }
+                if (highlightNode == clickedNode)
+                {
+                    highlightNode = Node.NullNode;
+                }
+
+                removedNode = clickedNode;
+                clickedNode = Node.NullNode;
+            }
+        }
+
+        var family = nodes[SelectedCharacter][removedNode];
+        List<Node> childs = [.. family.Childs];
+        List<Node> parents = [.. family.Parents];
+
+        foreach (var child in childs)
+        {
+            Unlink(removedNode, child, true);
+        }
+        foreach (var parent in parents)
+        {
+            Unlink(parent, removedNode, true);
+        }
+        nodes[SelectedCharacter].Remove(removedNode);
+
+        foreach (var child in childs)
+        {
+            NodeLinker.UpdateLinks(child, SelectedCharacter, nodes[SelectedCharacter]);
+        }
+        foreach (var parent in parents)
+        {
+            NodeLinker.UpdateLinks(parent, SelectedCharacter, nodes[SelectedCharacter]);
+        }
+        Graph.Invalidate();
     }
 
     private void ShowNodeSpawnBox()
@@ -566,7 +632,7 @@ public partial class Main : Form
 
     private void TryCreateOverlayBitmap()
     {
-        if (nodeToLinkNext != Node.NullNode)
+        if (nodeToLinkFrom != Node.NullNode)
         {
             if (oldGraph is null)
             {
@@ -993,7 +1059,7 @@ public partial class Main : Form
         }
         var g = e.Graphics;
 
-        if (oldGraph is null || nodeToLinkNext == Node.NullNode)
+        if (oldGraph is null || nodeToLinkFrom == Node.NullNode)
         {
             g.ToLowQuality();
 
@@ -1036,12 +1102,12 @@ public partial class Main : Form
             pos = Graph.PointToClient(Cursor.Position);
         }
 
-        GraphToScreen(nodeToLinkNext.Position.X, nodeToLinkNext.Position.Y, out float screenX, out float ScreenY);
+        GraphToScreen(nodeToLinkFrom.Position.X, nodeToLinkFrom.Position.Y, out float screenX, out float ScreenY);
         var screenPos = new PointF(screenX, ScreenY);
 
-        screenPos += new SizeF(nodeToLinkNext.Size.Width * Scaling[nodeToLinkNext.FileName], (nodeToLinkNext.Size.Height / 2) * Scaling[nodeToLinkNext.FileName]);
+        screenPos += new SizeF(nodeToLinkFrom.Size.Width * Scaling[nodeToLinkFrom.FileName], (nodeToLinkFrom.Size.Height / 2) * Scaling[nodeToLinkFrom.FileName]);
 
-        DrawEdge(g, nodeToLinkNext, Node.NullNode, nodeToLinkPen, start: screenPos, end: pos);
+        DrawEdge(g, nodeToLinkFrom, Node.NullNode, nodeToLinkPen, start: screenPos, end: pos);
     }
 
     private void DrawAllNodes(Graphics g)
@@ -1112,9 +1178,9 @@ public partial class Main : Form
             DrawNode(g, highlightNode, HighlightNodeBrush, true);
         }
 
-        if (nodeToLinkNext != Node.NullNode)
+        if (nodeToLinkFrom != Node.NullNode)
         {
-            DrawNode(g, nodeToLinkNext, NodeToLinkNextBrush, true);
+            DrawNode(g, nodeToLinkFrom, NodeToLinkNextBrush, true);
         }
     }
 
@@ -1390,24 +1456,24 @@ public partial class Main : Form
         {
             if (IsCtrlPressed && node.DataType != typeof(MissingReferenceInfo))
             {
-                nodeToLinkNext = node;
+                nodeToLinkFrom = node;
                 if (highlightNode == node)
                 {
                     highlightNode = Node.NullNode;
                 }
             }
-            else if (!IsCtrlPressed && nodeToLinkNext != Node.NullNode)
+            else if (!IsCtrlPressed && nodeToLinkFrom != Node.NullNode)
             {
-                if (nodes[SelectedCharacter].AreConnected(nodeToLinkNext, node))
+                if (nodes[SelectedCharacter].AreConnected(nodeToLinkFrom, node))
                 {
-                    Unlink(nodeToLinkNext, node);
+                    Unlink(nodeToLinkFrom, node);
                 }
                 else
                 {
-                    Link(nodeToLinkNext, node);
+                    Link(nodeToLinkFrom, node);
                 }
 
-                nodeToLinkNext = Node.NullNode;
+                nodeToLinkFrom = Node.NullNode;
                 oldMousePosBeforeSpawnWindow = Point.Empty;
 
                 ShowProperties(node);
@@ -1423,22 +1489,22 @@ public partial class Main : Form
             var circleNode = TryGetNodeLinkStart(graphPos);
             if (circleNode != Node.NullNode)
             {
-                if (nodeToLinkNext == Node.NullNode)
+                if (nodeToLinkFrom == Node.NullNode)
                 {
-                    nodeToLinkNext = circleNode;
+                    nodeToLinkFrom = circleNode;
                 }
-                else if (nodeToLinkNext != Node.NullNode)
+                else if (nodeToLinkFrom != Node.NullNode)
                 {
-                    Link(nodeToLinkNext, circleNode);
+                    Link(nodeToLinkFrom, circleNode);
 
-                    nodeToLinkNext = Node.NullNode;
+                    nodeToLinkFrom = Node.NullNode;
                     oldMousePosBeforeSpawnWindow = Point.Empty;
 
                     ShowProperties(node);
                     ClearOverlayBitmap();
                 }
             }
-            else if (nodeToLinkNext != Node.NullNode)
+            else if (nodeToLinkFrom != Node.NullNode)
             {
                 ShowNodeSpawnBox();
             }
@@ -1872,8 +1938,8 @@ public partial class Main : Form
 
         addFrom = Node.NullNode;
     }
-    
-    private void Unlink(Node removeFrom, Node removeThis)
+
+    private void Unlink(Node removeFrom, Node removeThis, bool removeAll = false)
     {
         if (removeThis.DataType == typeof(MissingReferenceInfo))
         {
@@ -1969,14 +2035,17 @@ public partial class Main : Form
             }
             else if (removeThis.DataType == typeof(Dialogue))
             {
-                var result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.None;
+                if (!removeAll)
+                {
+                    result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                }
+                if (result == DialogResult.Yes || removeAll)
                 {
                     removeThis.Data<Dialogue>()!.StartEvents!.Remove(removeFrom.Data<GameEvent>()!);
                     linked = true;
                 }
-                else if (result == DialogResult.No)
+                if (result == DialogResult.No || removeAll)
                 {
                     removeThis.Data<Dialogue>()!.CloseEvents!.Remove(removeFrom.Data<GameEvent>()!);
                     linked = true;
@@ -1989,14 +2058,17 @@ public partial class Main : Form
             }
             else if (removeThis.DataType == typeof(ItemInteraction))
             {
-                var result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.None;
+                if (!removeAll)
+                {
+                    result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                }
+                if (result == DialogResult.Yes || removeAll)
                 {
                     removeThis.Data<ItemInteraction>()!.OnAcceptEvents!.Remove(removeFrom.Data<GameEvent>()!);
                     linked = true;
                 }
-                else if (result == DialogResult.No)
+                if (result == DialogResult.No || removeAll)
                 {
                     removeThis.Data<ItemInteraction>()!.OnRefuseEvents!.Remove(removeFrom.Data<GameEvent>()!);
                     linked = true;
@@ -2004,14 +2076,17 @@ public partial class Main : Form
             }
             else if (removeThis.DataType == typeof(ItemGroupInteraction))
             {
-                var result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.None;
+                if (!removeAll)
+                {
+                    result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                }
+                if (result == DialogResult.Yes || removeAll)
                 {
                     removeThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Remove(removeFrom.Data<GameEvent>()!);
                     linked = true;
                 }
-                else if (result == DialogResult.No)
+                if (result == DialogResult.No || removeAll)
                 {
                     removeThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Remove(removeFrom.Data<GameEvent>()!);
                     linked = true;
@@ -2160,14 +2235,17 @@ public partial class Main : Form
             }
             else if (removeThis.DataType == typeof(Dialogue))
             {
-                var result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to Remove the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.None;
+                if (!removeAll)
+                {
+                    result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to Remove the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                }
+                if (result == DialogResult.Yes || removeAll)
                 {
                     removeFrom.Data<Response>()!.Next = 0;
                     nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
                 }
-                else if (result == DialogResult.No)
+                if (result == DialogResult.No || removeAll)
                 {
                     removeThis.Data<Dialogue>()!.Responses.Remove(removeFrom.Data<Response>()!);
                     nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
@@ -2178,14 +2256,17 @@ public partial class Main : Form
         {
             if (removeThis.DataType == typeof(GameEvent))
             {
-                var result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.None;
+                if (!removeAll)
+                {
+                    result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                }
+                if (result == DialogResult.Yes || removeAll)
                 {
                     removeFrom.Data<Dialogue>()!.StartEvents!.Remove(removeThis.Data<GameEvent>()!);
                     nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
                 }
-                else if (result == DialogResult.No)
+                if (result == DialogResult.No || removeAll)
                 {
                     removeFrom.Data<Dialogue>()!.CloseEvents!.Remove(removeThis.Data<GameEvent>()!);
                     nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
@@ -2193,14 +2274,17 @@ public partial class Main : Form
             }
             else if (removeThis.DataType == typeof(Response))
             {
-                var result = MessageBox.Show("Remove as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                DialogResult result = DialogResult.None;
+                if (!removeAll)
+                {
+                    result = MessageBox.Show("Remove as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                }
+                if (result == DialogResult.Yes || removeAll)
                 {
                     removeFrom.Data<Dialogue>()!.Responses.Remove(removeThis.Data<Response>()!);
                     nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
                 }
-                else if (result == DialogResult.No)
+                if (result == DialogResult.No || removeAll)
                 {
                     removeThis.Data<Response>()!.Next = 0;
                     nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
@@ -2264,8 +2348,6 @@ public partial class Main : Form
         }
 
         NodeLinker.UpdateLinks(removeThis, SelectedCharacter, nodes[selectedCharacter]);
-
-        removeFrom = Node.NullNode;
     }
 
     //todo implement drag/drop setting of node data like item name or sth
@@ -4233,7 +4315,7 @@ public partial class Main : Form
 
         if (!NodeSpawnBox.Enabled)
         {
-            nodeToLinkNext = Node.NullNode;
+            nodeToLinkFrom = Node.NullNode;
             oldMousePosBeforeSpawnWindow = Point.Empty;
             return;
         }
@@ -4248,11 +4330,11 @@ public partial class Main : Form
 
         newNode.Position = new(nodeX, nodeY);
 
-        if (nodeToLinkNext != Node.NullNode)
+        if (nodeToLinkFrom != Node.NullNode)
         {
-            Link(nodeToLinkNext, newNode);
+            Link(nodeToLinkFrom, newNode);
             ShowProperties(newNode);
-            nodeToLinkNext = Node.NullNode;
+            nodeToLinkFrom = Node.NullNode;
             oldMousePosBeforeSpawnWindow = Point.Empty;
         }
     }
