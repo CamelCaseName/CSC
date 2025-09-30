@@ -116,13 +116,14 @@ public partial class Main : Form
     public const string NoCharacter = "None";
     public const string Player = "Player";
     private const string Anybody = "Anybody";
-
-    public static string StoryName { get; private set; } = NoCharacter;
     private RectangleF adjustedVisibleClipBounds = new();
     private Point oldMousePosBeforeSpawnWindow = Point.Empty;
     private bool selecting;
+    private bool subtracting;
+    private bool adding;
     private Point startSelectingMousePos = Point.Empty;
 
+    public static string StoryName { get; private set; } = NoCharacter;
     public static string SelectedCharacter
     {
         get
@@ -288,6 +289,24 @@ public partial class Main : Form
         //get the shift key state so we can determine later if we want to redraw the tree on node selection or not
         IsShiftPressed = e.KeyData == (Keys.ShiftKey | Keys.Shift);
         IsCtrlPressed = e.KeyData == (Keys.Control | Keys.ControlKey);
+
+        if (selected.Count > 0)
+        {
+            subtracting = IsCtrlPressed;
+        }
+        else
+        {
+            subtracting = false;
+        }
+
+        if (selected.Count > 0)
+        {
+            adding = IsShiftPressed;
+        }
+        else
+        {
+            adding = false;
+        }
 
         if (e.KeyData == Keys.Space && !NodeSpawnBox.Enabled)
         {
@@ -664,42 +683,69 @@ public partial class Main : Form
 
     private void UpdateLeftClickSelection(PointF graphPos)
     {
-        if (selecting)
+        if (!selecting)
+        {
+            return;
+        }
+
+        if (!subtracting && !adding)
         {
             selected.Clear();
-            var Pos1 = graphPos;
-            ScreenToGraph(startSelectingMousePos.X, startSelectingMousePos.Y, out float GraphPosX, out float GraphPosY);
-            var Pos2 = new PointF(GraphPosX, GraphPosY);
-            int MinX = (int)MathF.Min(Pos1.X, Pos2.X);
-            int MaxX = (int)MathF.Max(Pos1.X, Pos2.X);
-            int MinY = (int)MathF.Min(Pos1.Y, Pos2.Y);
-            int MaxY = (int)MathF.Max(Pos1.Y, Pos2.Y);
+        }
 
-            for (int x = MinX; x < MaxX; x += (NodeSizeX / 2))
+        var Pos1 = graphPos;
+        ScreenToGraph(startSelectingMousePos.X, startSelectingMousePos.Y, out float GraphPosX, out float GraphPosY);
+        var Pos2 = new PointF(GraphPosX, GraphPosY);
+        int MinX = (int)MathF.Min(Pos1.X, Pos2.X);
+        int MaxX = (int)MathF.Max(Pos1.X, Pos2.X);
+        int MinY = (int)MathF.Min(Pos1.Y, Pos2.Y);
+        int MaxY = (int)MathF.Max(Pos1.Y, Pos2.Y);
+
+        for (int x = MinX; x < MaxX; x += (NodeSizeX / 2))
+        {
+            for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
             {
-                for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
+                var maybeNode = GetNodeAtPoint(new PointF(x, y));
+                if (maybeNode != Node.NullNode)
                 {
-                    var maybeNode = GetNodeAtPoint(new PointF(x, y));
-                    if (maybeNode != Node.NullNode && !selected.Contains(maybeNode))
+                    if (subtracting)
+                    {
+                        selected.Remove(maybeNode);
+                    }
+                    else if (!selected.Contains(maybeNode))
                     {
                         selected.Add(maybeNode);
                     }
                 }
             }
-            //do rightmost edge
-            for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
+        }
+        //do rightmost edge
+        for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
+        {
+            var maybeNode = GetNodeAtPoint(new PointF(MaxX, y));
+            if (maybeNode != Node.NullNode)
             {
-                var maybeNode = GetNodeAtPoint(new PointF(MaxX, y));
-                if (maybeNode != Node.NullNode && !selected.Contains(maybeNode))
+                if (subtracting)
+                {
+                    selected.Remove(maybeNode);
+                }
+                else if (!selected.Contains(maybeNode))
                 {
                     selected.Add(maybeNode);
                 }
             }
-            //do bottom edge
-            for (int x = MinX; x < MaxX; x += (NodeSizeY / 2))
+        }
+        //do bottom edge
+        for (int x = MinX; x < MaxX; x += (NodeSizeY / 2))
+        {
+            var maybeNode = GetNodeAtPoint(new PointF(x, MaxY));
+            if (maybeNode != Node.NullNode)
             {
-                var maybeNode = GetNodeAtPoint(new PointF(x, MaxY));
-                if (maybeNode != Node.NullNode && !selected.Contains(maybeNode))
+                if (subtracting)
+                {
+                    selected.Remove(maybeNode);
+                }
+                else if (!selected.Contains(maybeNode))
                 {
                     selected.Add(maybeNode);
                 }
@@ -749,7 +795,10 @@ public partial class Main : Form
     {
         selecting = true;
         startSelectingMousePos = new((int)screenPos.X, (int)screenPos.Y);
-        selected.Clear();
+        if (!subtracting && !adding)
+        {
+            selected.Clear();
+        }
         SelectedNodeOffsets.Clear();
         TryCreateOverlayBitmap();
     }
