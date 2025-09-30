@@ -157,7 +157,6 @@ public partial class Main : Form
     public int LeftClickFrameCounter { get; private set; }
 
     //todo populate propertyinspector for most basic events.
-    //todo add new file creation/class default values :)
     //todo after these two todos we should then be more or less able to make a story
 
     //todo add info when trying to link incompatible notes
@@ -426,6 +425,7 @@ public partial class Main : Form
 
     private object[] GetSpawnableNodeTypes()
     {
+        //todo also filter by Mainstory or character story!!!
         if (clickedNode != Node.NullNode)
         {
             switch (clickedNode.Type)
@@ -953,7 +953,33 @@ public partial class Main : Form
 
     private void Add_Click(object sender, EventArgs e)
     {
+        if (string.IsNullOrEmpty(StoryName) || StoryName == NoCharacter || Story is null)
+        {
+            DialogResult res = MessageBox.Show("Do you want to create a new Story file?", "New Story?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
+            if (res != DialogResult.Yes)
+            {
+                return;
+            }
+
+            var newStoryName = string.Empty;
+            res = Dialogs.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
+
+            if (res != DialogResult.OK)
+            {
+                return;
+            }
+
+            Story = new();
+            StoryName = newStoryName;
+            SelectedCharacter = Player;
+
+            AddItemToStoryTree(true, StoryName);
+        }
+        else
+        {
+
+        }
     }
 
     private void AddChild_Click(object sender, EventArgs e)
@@ -1524,7 +1550,20 @@ public partial class Main : Form
 
         if (Path.GetExtension(FilePath) == ".story")
         {
-            StoryTree.Nodes[0].Nodes.Insert(0, new TreeNode(Path.GetFileNameWithoutExtension(FilePath)));
+            AddItemToStoryTree(true, Path.GetFileNameWithoutExtension(FilePath));
+        }
+        else
+        {
+            AddItemToStoryTree(false, FileName);
+        }
+        return;
+    }
+
+    private void AddItemToStoryTree(bool isStory, string FileName)
+    {
+        if (isStory)
+        {
+            StoryTree.Nodes[0].Nodes.Insert(0, new TreeNode(FileName));
             StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[0];
         }
         else
@@ -1533,7 +1572,6 @@ public partial class Main : Form
             StoryTree.SelectedNode = StoryTree.Nodes[0].LastNode.LastNode;
         }
         StoryTree.ExpandAll();
-        return;
     }
 
     private void ResetButton_Click(object sender, EventArgs e)

@@ -104,7 +104,6 @@ namespace CSC
             // Add
             // 
             Add.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            Add.Enabled = false;
             Add.ForeColor = Color.FromArgb(224, 224, 224);
             Add.Image = (Image)resources.GetObject("Add.Image");
             Add.ImageTransparentColor = Color.Magenta;
