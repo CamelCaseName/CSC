@@ -50,6 +50,9 @@ namespace CSC
             NodeContext = new ContextMenuStrip(components);
             PullChildsMenu = new ToolStripMenuItem();
             PullParentsMenu = new ToolStripMenuItem();
+            SortConnectedMenu = new ToolStripMenuItem();
+            SortSelectedMenu = new ToolStripMenuItem();
+            SortSelectedConnectedMenu = new ToolStripMenuItem();
             Seperator1 = new ToolStripSeparator();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
@@ -272,6 +275,30 @@ namespace CSC
             PullParentsMenu.ForeColor = Color.LightGray;
             PullParentsMenu.Click += PullParentsClose;
             // 
+            // SortConnectedMenu
+            // 
+            SortConnectedMenu.Name = "SortConnected";
+            SortConnectedMenu.Size = new Size(155, 22);
+            SortConnectedMenu.Text = "Sort Connected nodes";
+            SortConnectedMenu.ForeColor = Color.LightGray;
+            SortConnectedMenu.Click += SortConnected;
+            // 
+            // SortSelectedMenu
+            // 
+            SortSelectedMenu.Name = "SortSelected";
+            SortSelectedMenu.Size = new Size(155, 22);
+            SortSelectedMenu.Text = "Sort Selected nodes";
+            SortSelectedMenu.ForeColor = Color.LightGray;
+            SortSelectedMenu.Click += SortSelected;
+            // 
+            // SortSelectedConnectedMenu
+            // 
+            SortSelectedConnectedMenu.Name = "SortSelectedConnected";
+            SortSelectedConnectedMenu.Size = new Size(155, 22);
+            SortSelectedConnectedMenu.Text = "Sort nodes connected to the selected";
+            SortSelectedConnectedMenu.ForeColor = Color.LightGray;
+            SortSelectedConnectedMenu.Click += SortSelectedConnected;
+            // 
             // toolStripSeparator1
             // 
             Seperator1.Name = "toolStripSeparator1";
@@ -327,6 +354,9 @@ namespace CSC
         private ContextMenuStrip NodeContext;
         private ToolStripMenuItem PullChildsMenu;
         private ToolStripMenuItem PullParentsMenu;
+        private ToolStripMenuItem SortConnectedMenu;
+        private ToolStripMenuItem SortSelectedMenu;
+        private ToolStripMenuItem SortSelectedConnectedMenu;
         private ToolStripSeparator Seperator1;
     }
 }

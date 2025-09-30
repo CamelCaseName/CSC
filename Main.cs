@@ -31,6 +31,7 @@ public partial class Main : Form
     private readonly HatchBrush InterlinkedNodeBrush;
     private readonly int scaleX = (int)(NodeSizeX * 1.5f);
     private readonly int scaleY = (int)(NodeSizeY * 1.5f);
+    private readonly SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
     private readonly List<int> maxYperX = [];
     private readonly List<Node> visited = [];
     private readonly List<Node> selected = [];
@@ -153,10 +154,12 @@ public partial class Main : Form
     public int RightClickFrameCounter { get; private set; } = 0;
     public int LeftClickFrameCounter { get; private set; }
 
-    //todo add selection
+    //todo populate propertyinspector for most basic events.
+    //todo add new file creation
+    //todo after these two todos we should then be more or less able to make a story
+
     //todo add info when trying to link incompatible notes
     //todo add search
-    //todo add new file creation
     //todo add file export
     //todo use the csc dll to populate the rest of the events and criteria i havent done yet, 
     //maybe turn it into a store where you put in the type and get out the relevant fields in order
@@ -1503,116 +1506,139 @@ public partial class Main : Form
 
             SelectedCharacter = store;
 
-            int sideLengthY = (int)(Math.Sqrt(nodes[store].Count) + 0.5);
-
-            maxYperX.Clear();
-            var intX = 100;
-            maxYperX.ExtendToIndex(intX, 1);
-
-            visited.Clear();
-            for (int i = 0; i < maxYperX.Count; i++)
-            {
-                maxYperX[i] = 1;
-            }
-
             NodeStore nodeStore = nodes[store];
             var nodeList = nodeStore.Nodes;
-            int ParentEdgeMaxStartValue = 1;
-
-            nodeList.Sort(new NodeParentComparer(nodes[store]));
-            foreach (var key in nodeList)
-            {
-                Family family = nodeStore[key];
-                if (family.Parents.Count > ParentEdgeMaxStartValue || visited.Contains(key))
-                {
-                    continue;
-                }
-
-                if (family.Childs.Count > 0)
-                {
-                    intX = maxYperX.Count + 1;
-                }
-                else
-                {
-                    intX += 1 + ParentEdgeMaxStartValue;
-                }
-                maxYperX.ExtendToIndex(intX, 1);
-
-                Queue<Node> toExplore = [];
-                Queue<int> layerX = [];
-                toExplore.Enqueue(key);
-                layerX.Enqueue(intX);
-
-                //Debug.WriteLine($"starting on {key.ID} at {intX}|{1}");
-
-                while (toExplore.Count > 0)
-                {
-                    var node = toExplore.Dequeue();
-                    intX = layerX.Dequeue();
-
-                    if (visited.Contains(node))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        visited.Add(node);
-                    }
-
-                    var childs = nodeStore.Childs(node);
-                    childs.Sort(new NodeChildComparer(nodeStore));
-                    var parents = nodeStore.Parents(node);
-                    parents.Sort(new NodeParentComparer(nodeStore));
-
-                    int newParentsX = intX - (parents.Count / 3) - 1;
-                    newParentsX = Math.Max(0, newParentsX);
-                    int newChildX = intX + (childs.Count / 3) + 1;
-                    maxYperX.ExtendToIndex(newChildX, maxYperX[intX]);
-
-                    int rest = (int)float.Round(node.Size.Height / NodeSizeY);
-                    rest = rest < 0 ? 1 : rest;
-
-                    node.Position = new PointF(intX * scaleX, maxYperX[intX] * scaleY);
-
-                    maxYperX[intX] += rest;
-
-                    if (parents.Count > 0)
-                    {
-                        if (maxYperX[newParentsX] < maxYperX[intX] - rest)
-                        {
-                            maxYperX[newParentsX] = maxYperX[intX] - rest;
-                        }
-
-                        foreach (var item in parents)
-                        {
-                            if (visited.Contains(item))
-                            {
-                                continue;
-                            }
-
-                            layerX.Enqueue(newParentsX);
-                            toExplore.Enqueue(item);
-                        }
-                    }
-
-                    if (childs.Count > 0)
-                    {
-                        foreach (var item in childs)
-                        {
-                            if (visited.Contains(item))
-                            {
-                                continue;
-                            }
-
-                            layerX.Enqueue(newChildX);
-                            toExplore.Enqueue(item);
-                        }
-                    }
-                }
-            }
+            SetStartPositionsForNodesInList(store, 100, 1, nodeStore, nodeList);
 
             CenterOnNode(nodes[store].Nodes.First(), 0.8f);
         }
+    }
+
+    private void SetStartPositionsForNodesInList(string store, int intX, int intY, NodeStore nodeStore, List<Node> nodeList, bool inListOnly = false)
+    {
+        int ParentEdgeMaxStartValue = 1;
+        maxYperX.Clear();
+        maxYperX.ExtendToIndex(intX, intY);
+
+        for (int i = 0; i < maxYperX.Count; i++)
+        {
+            maxYperX[i] = intY;
+        }
+
+        nodeList.Sort(new NodeParentComparer(nodes[store]));
+        visited.Clear();
+        foreach (var key in nodeList)
+        {
+            Family family = nodeStore[key];
+            if (family.Parents.Count > ParentEdgeMaxStartValue || visited.Contains(key))
+            {
+                continue;
+            }
+
+            if (family.Childs.Count > 0)
+            {
+                intX = maxYperX.Count + 1;
+            }
+            else
+            {
+                intX += 1 + ParentEdgeMaxStartValue;
+            }
+            maxYperX.ExtendToIndex(intX, intY);
+
+            intX = SetStartPosForConnected(intX, nodeStore, key, inListOnly);
+        }
+    }
+
+    private int SetStartPosForConnected(int intX, NodeStore nodeStore, Node start, bool inListOnly = false)
+    {
+        maxYperX.ExtendToIndex(intX, (int)(start.Position.Y / scaleY));
+
+        Queue<Node> toExplore = [];
+        Queue<int> layerX = [];
+        toExplore.Enqueue(start);
+        layerX.Enqueue(intX);
+        int lastIntX = 0;
+
+        //Debug.WriteLine($"starting on {key.ID} at {intX}|{1}");
+
+        while (toExplore.Count > 0)
+        {
+            var node = toExplore.Dequeue();
+            intX = layerX.Dequeue();
+
+            if (visited.Contains(node) || (inListOnly && !selected.Contains(node)))
+            {
+                continue;
+            }
+            else
+            {
+                visited.Add(node);
+            }
+
+            var childs = nodeStore.Childs(node);
+            childs.Sort(new NodeChildComparer(nodeStore));
+            var parents = nodeStore.Parents(node);
+            parents.Sort(new NodeParentComparer(nodeStore));
+
+            int newParentsX = intX - (parents.Count / 3) - 1;
+            newParentsX = Math.Max(0, newParentsX);
+            int newChildX = intX + (childs.Count / 3) + 1;
+            maxYperX.ExtendToIndex(newChildX, maxYperX[intX]);
+
+            int rest = (int)float.Round(node.Size.Height / NodeSizeY);
+            rest = rest < 0 ? 1 : rest;
+
+            var newPos = new PointF(intX * scaleX, maxYperX[intX] * scaleY);
+            //if we are more right along the screen this is a child
+            if (lastIntX < intX)
+            {
+                ShoveNodesToRight(node, newPos);
+            }
+            else
+            {
+                ShoveNodesToLeft(node, newPos);
+            }
+
+            node.Position = newPos;
+
+            maxYperX[intX] += rest;
+
+            if (parents.Count > 0)
+            {
+                if (maxYperX[newParentsX] < maxYperX[intX] - rest)
+                {
+                    maxYperX[newParentsX] = maxYperX[intX] - rest;
+                }
+
+                foreach (var item in parents)
+                {
+                    if (visited.Contains(item) || (inListOnly && !selected.Contains(item)))
+                    {
+                        continue;
+                    }
+
+                    layerX.Enqueue(newParentsX);
+                    toExplore.Enqueue(item);
+                }
+            }
+
+            if (childs.Count > 0)
+            {
+                foreach (var item in childs)
+                {
+                    if (visited.Contains(item) || (inListOnly && !selected.Contains(item)))
+                    {
+                        continue;
+                    }
+
+                    layerX.Enqueue(newChildX);
+                    toExplore.Enqueue(item);
+                }
+            }
+            lastIntX = intX;
+        }
+
+        return intX;
     }
 
     private void Start_Click(object sender, EventArgs e)
@@ -1698,14 +1724,22 @@ public partial class Main : Form
 
         if (clickedNode != Node.NullNode)
         {
+            NodeContext.Items.Add(SortConnectedMenu);
             NodeContext.Items.Add(PullChildsMenu);
             NodeContext.Items.Add(PullParentsMenu);
             NodeContext.Items.Add(Seperator1);
         }
 
+        else if (selected.Count > 0)
+        {
+            NodeContext.Items.Add(SortSelectedConnectedMenu);
+            NodeContext.Items.Add(SortSelectedMenu);
+            NodeContext.Items.Add(Seperator1);
+        }
+
         foreach (var item in list)
         {
-            var button = new ToolStripMenuItem(item.ToString(), null, onClick: (_, _) =>
+            var button = new ToolStripMenuItem("Add " + item.ToString(), null, onClick: (_, _) =>
             {
                 string character = GetProbableCharacter();
                 var newNode = GetNodeFromSpawnableType((Enum.Parse<SpawnableNodeType>(item.ToString()!)), character);
@@ -4909,28 +4943,11 @@ public partial class Main : Form
     {
         //clickednode is set when this is called
         var childs = nodes[SelectedCharacter].Childs(clickedNode);
-        SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
 
         for (int i = 0; i < childs.Count; i++)
         {
             var newPos = clickedNode.Position + new SizeF(scaleX, (i - (childs.Count / 2)) * scaleY);
-            var maybeNodePos = newPos;
-            Node maybeThere;
-            Node maybeNewSpot;
-
-            while ((maybeNewSpot = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeNewSpot != childs[i])
-            {
-                maybeNodePos = newPos;
-                while ((maybeThere = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeThere != childs[i])
-                {
-                    maybeNodePos += new SizeF(scaleX, 0);
-                    if (GetNodeAtPoint(maybeNodePos + NodeCenter) == Node.NullNode)
-                    {
-                        maybeThere.Position = maybeNodePos;
-                        break;
-                    }
-                }
-            }
+            ShoveNodesToRight(childs[i], newPos);
 
             childs[i].Position = newPos;
         }
@@ -4943,33 +4960,100 @@ public partial class Main : Form
     {
         //clickednode is set when this is called
         var parents = nodes[SelectedCharacter].Parents(clickedNode);
-        SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
 
         for (int i = 0; i < parents.Count; i++)
         {
             var newPos = clickedNode.Position - new SizeF(scaleX, (i - (parents.Count / 2)) * scaleY);
-            var maybeNodePos = newPos;
-            Node maybeThere;
-            Node maybeNewSpot;
-
-            while ((maybeNewSpot = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeNewSpot != parents[i])
-            {
-                maybeNodePos = newPos;
-                while ((maybeThere = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeThere != parents[i])
-                {
-                    maybeNodePos -= new SizeF(scaleX, 0);
-                    if (GetNodeAtPoint(maybeNodePos + NodeCenter) == Node.NullNode)
-                    {
-                        maybeThere.Position = maybeNodePos;
-                        break;
-                    }
-                }
-            }
-
+            ShoveNodesToLeft(parents[i], newPos);
             parents[i].Position = newPos;
         }
 
         CenterOnNode(clickedNode, 0.3f);
+        Graph.Invalidate();
+    }
+
+    private void ShoveNodesToLeft(Node nodeToPlace, PointF newPos)
+    {
+        var maybeNodePos = newPos;
+        Node maybeThere;
+        Node maybeNewSpot;
+
+        while ((maybeNewSpot = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeNewSpot != nodeToPlace)
+        {
+            maybeNodePos = newPos;
+            while ((maybeThere = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeThere != nodeToPlace)
+            {
+                maybeNodePos -= new SizeF(scaleX, 0);
+                if (GetNodeAtPoint(maybeNodePos + NodeCenter) == Node.NullNode)
+                {
+                    maybeThere.Position = maybeNodePos;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void ShoveNodesToRight(Node nodeToPlace, PointF newPos)
+    {
+        var maybeNodePos = newPos;
+        Node maybeThere;
+        Node maybeNewSpot;
+
+        while ((maybeNewSpot = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeNewSpot != nodeToPlace)
+        {
+            maybeNodePos = newPos;
+            while ((maybeThere = GetNodeAtPoint(maybeNodePos + NodeCenter)) != Node.NullNode && maybeThere != nodeToPlace)
+            {
+                maybeNodePos += new SizeF(scaleX, 0);
+                if (GetNodeAtPoint(maybeNodePos + NodeCenter) == Node.NullNode)
+                {
+                    maybeThere.Position = maybeNodePos;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void SortConnected(object sender, EventArgs e)
+    {
+        if (clickedNode == Node.NullNode)
+        {
+            return;
+        }
+        //clickednode is set when this is called
+        visited.Clear();
+        var intX = (int)(clickedNode.Position.X / scaleX);
+        var intY = (int)(clickedNode.Position.Y / scaleY);
+        maxYperX.ExtendToIndex(intX, intY);
+
+        for (int i = 0; i < maxYperX.Count; i++)
+        {
+            maxYperX[i] = intY;
+        }
+        SetStartPosForConnected(intX, nodes[SelectedCharacter], clickedNode);
+
+        Graph.Invalidate();
+    }
+
+    private void SortSelected(object sender, EventArgs e)
+    {
+        if (selected.Count == 0)
+        {
+            return;
+        }
+        SetStartPositionsForNodesInList(SelectedCharacter, (int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected, true);
+
+        Graph.Invalidate();
+    }
+
+    private void SortSelectedConnected(object sender, EventArgs e)
+    {
+        if (selected.Count == 0)
+        {
+            return;
+        }
+        SetStartPositionsForNodesInList(SelectedCharacter, (int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected);
+
         Graph.Invalidate();
     }
 }
