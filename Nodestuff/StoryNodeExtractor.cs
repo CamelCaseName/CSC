@@ -53,7 +53,7 @@ namespace CSC.Nodestuff
                 //add items to list
                 var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition) { RawData = group };
 
-                foreach (CriteriaList1 criteriaList in group.CriteriaList ?? [])
+                foreach (CriteriaListWrapper criteriaList in group.CriteriaList ?? [])
                 {
                     nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
                 }
@@ -234,7 +234,7 @@ namespace CSC.Nodestuff
         public static void GetItemOverrides(MainStory story, NodeStore nodes)
         {
             //go through all Main.nodes to search them for actions
-            foreach (ItemOverride itemOverride in story.ItemOverrides ?? [])
+            foreach (InteractiveitemBehaviour itemOverride in story.ItemOverrides ?? [])
             {
                 //add items to list
                 var nodeItem = new Node(itemOverride.Id ?? string.Empty, NodeType.StoryItem, itemOverride.DisplayName ?? string.Empty) { RawData = itemOverride };

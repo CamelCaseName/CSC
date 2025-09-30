@@ -122,6 +122,7 @@ public partial class Main : Form
     private bool subtracting;
     private bool adding;
     private Point startSelectingMousePos = Point.Empty;
+    public const string HousePartyVersion = "1.4.2";
 
     public static string StoryName { get; private set; } = NoCharacter;
     public static string SelectedCharacter
@@ -156,7 +157,7 @@ public partial class Main : Form
     public int LeftClickFrameCounter { get; private set; }
 
     //todo populate propertyinspector for most basic events.
-    //todo add new file creation
+    //todo add new file creation/class default values :)
     //todo after these two todos we should then be more or less able to make a story
 
     //todo add info when trying to link incompatible notes
@@ -1461,14 +1462,19 @@ public partial class Main : Form
         //else create new
         try
         {
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Error
+            };
             if (Path.GetExtension(FilePath) == ".story")
             {
-                Story = JsonConvert.DeserializeObject<MainStory>(fileString) ?? new MainStory();
+                Story = JsonConvert.DeserializeObject<MainStory>(fileString, settings) ?? new MainStory();
                 FileName = Player;
             }
             else
             {
-                CharacterStory story = JsonConvert.DeserializeObject<CharacterStory>(fileString) ?? new CharacterStory();
+                CharacterStory story = JsonConvert.DeserializeObject<CharacterStory>(fileString, settings) ?? new CharacterStory();
                 FileName = story.CharacterName!;
                 Stories.Add(FileName, story);
 
@@ -1830,9 +1836,9 @@ public partial class Main : Form
                 addToThis.Data<UseWith>()!.Criteria!.Add(addFrom.Data<Criterion>()!);
                 linked = true;
             }
-            else if (addToThis.DataType == typeof(CriteriaList1))
+            else if (addToThis.DataType == typeof(CriteriaListWrapper))
             {
-                addToThis.Data<CriteriaList1>()!.CriteriaList!.Add(addFrom.Data<Criterion>()!);
+                addToThis.Data<CriteriaListWrapper>()!.CriteriaList!.Add(addFrom.Data<Criterion>()!);
                 linked = true;
             }
             else if (addToThis.DataType == typeof(GameEvent))
@@ -1867,7 +1873,7 @@ public partial class Main : Form
             }
             else if (addToThis.DataType == typeof(ItemGroupInteraction))
             {
-                addToThis.Data<ItemGroupInteraction>()!.Critera!.Add(addFrom.Data<Criterion>()!);
+                addToThis.Data<ItemGroupInteraction>()!.Criteria!.Add(addFrom.Data<Criterion>()!);
                 linked = true;
             }
 
@@ -1966,9 +1972,9 @@ public partial class Main : Form
         }
         else if (addFrom.DataType == typeof(ItemAction))
         {
-            if (addToThis.DataType == typeof(ItemOverride))
+            if (addToThis.DataType == typeof(InteractiveitemBehaviour))
             {
-                addToThis.Data<ItemOverride>()!.ItemActions.Add(addFrom.Data<ItemAction>()!);
+                addToThis.Data<InteractiveitemBehaviour>()!.ItemActions.Add(addFrom.Data<ItemAction>()!);
                 nodes[addToThis.FileName].AddChild(addToThis, addFrom);
             }
             else if (addToThis.DataType == typeof(ItemGroupBehavior))
@@ -1989,9 +1995,9 @@ public partial class Main : Form
         }
         else if (addFrom.DataType == typeof(UseWith))
         {
-            if (addToThis.DataType == typeof(ItemOverride))
+            if (addToThis.DataType == typeof(InteractiveitemBehaviour))
             {
-                addToThis.Data<ItemOverride>()!.UseWiths.Add(addFrom.Data<UseWith>()!);
+                addToThis.Data<InteractiveitemBehaviour>()!.UseWiths.Add(addFrom.Data<UseWith>()!);
                 nodes[addToThis.FileName].AddChild(addToThis, addFrom);
             }
             else if (addToThis.DataType == typeof(ItemGroupBehavior))
@@ -2010,16 +2016,16 @@ public partial class Main : Form
                 nodes[addToThis.FileName].AddParent(addToThis, addFrom);
             }
         }
-        else if (addFrom.DataType == typeof(ItemOverride))
+        else if (addFrom.DataType == typeof(InteractiveitemBehaviour))
         {
             if (addToThis.DataType == typeof(ItemAction))
             {
-                addFrom.Data<ItemOverride>()!.ItemActions.Add(addToThis.Data<ItemAction>()!);
+                addFrom.Data<InteractiveitemBehaviour>()!.ItemActions.Add(addToThis.Data<ItemAction>()!);
                 nodes[addToThis.FileName].AddParent(addToThis, addFrom);
             }
             else if (addToThis.DataType == typeof(UseWith))
             {
-                addFrom.Data<ItemOverride>()!.UseWiths.Add(addToThis.Data<UseWith>()!);
+                addFrom.Data<InteractiveitemBehaviour>()!.UseWiths.Add(addToThis.Data<UseWith>()!);
                 nodes[addToThis.FileName].AddParent(addToThis, addFrom);
             }
         }
@@ -2040,7 +2046,7 @@ public partial class Main : Form
         {
             //todo
         }
-        else if (addFrom.DataType == typeof(CriteriaList1))
+        else if (addFrom.DataType == typeof(CriteriaListWrapper))
         {
             //todo
         }
@@ -2225,9 +2231,9 @@ public partial class Main : Form
                 removeThis.Data<UseWith>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
                 linked = true;
             }
-            else if (removeThis.DataType == typeof(CriteriaList1))
+            else if (removeThis.DataType == typeof(CriteriaListWrapper))
             {
-                removeThis.Data<CriteriaList1>()!.CriteriaList!.Remove(removeFrom.Data<Criterion>()!);
+                removeThis.Data<CriteriaListWrapper>()!.CriteriaList!.Remove(removeFrom.Data<Criterion>()!);
                 linked = true;
             }
             else if (removeThis.DataType == typeof(GameEvent))
@@ -2262,7 +2268,7 @@ public partial class Main : Form
             }
             else if (removeThis.DataType == typeof(ItemGroupInteraction))
             {
-                removeThis.Data<ItemGroupInteraction>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
+                removeThis.Data<ItemGroupInteraction>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
                 linked = true;
             }
 
@@ -2370,9 +2376,9 @@ public partial class Main : Form
         }
         else if (removeFrom.DataType == typeof(ItemAction))
         {
-            if (removeThis.DataType == typeof(ItemOverride))
+            if (removeThis.DataType == typeof(InteractiveitemBehaviour))
             {
-                removeThis.Data<ItemOverride>()!.ItemActions.Remove(removeFrom.Data<ItemAction>()!);
+                removeThis.Data<InteractiveitemBehaviour>()!.ItemActions.Remove(removeFrom.Data<ItemAction>()!);
                 nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
             }
             else if (removeThis.DataType == typeof(ItemGroupBehavior))
@@ -2393,9 +2399,9 @@ public partial class Main : Form
         }
         else if (removeFrom.DataType == typeof(UseWith))
         {
-            if (removeThis.DataType == typeof(ItemOverride))
+            if (removeThis.DataType == typeof(InteractiveitemBehaviour))
             {
-                removeThis.Data<ItemOverride>()!.UseWiths.Remove(removeFrom.Data<UseWith>()!);
+                removeThis.Data<InteractiveitemBehaviour>()!.UseWiths.Remove(removeFrom.Data<UseWith>()!);
                 nodes[removeThis.FileName].RemoveChild(removeThis, removeFrom);
             }
             else if (removeThis.DataType == typeof(ItemGroupBehavior))
@@ -2414,16 +2420,16 @@ public partial class Main : Form
                 nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
             }
         }
-        else if (removeFrom.DataType == typeof(ItemOverride))
+        else if (removeFrom.DataType == typeof(InteractiveitemBehaviour))
         {
             if (removeThis.DataType == typeof(ItemAction))
             {
-                removeFrom.Data<ItemOverride>()!.ItemActions.Remove(removeThis.Data<ItemAction>()!);
+                removeFrom.Data<InteractiveitemBehaviour>()!.ItemActions.Remove(removeThis.Data<ItemAction>()!);
                 nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
             }
             else if (removeThis.DataType == typeof(UseWith))
             {
-                removeFrom.Data<ItemOverride>()!.UseWiths.Remove(removeThis.Data<UseWith>()!);
+                removeFrom.Data<InteractiveitemBehaviour>()!.UseWiths.Remove(removeThis.Data<UseWith>()!);
                 nodes[removeThis.FileName].RemoveParent(removeThis, removeFrom);
             }
         }
@@ -2444,7 +2450,7 @@ public partial class Main : Form
         {
             //todo
         }
-        else if (removeFrom.DataType == typeof(CriteriaList1))
+        else if (removeFrom.DataType == typeof(CriteriaListWrapper))
         {
             //todo
         }
@@ -3322,7 +3328,7 @@ public partial class Main : Form
                 ComboBox pairedEmote = GetComboBox();
                 pairedEmote.Items.AddRange(Enum.GetNames(typeof(StoryEnums.BGCEmotes)));
                 pairedEmote.SelectedItem = dialogue.PairedEmote;
-                pairedEmote.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => dialogue.PairedEmote = pairedEmote.SelectedItem!.ToString());
+                pairedEmote.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => dialogue.PairedEmote = Enum.Parse<BGCEmotes>(pairedEmote.SelectedItem.ToString()!));
                 PropertyInspector.Controls.Add(pairedEmote);
 
                 TextBox text = new()
@@ -3376,8 +3382,8 @@ public partial class Main : Form
                 checkBox.CheckedChanged += (_, args) => dialogue.ShowGlobalGoodByeResponses = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
-                checkBox = GetCheckbox("Auto Immersive:", dialogue.IsDynamic);
-                checkBox.CheckedChanged += (_, args) => dialogue.IsDynamic = checkBox.Checked;
+                checkBox = GetCheckbox("Auto Immersive:", dialogue.AutoImmersive);
+                checkBox.CheckedChanged += (_, args) => dialogue.AutoImmersive = checkBox.Checked;
                 PropertyInspector.Controls.Add(checkBox);
 
                 TextBox text = new()
@@ -4464,7 +4470,7 @@ public partial class Main : Form
         equals.Items.AddRange(Enum.GetNames(typeof(EqualsValues)));
         equals.SelectedIndex = (int)criterion.EqualsValue!;
         equals.PerformLayout();
-        equals.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.EqualsValue = (EqualsValues?)equals.SelectedIndex);
+        equals.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.EqualsValue = (EqualsValues)equals.SelectedIndex);
         PropertyInspector.Controls.Add(equals);
     }
 
@@ -4848,7 +4854,7 @@ public partial class Main : Form
                 string id = "item name";
                 newNode = new Node(id, NodeType.StoryItem, string.Empty, nodes[character].Positions)
                 {
-                    RawData = new ItemOverride() { ItemName = id },
+                    RawData = new InteractiveitemBehaviour() { ItemName = id },
                     FileName = character,
                 };
                 nodes[character].Add(newNode);

@@ -95,7 +95,7 @@ namespace CSC.Nodestuff
             ItemGroup itemGroup;
             ItemGroupBehavior itemGroupBehavior;
             ItemGroupInteraction itemGroupInteraction;
-            ItemOverride itemOverride;
+            InteractiveitemBehaviour itemOverride;
             Node? result;
             Quest quest1;
             Response response;
@@ -531,9 +531,9 @@ namespace CSC.Nodestuff
                                     result.DupeToOtherSorting(node.FileName);
                                 }
 
-                                if (!result.StaticText.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value))
+                                if (!result.StaticText.Contains(GetSymbolsFromValueFormula(criterion.ValueFormula) + criterion.Value))
                                 {
-                                    result.StaticText += GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ";
+                                    result.StaticText += GetSymbolsFromValueFormula(criterion.ValueFormula) + criterion.Value + ", ";
                                 }
 
                                 nodes.AddParent(node, result);
@@ -542,7 +542,7 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula ?? ValueSpecificFormulas.EqualsValue) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
+                                var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
                                 Values.Add(value);
                                 nodes.AddParent(node, value);
                             }
@@ -1241,7 +1241,7 @@ namespace CSC.Nodestuff
                         HandleEvent(nodes, node, searchIn, _event, dupeTo);
                     }
 
-                    foreach (Criterion _criterion in itemGroupInteraction.Critera!)
+                    foreach (Criterion _criterion in itemGroupInteraction.Criteria!)
                     {
                         HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
@@ -1304,7 +1304,7 @@ namespace CSC.Nodestuff
                     }
                     break;
                 }
-                case NodeType.StoryItem when (itemOverride = node.Data<ItemOverride>()!) is not null:
+                case NodeType.StoryItem when (itemOverride = node.Data<InteractiveitemBehaviour>()!) is not null:
                 {
                     foreach (var _action in itemOverride.ItemActions)
                     {

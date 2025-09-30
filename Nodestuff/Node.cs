@@ -660,7 +660,7 @@ namespace CSC.Nodestuff
                         catch (Exception ex)
                         {
                             Debug.WriteLine(ex.Message);
-                            gevent.Value = "";
+                            gevent.Value = "0";
                             gevent.Key = "";
                             gevent.Value2 = "";
                             return Text;
