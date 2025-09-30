@@ -953,7 +953,14 @@ namespace CSC.Nodestuff
                     }
                     case NodeType.Quest:
                     {
-                        return $"{Data<Quest>()?.Name ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
+                        if (Data<Quest>() is null)
+                        {
+                            return StaticText;
+                        }
+                        else
+                        {
+                            return $"{Data<Quest>()?.Name ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
+                        }
                     }
                     case NodeType.Response:
                     {
@@ -961,7 +968,7 @@ namespace CSC.Nodestuff
                     }
                     case NodeType.Value:
                     {
-                        return $"{fileName}:{Data<Value>()?.value} \n{StaticText}";
+                        return $"{fileName}:{Data<string>()} \n{StaticText}";
                     }
                     case NodeType.UseWith:
                     {
@@ -1054,7 +1061,7 @@ namespace CSC.Nodestuff
             }
         }
 
-        public T? Data<T>() where T : class, new()
+        public T? Data<T>() where T : class
         {
             if (typeof(T) == DataType && RawData is not null)
             {

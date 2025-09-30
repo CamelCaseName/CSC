@@ -32,8 +32,8 @@ namespace CSC
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            TreeNode treeNode3 = new TreeNode("Characters");
-            TreeNode treeNode4 = new TreeNode("Story Root", new TreeNode[] { treeNode3 });
+            TreeNode treeNode1 = new TreeNode("Characters");
+            TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
             Menu = new ToolStrip();
             StartButton = new ToolStripButton();
             ResetButton = new ToolStripButton();
@@ -64,7 +64,6 @@ namespace CSC
             GraphAndProperties.Panel2.SuspendLayout();
             GraphAndProperties.SuspendLayout();
             Graph.SuspendLayout();
-            NodeContext.SuspendLayout();
             SuspendLayout();
             // 
             // Menu
@@ -156,14 +155,14 @@ namespace CSC
             StoryTree.HideSelection = false;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
-            treeNode3.Name = "Characters";
-            treeNode3.Text = "Characters";
-            treeNode3.ToolTipText = "You'll find all your Characters here";
-            treeNode4.Checked = true;
-            treeNode4.Name = "Story Name";
-            treeNode4.Text = "Story Root";
-            treeNode4.ToolTipText = "The Story itself and the Characters are in here";
-            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode4 });
+            treeNode1.Name = "Characters";
+            treeNode1.Text = "Characters";
+            treeNode1.ToolTipText = "You'll find all your Characters here";
+            treeNode2.Checked = true;
+            treeNode2.Name = "Story Name";
+            treeNode2.Text = "Story Root";
+            treeNode2.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
             StoryTree.ShowNodeToolTips = true;
             StoryTree.Size = new Size(186, 537);
             StoryTree.TabIndex = 1;
@@ -252,55 +251,54 @@ namespace CSC
             // NodeContext
             // 
             NodeContext.BackColor = Color.FromArgb(64, 64, 64);
-            NodeContext.Items.AddRange(new ToolStripItem[] { });
             NodeContext.Name = "contextMenuStrip1";
             NodeContext.ShowImageMargin = false;
-            NodeContext.Size = new Size(156, 76);
+            NodeContext.Size = new Size(36, 4);
             NodeContext.Text = "Spawn new Node:";
             // 
             // PullChildsMenu
             // 
+            PullChildsMenu.ForeColor = Color.LightGray;
             PullChildsMenu.Name = "PullChildsMenu";
             PullChildsMenu.Size = new Size(155, 22);
             PullChildsMenu.Text = "Pull Childs close";
-            PullChildsMenu.ForeColor = Color.LightGray;
             PullChildsMenu.Click += PullChildsClose;
             // 
             // PullParentsMenu
             // 
+            PullParentsMenu.ForeColor = Color.LightGray;
             PullParentsMenu.Name = "PullParentsMenu";
             PullParentsMenu.Size = new Size(155, 22);
             PullParentsMenu.Text = "Pull Parents close";
-            PullParentsMenu.ForeColor = Color.LightGray;
             PullParentsMenu.Click += PullParentsClose;
             // 
             // SortConnectedMenu
             // 
-            SortConnectedMenu.Name = "SortConnected";
+            SortConnectedMenu.ForeColor = Color.LightGray;
+            SortConnectedMenu.Name = "SortConnectedMenu";
             SortConnectedMenu.Size = new Size(155, 22);
             SortConnectedMenu.Text = "Sort Connected nodes";
-            SortConnectedMenu.ForeColor = Color.LightGray;
             SortConnectedMenu.Click += SortConnected;
             // 
             // SortSelectedMenu
             // 
-            SortSelectedMenu.Name = "SortSelected";
+            SortSelectedMenu.ForeColor = Color.LightGray;
+            SortSelectedMenu.Name = "SortSelectedMenu";
             SortSelectedMenu.Size = new Size(155, 22);
             SortSelectedMenu.Text = "Sort Selected nodes";
-            SortSelectedMenu.ForeColor = Color.LightGray;
             SortSelectedMenu.Click += SortSelected;
             // 
             // SortSelectedConnectedMenu
             // 
-            SortSelectedConnectedMenu.Name = "SortSelectedConnected";
+            SortSelectedConnectedMenu.ForeColor = Color.LightGray;
+            SortSelectedConnectedMenu.Name = "SortSelectedConnectedMenu";
             SortSelectedConnectedMenu.Size = new Size(155, 22);
             SortSelectedConnectedMenu.Text = "Sort nodes connected to the selected";
-            SortSelectedConnectedMenu.ForeColor = Color.LightGray;
             SortSelectedConnectedMenu.Click += SortSelectedConnected;
             // 
-            // toolStripSeparator1
+            // Seperator1
             // 
-            Seperator1.Name = "toolStripSeparator1";
+            Seperator1.Name = "Seperator1";
             Seperator1.Size = new Size(152, 6);
             // 
             // Main
@@ -330,7 +328,6 @@ namespace CSC
             ((System.ComponentModel.ISupportInitialize)GraphAndProperties).EndInit();
             GraphAndProperties.ResumeLayout(false);
             Graph.ResumeLayout(false);
-            NodeContext.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }

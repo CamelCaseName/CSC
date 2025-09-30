@@ -660,18 +660,12 @@ namespace CSC.StoryItems
             LizKatz
         }
 
-
-
-
         public enum IntimateCharacters
         {
             None,
             Amy,
-            Arin,
             Ashley,
             Brittney,
-            Compubrah,
-            Dan,
             Derek,
             Frank,
             Katherine,
@@ -683,9 +677,24 @@ namespace CSC.StoryItems
             Rachael,
             Stephanie,
             Vickie,
-            Amala,
-            DojaCat,
             LizKatz
+        }
+
+        public enum StoryCharacters
+        {
+            Amy,
+            Ashley,
+            Brittney,
+            Derek,
+            Frank,
+            Katherine,
+            Leah,
+            Lety,
+            Madison,
+            Patrick,
+            Rachael,
+            Stephanie,
+            Vickie,
         }
 
         public enum AnybodyCharacters

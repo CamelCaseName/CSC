@@ -195,8 +195,8 @@ namespace CSC.StoryItems
         public List<ItemGroupBehavior> ItemGroupBehaviors { get; set; } = [];
         public List<InteractiveitemBehaviour> ItemOverrides { get; set; } = [];
         public List<object> PlayerPeriodcBehaviors { get; set; } = [];
-        public List<object> Interactions{ get; set; } = [];
-        public List<object> Opportunities{ get; set; } = [];
+        public List<object> Interactions { get; set; } = [];
+        public List<object> Opportunities { get; set; } = [];
         public List<object> PlayerReactionBehaviors { get; set; } = [];
 
         public List<object> OnGameStartScripts { get; set; } = [];
@@ -365,6 +365,20 @@ namespace CSC.StoryItems
 
     public sealed class CharacterStory
     {
+        public CharacterStory(string name)
+        {
+            CharacterName = name;
+            foreach (var trait in Enum.GetValues<PersonalityTraits>())
+            {
+                Personality.Values.Add(new Trait() { Type = trait, Value = 0 });
+            }
+
+            Dialogues.Add(new Dialogue() { Text = "first dialogue" });
+        }
+        public CharacterStory()
+        {
+        }
+
         public int DialogueID { get; set; } = 0;
         public List<BackgroundChatter> BackgroundChatter { get; set; } = [];
         public List<Dialogue> Dialogues { get; set; } = [];
@@ -384,15 +398,5 @@ namespace CSC.StoryItems
         public List<object> ReactionBehaviors { get; set; } = [];
 
         public string HousePartyVersion { get; set; } = Main.HousePartyVersion;
-    }
-
-    public sealed class Value
-    {
-#pragma warning disable IDE0079
-#pragma warning disable IDE1006
-
-        public string value { get; set; } = "#";
-#pragma warning restore IDE1006
-#pragma warning restore IDE0079
     }
 }
