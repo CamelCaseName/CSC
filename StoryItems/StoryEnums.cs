@@ -556,10 +556,17 @@ namespace CSC.StoryItems
             GrabFromPlayerInventory
         }
         [JsonConverter(typeof(StringEnumConverter))]
-        public enum PersonalityAction
+        public enum ValueAction
         {
             Equals,
             Add
+        }
+
+        public enum WarpToOption
+        {
+            MoveTarget,
+            Character,
+            Item
         }
 
         public enum ImportanceSpecified
@@ -1575,6 +1582,12 @@ namespace CSC.StoryItems
             DerekSupporter_c,
             F_AshleySupporter_c,
             F_DerekSupporter_c
+        }
+
+        public enum TriggerOptions
+        {
+            PerformEvent,
+            SetEnabled
         }
 
         public enum Packages

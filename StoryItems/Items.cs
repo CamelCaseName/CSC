@@ -181,6 +181,7 @@ namespace CSC.StoryItems
         public List<string> CharactersInGroup { get; set; } = [];
     }
 
+    //todo also add the default events here like in the original csc and like we do for characters
     public sealed class MainStory
     {
         public bool AllowPlayerFemale { get; set; } = true;
@@ -373,7 +374,21 @@ namespace CSC.StoryItems
                 Personality.Values.Add(new Trait() { Type = trait, Value = 0 });
             }
 
-            Dialogues.Add(new Dialogue() { Text = "first dialogue" });
+            var resp = new Response() { Text = "Goodbye " + name + "!" };
+
+            Dialogues.Add(new Dialogue() { Text = "Hello, i'm " + name + " :D", Responses = [resp] });
+
+            Reactions.Add(new EventTrigger()
+            {
+                Name = name + "-GameStart",
+                Events = [new GameEvent() {
+                    Character = name,
+                    EventType = GameEvents.WarpTo,
+                    Option = (int)WarpToOption.MoveTarget,
+                    Value = MoveTargets.MasterBedroom.ToString() }],
+                Critera = [new Criterion() {
+                    CompareType = CompareTypes.IsNewGame }]
+            });
         }
         public CharacterStory()
         {

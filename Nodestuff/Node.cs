@@ -558,7 +558,7 @@ namespace CSC.Nodestuff
                                 }
                                 case GameEvents.Personality:
                                 {
-                                    return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((PersonalityAction)gevent.Option2).ToString() + " " + gevent.Value;
+                                    return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((ValueAction)gevent.Option2).ToString() + " " + gevent.Value;
                                 }
                                 case GameEvents.Property:
                                 {
@@ -570,7 +570,7 @@ namespace CSC.Nodestuff
                                 }
                                 case GameEvents.ModifyValue:
                                 {
-                                    return (gevent.Option == 0 ? "Equals" : "Add") + gevent.Character + ":" + gevent.Key + " to " + gevent.Value;
+                                    return (gevent.Option == 0 ? "Equals " : "Add ") + gevent.Character + ":" + gevent.Value + " to " + gevent.Key;
                                 }
                                 case GameEvents.Player:
                                 {

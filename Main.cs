@@ -111,6 +111,7 @@ public partial class Main : Form
     private static readonly Dictionary<string, NodeStore> nodes = [];
     private static string _selectedCharacter = NoCharacter;
     public bool MovingChild = false;
+    private int GEventPropertyCounter = 0;
     public const int NodeSizeX = 200;
     public const int NodeSizeY = 50;
     public const string NoCharacter = "None";
@@ -157,11 +158,11 @@ public partial class Main : Form
     public int LeftClickFrameCounter { get; private set; }
 
     //todo populate propertyinspector for most basic events.
-    //todo after these two todos we should then be more or less able to make a story
+    //todo check with original csc for minimum requirements to build story
+    //todo add file export
 
     //todo add info when trying to link incompatible notes
     //todo add search
-    //todo add file export
     //todo use the csc dll to populate the rest of the events and criteria i havent done yet, 
     //maybe turn it into a store where you put in the type and get out the relevant fields in order
     //this can then be used for linking as well
@@ -1274,9 +1275,9 @@ public partial class Main : Form
 
     private static RectangleF ScaleRect(RectangleF rect, float increase) => new(rect.X - (increase / 2), rect.Y - (increase / 2), rect.Width + increase, rect.Height + increase);
 
-    //see https://stackoverflow.com/questions/33853434/how-to-draw-a-rounded-rectangle-in-c-sharp
     private static GraphicsPath RoundedRect(RectangleF bounds, float radius)
-    {
+    {//see https://stackoverflow.com/questions/33853434/how-to-draw-a-rounded-rectangle-in-c-sharp
+
         float diameter = radius * 2;
         SizeF size = new(diameter, diameter);
         RectangleF arc = new(bounds.Location, size);
@@ -2789,9 +2790,17 @@ public partial class Main : Form
                 }
 
                 PropertyInspector.RowCount = 2;
-                PropertyInspector.ColumnCount = 5;
+                PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
+                PropertyInspector.RowStyles[0].Height = 35;
+                PropertyInspector.ColumnCount = 7;
+                GEventPropertyCounter = 0;
 
                 GameEvent gevent = node.Data<GameEvent>()!;
+
+                if (gevent.Character == "#" || string.IsNullOrEmpty(gevent.Character))
+                {
+                    gevent.Character = AnybodyCharacters.Anybody.ToString();
+                }
 
                 Label label = GetLabel("Order:");
                 PropertyInspector.Controls.Add(label, 0, 0);
@@ -2806,7 +2815,12 @@ public partial class Main : Form
                 ComboBox type = GetComboBox();
                 type.Items.AddRange(Enum.GetNames(typeof(GameEvents)));
                 type.SelectedItem = gevent.EventType.ToString();
-                type.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!));
+                type.AddComboBoxHandler(node, nodes[SelectedCharacter],
+                    (_, _) =>
+                    {
+                        gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
+                    });
+                type.SelectedIndexChanged += (_, _) => ShowProperties(node);
                 PropertyInspector.Controls.Add(type, 2, 0);
 
                 Label label3 = GetLabel("Delay:");
@@ -2817,16 +2831,12 @@ public partial class Main : Form
                 delay.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(delay, 4, 0);
 
+                PropertyInspector.Controls.Add(new Panel(), 5, 0);
+
                 switch (gevent.EventType)
                 {
                     case GameEvents.AddForce:
                     {
-                        ComboBox characters = GetComboBox();
-                        characters.Items.AddRange(Enum.GetNames(typeof(Characters)));
-                        characters.SelectedItem = gevent.Value!;
-                        characters.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = characters.SelectedItem.ToString()!);
-                        PropertyInspector.Controls.Add(characters);
-
                         //todo
                         break;
                     }
@@ -2856,11 +2866,6 @@ public partial class Main : Form
                         break;
                     }
                     case GameEvents.Combat:
-                    {
-                        //todo
-                        break;
-                    }
-                    case GameEvents.CombineValue:
                     {
                         //todo
                         break;
@@ -2902,7 +2907,57 @@ public partial class Main : Form
                     }
                     case GameEvents.EventTriggers:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        gevent.Character2 = "#";
+                        gevent.Value = "";
+
+                        var options = GetComboBox();
+                        options.Items.AddRange(Enum.GetNames<TriggerOptions>());
+                        if (gevent.Option >= 2)
+                        {
+                            gevent.Option = 0;
+                        }
+                        options.SelectedIndex = gevent.Option;
+                        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = options.SelectedIndex);
+                        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+                        PropertyInspector.Controls.Add(options, GEventPropertyCounter++, 1);
+
+                        if (gevent.Option == 1)
+                        {
+                            options = GetComboBox();
+                            options.Items.AddRange(Enum.GetNames<BoolCritera>());
+                            if (gevent.Option2 >= 2)
+                            {
+                                gevent.Option2 = 0;
+                            }
+                            options.SelectedIndex = gevent.Option2;
+                            options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option2 = options.SelectedIndex);
+                            PropertyInspector.Controls.Add(options, GEventPropertyCounter++, 1);
+                        }
+
+                        var value = GetComboBox();
+                        string character = gevent.Value;
+                        if (character == Player)
+                        {
+                            for (int i = 0; i < Story.PlayerReactions!.Count; i++)
+                            {
+                                value.Items.Add(Story.PlayerReactions![i].Id);
+                            }
+                        }
+                        else
+                        {
+                            if (Stories.TryGetValue(character, out CharacterStory? _story))
+                            {
+                                for (int i = 0; i < _story.Reactions!.Count; i++)
+                                {
+                                    value.Items.Add(_story.Reactions![i].Id);
+                                }
+                            }
+                        }
+                        value.SelectedItem = gevent.Value;
+                        value.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = value.SelectedIndex);
+                        PropertyInspector.Controls.Add(value, GEventPropertyCounter++, 1);
+
                         break;
                     }
                     case GameEvents.FadeIn:
@@ -2951,13 +3006,36 @@ public partial class Main : Form
                         break;
                     }
                     case GameEvents.MatchValue:
+                    case GameEvents.CombineValue:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+
+                        PutValueKey(node, gevent.Character, gevent);
+
+                        Label typeLabel = GetLabel(gevent.EventType.ToString());
+                        PropertyInspector.Controls.Add(typeLabel, GEventPropertyCounter++, 1);
+
+                        PutCharacter2(node, gevent);
+
+                        PutValueValue(node, gevent.Character2, gevent);
+
                         break;
                     }
                     case GameEvents.ModifyValue:
                     {
-                        //todo
+                        gevent.Character2 = "#";
+                        PutCharacter(node, gevent);
+
+                        PutValueKey(node, gevent.Character, gevent);
+
+                        ComboBox change = GetComboBox();
+                        change.Items.AddRange(Enum.GetNames(typeof(ValueAction)));
+                        change.SelectedIndex = gevent.Option!;
+                        change.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = change.SelectedIndex);
+                        PropertyInspector.Controls.Add(change, GEventPropertyCounter++, 1);
+
+                        PutNumberValue(gevent);
+
                         break;
                     }
                     case GameEvents.Player:
@@ -2982,7 +3060,17 @@ public partial class Main : Form
                     }
                     case GameEvents.RandomizeIntValue:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+
+                        PutValueKey(node, gevent.Character, gevent);
+
+                        PutNumberValue(gevent);
+
+                        Label typeLabel = GetLabel("lower bound - upper bound");
+                        PropertyInspector.Controls.Add(typeLabel, GEventPropertyCounter++, 1);
+
+                        PutNumberValue2(gevent);
+
                         break;
                     }
                     case GameEvents.ResetReactionCooldown:
@@ -3529,6 +3617,92 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
     }
 
+    private void PutNumberValue2(GameEvent gevent)
+    {
+        _ = float.TryParse(gevent.Value2, out float result);
+        var number = GetNumericUpDown(result);
+        number.ValueChanged += (_, _) => gevent.Value2 = number.Value.ToString();
+        PropertyInspector.Controls.Add(number, GEventPropertyCounter++, 1);
+    }
+
+    private void PutNumberValue(GameEvent gevent)
+    {
+        _ = float.TryParse(gevent.Value, out float result);
+        var number = GetNumericUpDown(result);
+        number.ValueChanged += (_, _) => gevent.Value = number.Value.ToString();
+        PropertyInspector.Controls.Add(number, GEventPropertyCounter++, 1);
+    }
+
+    private void PutCharacter2(Node node, GameEvent gevent)
+    {
+        ComboBox character2 = GetComboBox();
+        character2.Items.AddRange(Enum.GetNames(typeof(Characters)));
+        character2.SelectedItem = gevent.Character2!;
+        character2.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Character2 = character2.SelectedItem.ToString()!);
+        character2.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(character2, GEventPropertyCounter++, 1);
+    }
+
+    private void PutValueValue(Node node, string character, GameEvent gevent)
+    {
+        ComboBox value2 = GetComboBox();
+        if (character == Player)
+        {
+            for (int i = 0; i < Story.PlayerValues!.Count; i++)
+            {
+                value2.Items.Add(Story.PlayerValues![i]);
+            }
+        }
+        else
+        {
+            if (Stories.TryGetValue(character, out CharacterStory? _story))
+            {
+                for (int i = 0; i < _story.StoryValues!.Count; i++)
+                {
+                    value2.Items.Add(_story.StoryValues![i]);
+                }
+            }
+        }
+        value2.SelectedItem = gevent.Value!;
+        value2.AddComboBoxHandler(node, nodes[SelectedCharacter], (sender, values) => gevent.Value = value2.SelectedItem.ToString()!);
+        PropertyInspector.Controls.Add(value2, GEventPropertyCounter++, 1);
+    }
+
+    private void PutValueKey(Node node, string character, GameEvent gevent)
+    {
+        ComboBox value = GetComboBox();
+        if (character == Player)
+        {
+            for (int i = 0; i < Story.PlayerValues!.Count; i++)
+            {
+                value.Items.Add(Story.PlayerValues![i]);
+            }
+        }
+        else
+        {
+            if (Stories.TryGetValue(character, out CharacterStory? _story))
+            {
+                for (int i = 0; i < _story.StoryValues!.Count; i++)
+                {
+                    value.Items.Add(_story.StoryValues![i]);
+                }
+            }
+        }
+        value.SelectedItem = gevent.Key!;
+        value.AddComboBoxHandler(node, nodes[SelectedCharacter], (sender, values) => gevent.Key = value.SelectedItem.ToString()!);
+        PropertyInspector.Controls.Add(value, GEventPropertyCounter++, 1);
+    }
+
+    private void PutCharacter(Node node, GameEvent gevent)
+    {
+        ComboBox character = GetComboBox();
+        character.Items.AddRange(Enum.GetNames(typeof(Characters)));
+        character.SelectedItem = gevent.Character!;
+        character.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Character = character.SelectedItem.ToString()!);
+        character.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(character, GEventPropertyCounter++, 1);
+    }
+
     private void UpdatePropertyColoumnWidths()
     {
         foreach (ColumnStyle coloumn in PropertyInspector.ColumnStyles)
@@ -3898,9 +4072,9 @@ public partial class Main : Form
         OffsetY[SelectedCharacter] += BeforeZoomNodeY - AfterZoomNodeY;
     }
 
-    //see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
     private static Font GetScaledFont(Graphics g, Font f, float scale)
-    {
+    {//see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
+
         if (f.SizeInPoints * scale < 0)
         {
             Debugger.Break();
