@@ -181,9 +181,78 @@ namespace CSC.StoryItems
         public List<string> CharactersInGroup { get; set; } = [];
     }
 
-    //todo also add the default events here like in the original csc and like we do for characters
     public sealed class MainStory
     {
+        public MainStory(string name)
+        {
+            PlayerReactions.Add(new()
+            {
+                Name = "Gamestart-Gamestarts",
+                Type = EventTypes.GameStarts,
+                Critera = [new() { CompareType = CompareTypes.IsNewGame, BoolValue = BoolCritera.True }],
+                Events = [
+                    new(){
+                        SortOrder = 2,
+                        EventType = GameEvents.DisplayGameMessage,
+                        Option = (int)GameMessageType.Narration,
+                        Value = "Welcome to "+name+"! Have fun here :)"
+                    },
+                    new(){
+                        SortOrder = 3,
+                        EventType = GameEvents.EventTriggers,
+                        Character = "Player",
+                        Option = (int)TriggerOptions.PerformEvent,
+                        Value = "Gamestart-EnableNPCs",
+                    }
+                    ]
+            });
+            PlayerReactions.Add(new()
+            {
+                Name = "Gamestart-EnableNPCs",
+                Type = EventTypes.Never,
+                Events = [
+                    new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Amy.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Ashley.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Brittney.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Derek.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Frank.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Katherine.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Leah.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Madison.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Patrick.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Rachael.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Stephanie.ToString()
+                    },new(){
+                        EventType = GameEvents.EnableNPC,
+                        Character = StoryCharacters.Vickie.ToString()
+                    },
+                    ]
+            });
+
+        }
+        public MainStory() { }
         public bool AllowPlayerFemale { get; set; } = true;
         public bool AllowPlayerMale { get; set; } = true;
         public bool UseEekDefaultItemEnableBehavior { get; set; } = true;

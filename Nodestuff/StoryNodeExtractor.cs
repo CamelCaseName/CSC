@@ -130,7 +130,7 @@ namespace CSC.Nodestuff
 
         public static void GetGameStartEvents(MainStory story, NodeStore nodes)
         {
-            var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents");
+            var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents") { RawData = story.GameStartEvents };
             foreach (GameEvent _event in story.GameStartEvents ?? [])
             {
                 var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { RawData = _event, FileName = Main.Player };

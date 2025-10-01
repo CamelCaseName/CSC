@@ -1036,7 +1036,7 @@ public partial class Main : Form
                 return;
             }
 
-            Story = new();
+            Story = new(newStoryName);
             StoryName = newStoryName;
             SelectedCharacter = Player;
 
@@ -3011,7 +3011,7 @@ public partial class Main : Form
                     {
                         PutCharacter(node, gevent);
                         gevent.Character2 = "#";
-                        gevent.Value = "";
+                        gevent.Key = "";
 
                         PutEnumOptions<TriggerOptions>(node, gevent);
 
@@ -3021,12 +3021,12 @@ public partial class Main : Form
                         }
 
                         var value = GetComboBox();
-                        string character = gevent.Value;
-                        if (character == Player)
+                        string character = gevent.Character;
+                        if (character == Player || character == "#")
                         {
                             for (int i = 0; i < Story.PlayerReactions!.Count; i++)
                             {
-                                value.Items.Add(Story.PlayerReactions![i].Id);
+                                value.Items.Add(Story.PlayerReactions![i].Name);
                             }
                         }
                         else
@@ -3035,13 +3035,14 @@ public partial class Main : Form
                             {
                                 for (int i = 0; i < _story.Reactions!.Count; i++)
                                 {
-                                    value.Items.Add(_story.Reactions![i].Id);
+                                    value.Items.Add(_story.Reactions![i].Name);
                                 }
                             }
                         }
                         value.SelectedItem = gevent.Value;
-                        value.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = value.SelectedIndex);
+                        value.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = value.SelectedItem.ToString()!);
                         PropertyInspector.Controls.Add(value, GeventPropertyCounter++, 1);
+                        PropertyInspector.SetColumnSpan(value, 2);
 
                         break;
                     }
