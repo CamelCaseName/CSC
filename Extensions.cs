@@ -47,7 +47,9 @@ namespace CSC
         public static void AddComboBoxHandler(this ComboBox box, Node node, NodeStore nodes, EventHandler handler)
         {
             box.SelectedIndexChanged += handler;
-            box.SelectedIndexChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes); Main.RedrawGraph(); };
+            box.SelectedIndexChanged += (_, _) => {
+                NodeLinker.UpdateLinks(node, node.FileName, nodes); Main.RedrawGraph();
+            };
         }
     }
 

@@ -486,7 +486,7 @@ namespace CSC.Nodestuff
                                 }
                                 case GameEvents.Clothing:
                                 {
-                                    return gevent.Character + "'s  " + ((Clothes)int.Parse(gevent.Value!)).ToString() + " in set " + (gevent.Option == 0 ? "any" : (gevent.Option - 1).ToString());
+                                    return gevent.Character + "'s  " + ((ClothingType)int.Parse(gevent.Value!)).ToString() + " in set " + (gevent.Option == 0 ? "any" : (gevent.Option - 1).ToString());
                                 }
                                 case GameEvents.Combat:
                                 {
@@ -558,7 +558,7 @@ namespace CSC.Nodestuff
                                 }
                                 case GameEvents.Personality:
                                 {
-                                    return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((ValueAction)gevent.Option2).ToString() + " " + gevent.Value;
+                                    return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((Modification)gevent.Option2).ToString() + " " + gevent.Value;
                                 }
                                 case GameEvents.Property:
                                 {

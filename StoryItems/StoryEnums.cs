@@ -138,7 +138,10 @@ namespace CSC.StoryItems
             Drunk = 10,
             Likes = 20,
             Loves = 30,
-            Scared = 40
+            Scared = 40,
+            Offended,
+            TalkTo = 50,
+            SendText = 60
         }
         [JsonConverter(typeof(StringEnumConverter))]
         public enum BoolCritera
@@ -146,6 +149,31 @@ namespace CSC.StoryItems
             False,
             True
         }
+
+        public enum ClothingChangeOptions
+        {
+            ClothingType,
+            AllOn,
+            AllOff,
+            ChangeItem,
+            ChangeToOutfit,
+            RemoveFromOutfit
+        }
+
+        public enum ClothingOnOff
+        {
+            On,
+            Off,
+        }
+
+        public enum SetEnum
+        {
+            Set0,
+            Set1,
+            Set2,
+            Set3,
+        }
+
         [JsonConverter(typeof(StringEnumConverter))]
         public enum ValueSpecificFormulas
         {
@@ -333,7 +361,7 @@ namespace CSC.StoryItems
             Exhibitionism
         }
         [JsonConverter(typeof(StringEnumConverter))]
-        public enum Clothes
+        public enum ClothingType
         {
             Top,
             Bottom,
@@ -344,6 +372,19 @@ namespace CSC.StoryItems
             StrapOn,
             Hair
         }
+
+        public enum ClothingOptions
+        {
+            Change,
+            ToggleWetEffect,
+            ToggleBloodyEffect
+        }
+        public enum AddRemoveActions
+        {
+            Add,
+            Remove
+        }
+
         [JsonConverter(typeof(StringEnumConverter))]
         public enum GameEvents
         {
@@ -394,6 +435,20 @@ namespace CSC.StoryItems
             WarpTo = 210,
             None = 1000
         }
+        public enum IntimacyOptions
+        {
+            SexualAct,
+            IncreaseActionSpeed = 10,
+            DecreaseActionSpeed
+        }
+
+        public enum GameMessageType
+        {
+            CenterScreenText,
+            Narration = 10,
+            ThoughtBubble = 20
+        }
+
         [JsonConverter(typeof(StringEnumConverter))]
         public enum ResponseReactionTypes
         {
@@ -556,10 +611,17 @@ namespace CSC.StoryItems
             GrabFromPlayerInventory
         }
         [JsonConverter(typeof(StringEnumConverter))]
-        public enum ValueAction
+        public enum Modification
         {
             Equals,
             Add
+        }
+        public enum TurnOptions
+        {
+            Around,
+            Left,
+            Right,
+            Toward
         }
 
         public enum WarpToOption
@@ -815,6 +877,25 @@ namespace CSC.StoryItems
             Fingering = 100,
             Scissoring = 200,
             InSexCutScene = 1000
+        }
+
+        public enum IntimacyEvents
+        {
+            StartFingering = 7000,
+            StartScissoring = 8000,
+            StartMakingOut = 9000,
+            StartBlowjob = 10000,
+            StartHotTubHandJob = 10011,
+            StartMissionary = 10030,
+            StartDoggieStyle = 10050,
+            StartMasturbation,
+            StartCowGirl,
+            StartCunnilingus,
+            StartSixtyNine,
+            StartWallSex,
+            StartWallSex2,
+            StartWallSex3,
+            End = 10060
         }
 
         public enum ZoneEnums
@@ -1628,6 +1709,30 @@ namespace CSC.StoryItems
             LKdoorbell_final
         }
 
+        public enum Emotions
+        {
+            Happy,
+            Sad,
+            Angry,
+            Surprised,
+            Scared,
+            Flirty,
+            Ecstatic,
+            Laugh,
+            OpenMouth,
+            Squint,
+            None,
+            EyebrowsUp,
+            EyebrowsIn,
+            ClosedEyes,
+            PuckeredLips,
+            BreatheIn,
+            OpenWide,
+            Erection = 200,
+            OpenLabia,
+            HappyAlt1 = 300
+        }
+
         public enum BodyRegion
         {
             Anywhere,
@@ -1637,6 +1742,13 @@ namespace CSC.StoryItems
             Legs = 40,
             Feet = 50,
             Hands = 60
+        }
+        public enum ClothingTypeOrName
+        {
+
+            ByName,
+
+            ByType
         }
     }
 }

@@ -111,7 +111,7 @@ public partial class Main : Form
     private static readonly Dictionary<string, NodeStore> nodes = [];
     private static string _selectedCharacter = NoCharacter;
     public bool MovingChild = false;
-    private int GEventPropertyCounter = 0;
+    private int GeventPropertyCounter = 0;
     public const int NodeSizeX = 200;
     public const int NodeSizeY = 50;
     public const string NoCharacter = "None";
@@ -2001,7 +2001,7 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
 
                         ComboBox clothing = GetComboBox();
-                        clothing.Items.AddRange(Enum.GetNames(typeof(Clothes)));
+                        clothing.Items.AddRange(Enum.GetNames(typeof(ClothingType)));
                         if (int.TryParse(criterion.Value!, out int res))
                         {
                             if (res < clothing.Items.Count && res >= 1)
@@ -2793,7 +2793,7 @@ public partial class Main : Form
                 PropertyInspector.RowStyles[0].SizeType = SizeType.Absolute;
                 PropertyInspector.RowStyles[0].Height = 35;
                 PropertyInspector.ColumnCount = 7;
-                GEventPropertyCounter = 0;
+                GeventPropertyCounter = 0;
 
                 GameEvent gevent = node.Data<GameEvent>()!;
 
@@ -2809,7 +2809,6 @@ public partial class Main : Form
                 sortOrder.DecimalPlaces = 0;
                 sortOrder.Minimum = 0;
                 sortOrder.ValueChanged += (_, _) => gevent.SortOrder = (int)sortOrder.Value;
-                sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(sortOrder, 1, 0);
 
                 ComboBox type = GetComboBox();
@@ -2819,8 +2818,8 @@ public partial class Main : Form
                     (_, _) =>
                     {
                         gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
+                        ShowProperties(node);
                     });
-                type.SelectedIndexChanged += (_, _) => ShowProperties(node);
                 PropertyInspector.Controls.Add(type, 2, 0);
 
                 Label label3 = GetLabel("Delay:");
@@ -2828,7 +2827,6 @@ public partial class Main : Form
 
                 NumericUpDown delay = GetNumericUpDown((float)gevent.Delay);
                 delay.ValueChanged += (_, _) => gevent.Delay = (double)delay.Value;
-                delay.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
                 PropertyInspector.Controls.Add(delay, 4, 0);
 
                 PropertyInspector.Controls.Add(new Panel(), 5, 0);
@@ -2842,7 +2840,7 @@ public partial class Main : Form
                     }
                     case GameEvents.AllowPlayerSave:
                     {
-                        //todo
+                        PutEnumOptions<BoolCritera>(node, gevent);
                         break;
                     }
                     case GameEvents.ChangeBodyScale:
@@ -2862,7 +2860,79 @@ public partial class Main : Form
                     }
                     case GameEvents.Clothing:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumOptions2<ClothingOptions>(node, gevent);
+
+                        switch ((ClothingOptions)gevent.Option2)
+                        {
+                            case ClothingOptions.Change:
+                            {
+                                PutEnumOptions4<ClothingChangeOptions>(node, gevent);
+
+                                switch ((ClothingChangeOptions)gevent.Option4)
+                                {
+                                    case ClothingChangeOptions.ClothingType:
+                                    {
+                                        PutEnumValue<ClothingType>(node, gevent);
+                                        PutEnumOptions<ClothingOnOff>(node, gevent);
+
+                                        if (gevent.Option == 0)
+                                        {
+                                            PutEnumOptions3<SetEnum>(node, gevent);
+                                        }
+
+                                        break;
+                                    }
+                                    case ClothingChangeOptions.AllOn:
+                                    case ClothingChangeOptions.AllOff:
+                                    {
+                                        break;
+                                    }
+                                    case ClothingChangeOptions.ChangeItem:
+                                    {
+                                        //todo items warable by - in value
+                                        PutEnumOptions<ClothingOnOff>(node, gevent);
+
+                                        break;
+                                    }
+                                    case ClothingChangeOptions.ChangeToOutfit:
+                                    {
+                                        //todo outfits wearable by - in value
+                                        break;
+                                    }
+                                    case ClothingChangeOptions.RemoveFromOutfit:
+                                    {
+                                        PutEnumOptions<ClothingTypeOrName>(node, gevent);
+
+                                        if (gevent.Option == 0)
+                                        {
+                                            //todo items warable by - in value
+                                        }
+                                        else
+                                        {
+                                            PutEnumOptions3<ClothingType>(node, gevent);
+                                        }
+
+                                        break;
+                                    }
+                                    default:
+                                        break;
+                                }
+
+                                break;
+                            }
+                            case ClothingOptions.ToggleBloodyEffect:
+                            case ClothingOptions.ToggleWetEffect:
+                            {
+                                PutEnumValue<ClothingType>(node, gevent);
+                                PutEnumOptions<ClothingOnOff>(node, gevent);
+
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+
                         break;
                     }
                     case GameEvents.Combat:
@@ -2877,17 +2947,46 @@ public partial class Main : Form
                     }
                     case GameEvents.Dialogue:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumOptions<DialogueAction>(node, gevent);
+                        if (gevent.Option == 1)
+                        {
+                            PutCharacter2(node, gevent);
+                        }
+                        if (gevent.Option == 0 || gevent.Option == 5)
+                        {
+                            var box = GetComboBox();
+                            foreach (var item in Stories[gevent.Character].Dialogues)
+                            {
+                                box.Items.Add(item.ID);
+                            }
+                            box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = box.SelectedItem.ToString()!);
+                        }
+
                         break;
                     }
                     case GameEvents.DisableNPC:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
                         break;
                     }
                     case GameEvents.DisplayGameMessage:
                     {
-                        //todo
+                        gevent.Key = "";
+
+                        var options = GetComboBox();
+                        options.Items.AddRange(Enum.GetNames<GameMessageType>());
+                        if (gevent.Option >= 21)
+                        {
+                            gevent.Option = 0;
+                        }
+                        options.SelectedIndex = gevent.Option / 10;
+                        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = options.SelectedIndex);
+                        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+                        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+
+                        PutTextValue(gevent);
+
                         break;
                     }
                     case GameEvents.Door:
@@ -2897,12 +2996,15 @@ public partial class Main : Form
                     }
                     case GameEvents.Emote:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumValue<Emotions>(node, gevent);
+                        PutNumberValue2(gevent);
+
                         break;
                     }
                     case GameEvents.EnableNPC:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
                         break;
                     }
                     case GameEvents.EventTriggers:
@@ -2911,28 +3013,11 @@ public partial class Main : Form
                         gevent.Character2 = "#";
                         gevent.Value = "";
 
-                        var options = GetComboBox();
-                        options.Items.AddRange(Enum.GetNames<TriggerOptions>());
-                        if (gevent.Option >= 2)
-                        {
-                            gevent.Option = 0;
-                        }
-                        options.SelectedIndex = gevent.Option;
-                        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = options.SelectedIndex);
-                        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
-                        PropertyInspector.Controls.Add(options, GEventPropertyCounter++, 1);
+                        PutEnumOptions<TriggerOptions>(node, gevent);
 
                         if (gevent.Option == 1)
                         {
-                            options = GetComboBox();
-                            options.Items.AddRange(Enum.GetNames<BoolCritera>());
-                            if (gevent.Option2 >= 2)
-                            {
-                                gevent.Option2 = 0;
-                            }
-                            options.SelectedIndex = gevent.Option2;
-                            options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option2 = options.SelectedIndex);
-                            PropertyInspector.Controls.Add(options, GEventPropertyCounter++, 1);
+                            PutEnumOptions2<BoolCritera>(node, gevent);
                         }
 
                         var value = GetComboBox();
@@ -2956,18 +3041,14 @@ public partial class Main : Form
                         }
                         value.SelectedItem = gevent.Value;
                         value.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = value.SelectedIndex);
-                        PropertyInspector.Controls.Add(value, GEventPropertyCounter++, 1);
+                        PropertyInspector.Controls.Add(value, GeventPropertyCounter++, 1);
 
                         break;
                     }
                     case GameEvents.FadeIn:
-                    {
-                        //todo
-                        break;
-                    }
                     case GameEvents.FadeOut:
                     {
-                        //todo
+                        PutNumberValue(gevent);
                         break;
                     }
                     case GameEvents.IKReach:
@@ -2977,7 +3058,17 @@ public partial class Main : Form
                     }
                     case GameEvents.Intimacy:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumOptions<IntimacyOptions>(node, gevent);
+                        if (gevent.Option == 0)
+                        {
+                            PutEnumValue<IntimacyEvents>(node, gevent);
+                            if (Enum.Parse<IntimacyEvents>(gevent.Value) is IntimacyEvents.End or IntimacyEvents.StartMasturbation)
+                            {
+                                PutCharacter2(node, gevent);
+                            }
+                        }
+
                         break;
                     }
                     case GameEvents.Item:
@@ -2997,12 +3088,18 @@ public partial class Main : Form
                     }
                     case GameEvents.Personality:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumOptions<PersonalityTraits>(node, gevent);
+                        PutEnumOptions2<Modification>(node, gevent);
+                        PutNumberValue(gevent);
                         break;
                     }
                     case GameEvents.Property:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumValue<InteractiveProperties>(node, gevent);
+                        PutEnumOptions<BoolCritera>(node, gevent);
+
                         break;
                     }
                     case GameEvents.MatchValue:
@@ -3013,7 +3110,7 @@ public partial class Main : Form
                         PutValueKey(node, gevent.Character, gevent);
 
                         Label typeLabel = GetLabel(gevent.EventType.ToString());
-                        PropertyInspector.Controls.Add(typeLabel, GEventPropertyCounter++, 1);
+                        PropertyInspector.Controls.Add(typeLabel, GeventPropertyCounter++, 1);
 
                         PutCharacter2(node, gevent);
 
@@ -3028,11 +3125,7 @@ public partial class Main : Form
 
                         PutValueKey(node, gevent.Character, gevent);
 
-                        ComboBox change = GetComboBox();
-                        change.Items.AddRange(Enum.GetNames(typeof(ValueAction)));
-                        change.SelectedIndex = gevent.Option!;
-                        change.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = change.SelectedIndex);
-                        PropertyInspector.Controls.Add(change, GEventPropertyCounter++, 1);
+                        PutEnumOptions<Modification>(node, gevent);
 
                         PutNumberValue(gevent);
 
@@ -3067,7 +3160,7 @@ public partial class Main : Form
                         PutNumberValue(gevent);
 
                         Label typeLabel = GetLabel("lower bound - upper bound");
-                        PropertyInspector.Controls.Add(typeLabel, GEventPropertyCounter++, 1);
+                        PropertyInspector.Controls.Add(typeLabel, GeventPropertyCounter++, 1);
 
                         PutNumberValue2(gevent);
 
@@ -3075,7 +3168,9 @@ public partial class Main : Form
                     }
                     case GameEvents.ResetReactionCooldown:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutCharacter2(node, gevent);
+                        PutEnumOptions<EventTypes>(node, gevent);
                         break;
                     }
                     case GameEvents.Roaming:
@@ -3095,12 +3190,53 @@ public partial class Main : Form
                     }
                     case GameEvents.Social:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+
+                        PutEnumOptions<SocialStatuses>(node, gevent);
+
+                        switch ((SocialStatuses)gevent.Option)
+                        {
+                            case SocialStatuses.Mood:
+                            case SocialStatuses.Drunk:
+                            {
+                                PutEnumOptions2<Modification>(node, gevent);
+                                PutNumberValue(gevent);
+                                break;
+                            }
+                            case SocialStatuses.Loves:
+                            case SocialStatuses.Likes:
+                            case SocialStatuses.Scared:
+                            {
+                                PutCharacter2(node, gevent);
+                                PutEnumOptions2<Modification>(node, gevent);
+                                PutNumberValue(gevent);
+                                break;
+                            }
+                            case SocialStatuses.SendText:
+                            case SocialStatuses.Offended:
+                            {
+                                break;
+                            }
+                            case SocialStatuses.TalkTo:
+                            {
+                                PutCharacter2(node, gevent);
+                                break;
+                            }
+                            default:
+                            {
+                                gevent.Option = 0;
+                                ShowProperties(node);
+                                break;
+                            }
+                        }
+
                         break;
                     }
                     case GameEvents.State:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumValue<InteractiveStates>(node, gevent);
+                        PutEnumOptions<AddRemoveActions>(node, gevent);
                         break;
                     }
                     case GameEvents.TriggerBGC:
@@ -3109,13 +3245,36 @@ public partial class Main : Form
                         break;
                     }
                     case GameEvents.Turn:
-                    {
-                        //todo
-                        break;
-                    }
                     case GameEvents.TurnInstantly:
                     {
-                        //todo
+                        PutCharacter(node, gevent);
+                        PutEnumOptions<TurnOptions>(node, gevent);
+
+                        if (gevent.Option == 3)
+                        {
+                            PutEnumOptions2<LocationTargetOption>(node, gevent);
+                            switch ((LocationTargetOption)gevent.Option2)
+                            {
+                                case LocationTargetOption.MoveTarget:
+                                {
+                                    PutEnumValue<MoveTargets>(node, gevent);
+                                    break;
+                                }
+                                case LocationTargetOption.Character:
+                                {
+                                    PutEnumValue<StoryCharacters>(node, gevent);
+                                    break;
+                                }
+                                case LocationTargetOption.Item:
+                                {
+                                    PutEnumValue<Items>(node, gevent);
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
+                        }
+
                         break;
                     }
                     case GameEvents.UnlockAchievement:
@@ -3139,10 +3298,6 @@ public partial class Main : Form
                         break;
                     }
                     case GameEvents.None:
-                    {
-                        //todo
-                        break;
-                    }
                     default:
                     {
                         //todo
@@ -3617,12 +3772,97 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
     }
 
+    private void PutEnumValue<E>(Node node, GameEvent gevent) where E : struct, Enum
+    {
+        var options = GetComboBox();
+        options.Items.AddRange(Enum.GetNames<E>());
+        if (!Enum.GetNames<E>().Contains(gevent.Value))
+        {
+            gevent.Value = "0";
+        }
+        options.SelectedItem = gevent.Value;
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = options.SelectedItem.ToString()!);
+        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+    }
+
+    private void PutEnumOptions<E>(Node node, GameEvent gevent) where E : struct, Enum
+    {
+        var options = GetComboBox();
+        options.Items.AddRange(Enum.GetNames<E>());
+        if (!Enum.GetValues<E>().Contains((E)(object)gevent.Option))
+        {
+            gevent.Option = 0;
+        }
+        options.SelectedItem = Enum.GetName(typeof(E), gevent.Option)!;
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
+        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+    }
+
+    private void PutEnumOptions2<E>(Node node, GameEvent gevent) where E : struct, Enum
+    {
+        var options = GetComboBox();
+        options.Items.AddRange(Enum.GetNames<E>());
+        if (!Enum.GetValues<E>().Contains((E)(object)gevent.Option2))
+        {
+            gevent.Option2 = 0;
+        }
+        options.SelectedItem = Enum.GetName(typeof(E), gevent.Option2)!;
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option2 = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
+        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+    }
+
+    private void PutEnumOptions3<E>(Node node, GameEvent gevent) where E : struct, Enum
+    {
+        var options = GetComboBox();
+        options.Items.AddRange(Enum.GetNames<E>());
+        if (!Enum.GetValues<E>().Contains((E)(object)gevent.Option3))
+        {
+            gevent.Option3 = 0;
+        }
+        options.SelectedItem = Enum.GetName(typeof(E), gevent.Option3)!;
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option3 = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
+        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+    }
+
+    private void PutEnumOptions4<E>(Node node, GameEvent gevent) where E : struct, Enum
+    {
+        var options = GetComboBox();
+        options.Items.AddRange(Enum.GetNames<E>());
+        if (!Enum.GetValues<E>().Contains((E)(object)gevent.Option4))
+        {
+            gevent.Option4 = 0;
+        }
+        options.SelectedItem = Enum.GetName(typeof(E), gevent.Option4)!;
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option4 = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
+        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
+        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+    }
+
+    private void PutTextValue(GameEvent gevent)
+    {
+        TextBox textBox = new()
+        {
+            Dock = DockStyle.Fill,
+            TextAlign = HorizontalAlignment.Left,
+            Text = gevent.Value,
+            Multiline = true,
+        };
+        textBox.TextChanged += (_, args) => gevent.Value = textBox.Text;
+        PropertyInspector.Controls.Add(textBox, GeventPropertyCounter++, 1);
+        GeventPropertyCounter += 2;
+        PropertyInspector.SetColumnSpan(textBox, 3);
+    }
+
     private void PutNumberValue2(GameEvent gevent)
     {
         _ = float.TryParse(gevent.Value2, out float result);
         var number = GetNumericUpDown(result);
         number.ValueChanged += (_, _) => gevent.Value2 = number.Value.ToString();
-        PropertyInspector.Controls.Add(number, GEventPropertyCounter++, 1);
+        PropertyInspector.Controls.Add(number, GeventPropertyCounter++, 1);
     }
 
     private void PutNumberValue(GameEvent gevent)
@@ -3630,7 +3870,7 @@ public partial class Main : Form
         _ = float.TryParse(gevent.Value, out float result);
         var number = GetNumericUpDown(result);
         number.ValueChanged += (_, _) => gevent.Value = number.Value.ToString();
-        PropertyInspector.Controls.Add(number, GEventPropertyCounter++, 1);
+        PropertyInspector.Controls.Add(number, GeventPropertyCounter++, 1);
     }
 
     private void PutCharacter2(Node node, GameEvent gevent)
@@ -3640,7 +3880,7 @@ public partial class Main : Form
         character2.SelectedItem = gevent.Character2!;
         character2.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Character2 = character2.SelectedItem.ToString()!);
         character2.SelectedIndexChanged += (_, _) => ShowProperties(node);
-        PropertyInspector.Controls.Add(character2, GEventPropertyCounter++, 1);
+        PropertyInspector.Controls.Add(character2, GeventPropertyCounter++, 1);
     }
 
     private void PutValueValue(Node node, string character, GameEvent gevent)
@@ -3665,7 +3905,7 @@ public partial class Main : Form
         }
         value2.SelectedItem = gevent.Value!;
         value2.AddComboBoxHandler(node, nodes[SelectedCharacter], (sender, values) => gevent.Value = value2.SelectedItem.ToString()!);
-        PropertyInspector.Controls.Add(value2, GEventPropertyCounter++, 1);
+        PropertyInspector.Controls.Add(value2, GeventPropertyCounter++, 1);
     }
 
     private void PutValueKey(Node node, string character, GameEvent gevent)
@@ -3690,7 +3930,7 @@ public partial class Main : Form
         }
         value.SelectedItem = gevent.Key!;
         value.AddComboBoxHandler(node, nodes[SelectedCharacter], (sender, values) => gevent.Key = value.SelectedItem.ToString()!);
-        PropertyInspector.Controls.Add(value, GEventPropertyCounter++, 1);
+        PropertyInspector.Controls.Add(value, GeventPropertyCounter++, 1);
     }
 
     private void PutCharacter(Node node, GameEvent gevent)
@@ -3700,7 +3940,7 @@ public partial class Main : Form
         character.SelectedItem = gevent.Character!;
         character.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Character = character.SelectedItem.ToString()!);
         character.SelectedIndexChanged += (_, _) => ShowProperties(node);
-        PropertyInspector.Controls.Add(character, GEventPropertyCounter++, 1);
+        PropertyInspector.Controls.Add(character, GeventPropertyCounter++, 1);
     }
 
     private void UpdatePropertyColoumnWidths()

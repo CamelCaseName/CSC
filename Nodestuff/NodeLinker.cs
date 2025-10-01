@@ -932,7 +932,7 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((Clothes)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString())) { FileName = criterion.Character! };
+                                var clothing = new Node(criterion.Option + criterion.Value, NodeType.Clothing, criterion.Character + "'s  " + ((ClothingType)int.Parse(criterion.Value!)).ToString() + " in set " + (criterion.Option == 0 ? "any" : (criterion.Option - 1).ToString())) { FileName = criterion.Character! };
                                 Clothing.Add(clothing);
                                 nodes.AddParent(node, clothing);
                             }
@@ -1381,7 +1381,7 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((Clothes)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
+                                var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((ClothingType)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
                                 Clothing.Add(clothing);
                                 nodes.AddChild(node, clothing);
                                 clothing.DupeToOtherSorting(node.FileName);
