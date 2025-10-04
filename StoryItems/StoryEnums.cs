@@ -61,7 +61,7 @@ namespace CSC.StoryItems
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Packages
-        { 
+        {
             Base,
             Christmas,
             DojaCat,
@@ -75,7 +75,7 @@ namespace CSC.StoryItems
             NocturnalTemptations
         }
 
-            [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DialogueStatuses
         {
             WasNotShown,
@@ -470,6 +470,16 @@ namespace CSC.StoryItems
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum CombatOptions
+        {
+            Fight,
+            Die = 10,
+            PassOut = 20,
+            WakeUp = 30,
+            Cancel = 40
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum RoamingOptions
         {
             Allow,
@@ -670,6 +680,17 @@ namespace CSC.StoryItems
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum IKTargets
+        {
+            LeftHand,
+            RightHand,
+            LeftFoot,
+            RightFoot,
+            Head,
+            Hips
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DialogueAction
         {
             Trigger,
@@ -806,6 +827,13 @@ namespace CSC.StoryItems
             GrabFromInventory,
             DropCurrentlyHeldItem,
             FlashBreasts
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum RadialTriggerOptions
+        {
+            Item,
+            Character
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
@@ -1125,6 +1153,159 @@ namespace CSC.StoryItems
             WallSexSecondary,
             WallSex2Primary = 220,
             WallSex2Secondary
+        }
+
+        public enum Females
+        {
+            Amy,
+            Ashley,
+            Brittney,
+            Katherine,
+            Leah,
+            Lety,
+            Madison,
+            Rachael,
+            Stephanie,
+            Vickie,
+            Amala,
+            DojaCat,
+            LizKatz
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum FemalePoses
+        {
+            HandsBehindHead,
+            SittingOnFloor,
+            BentOver,
+            HandsBehindBack,
+            StickingAssOut,
+            Sitting1,
+            Sitting2,
+            Sitting3,
+            Sitting4,
+            BlowjobAction,
+            BlowJobReady,
+            FemaleLay1,
+            FemaleLay2,
+            FemaleLay3,
+            ModelPose1,
+            ModelPose2,
+            ModelPose3,
+            AllFours,
+            MissionaryBottom,
+            SexReady,
+            DoggieStyleFront,
+            CowGirlTop,
+            CunnilingusTop,
+            HotTubSit1,
+            HotTubHandJob,
+            TakeCellPhoto,
+            SixtyNineTop,
+            Selfie,
+            MissionaryTop,
+            DoggieStyleBehind,
+            CowGirlBottom,
+            CunnilingusBottom,
+            SixtyNineBottom,
+            MakingOutPrimary,
+            MakingOutSecondary,
+            WallSexPrimary,
+            WallSexSecondary,
+            WallSex2Primary,
+            WallSex2Secondary,
+            WallSex3Primary,
+            WallSex3Secondary,
+            HotTubHandJobPrimary,
+            Masturbate,
+            SitInBathtub,
+            SittingOnFlamingo,
+            TPose,
+            BracingAgainstDoor1,
+            BracingAgainstDoor2,
+            BracingAgainstWindow,
+            Meditate,
+            TypingStanding,
+            OperatingTablet,
+            SixtyNineTopWithFemale,
+            FingeringTop,
+            FingeringBottom,
+            ScissoringBottom,
+            ScissoringTop,
+            CoverGenitals,
+            GiveSpeechArmsOut,
+            GetStuckInDryer,
+            GetStuckInDryerImmediate,
+            HotTubSeat5Pose,
+            DefaultCustomize,
+            HairCustomize,
+            ShoeCustomize,
+            EyesCustomize,
+            LoadingScren,
+            NailsCustomize,
+            ScreenshotPose,
+            Pondering,
+            OrganizingBriefcase
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum MalePoses
+        {
+            MissionaryTop,
+            Sitting,
+            Laying,
+            DoggieStyleSexBehind,
+            HotTubSit,
+            CowGirlSexBottom,
+            CunnilingusGiver,
+            BlowJobGiverReady,
+            BlowJobGiverAction,
+            SixtyNineBottom,
+            MissionaryBottom,
+            DoggieStyleFront,
+            CowgirlTop,
+            MakingOutPrimary,
+            MakingOutSecondary,
+            WallSexPrimary,
+            WallSexSecondary,
+            WallSex2Primary,
+            WallSex2Secondary,
+            WallSex3Primary,
+            WallSex3Secondary,
+            HotTubHandJobPrimary,
+            BathTubSit,
+            StickOutAss,
+            SitInBathTub,
+            SixtyNineTop,
+            TPose,
+            BracingAgainstDoor1,
+            BracingAgainstDoor2,
+            BracingAgainstWindow,
+            Meditate,
+            TypingStanding,
+            OperatingTablet,
+            FingeringBottom,
+            CoverGenitals,
+            GiveSpeechArmsOut,
+            DefaultCustomize,
+            HairCustomize,
+            ShoeCustomize,
+            EyesCustomize,
+            LoadingScreen,
+            NailsCustomize,
+            ScreenshotPose,
+            Pondering,
+            OrganizingBriefcase
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum LookAtTargets
+        {
+            Character,
+            Camera,
+            InteractiveItem = 10,
+            GameObject = 20,
+            PlayerPenis = 30
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]

@@ -2943,7 +2943,7 @@ public partial class Main : Form
                     }
                     case GameEvents.CharacterFromCharacterGroup:
                     {
-                        //todo
+                        //todo seems very involved, not gonna implement now
                         break;
                     }
                     case GameEvents.CharacterFunction:
@@ -3030,7 +3030,12 @@ public partial class Main : Form
                     }
                     case GameEvents.Combat:
                     {
-                        //todo
+                        PutCharacter1(node, gevent);
+                        PutEnumOption<CombatOptions>(node, gevent);
+                        if (gevent.Option == (int)(CombatOptions.Fight))
+                        {
+                            PutCharacter2(node, gevent);
+                        }
                         break;
                     }
                     case GameEvents.CutScene:
@@ -3119,7 +3124,8 @@ public partial class Main : Form
                     }
                     case GameEvents.Door:
                     {
-                        //todo
+                        PutEnumKeyText<Doors>(node, gevent);
+                        PutEnumOption<DoorAction>(node, gevent);
                         break;
                     }
                     case GameEvents.Emote:
@@ -3182,7 +3188,19 @@ public partial class Main : Form
                     }
                     case GameEvents.IKReach:
                     {
-                        //todo
+                        PutCharacter1(node, gevent);
+                        PutEnumOption2<IKTargets>(node, gevent);
+                        PutEnumOption<ClothingOnOff>(node, gevent);
+
+                        if (gevent.Option == 0)
+                        {
+                            var box = GetComboBox();
+                            box.Items.AddRange(Enum.GetNames<Characters>());
+                            box.Items.AddRange(Enum.GetNames<Items>());
+                            box.SelectedItem = gevent.Key;
+                            box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Key = box.SelectedItem!.ToString()!);
+                            PropertyInspector.Controls.Add(box, GeventPropertyCounter++, 1);
+                        }
                         break;
                     }
                     case GameEvents.Intimacy:
@@ -3202,17 +3220,46 @@ public partial class Main : Form
                     }
                     case GameEvents.Item:
                     {
-                        //todo
+                        //todo seems pretty involved
                         break;
                     }
                     case GameEvents.ItemFromItemGroup:
                     {
-                        //todo
+                        //todo just as involved as the item gameevent type
                         break;
                     }
                     case GameEvents.LookAt:
                     {
-                        //todo
+                        PutCharacter1(node, gevent);
+                        PutEnumOption<LookAtTargets>(node, gevent);
+
+                        switch ((LookAtTargets)gevent.Option)
+                        {
+                            case LookAtTargets.Character:
+                            {
+                                PutCharacter2(node, gevent);
+                                gevent.Value = string.Empty;
+                                break;
+                            }
+                            case LookAtTargets.InteractiveItem:
+                            {
+                                PutEnumValueText<Items>(node, gevent);
+                                gevent.Character2 = string.Empty;
+                                break;
+                            }
+                            case LookAtTargets.GameObject:
+                            {
+                                PutTextValue(gevent);
+                                gevent.Character2 = string.Empty;
+                                break;
+                            }
+                            case LookAtTargets.PlayerPenis:
+                            {
+                                gevent.Character2 = string.Empty;
+                                gevent.Value = string.Empty;
+                                break;
+                            }
+                        }
                         break;
                     }
                     case GameEvents.Personality:
@@ -3254,7 +3301,49 @@ public partial class Main : Form
                     }
                     case GameEvents.Player:
                     {
-                        //todo
+                        PutEnumOption<PlayerActions>(node, gevent);
+                        switch ((PlayerActions)gevent.Option)
+                        {
+                            case PlayerActions.Inventory:
+                            {
+                                PutEnumOption2<AddRemoveActions>(node, gevent);
+                                PutEnumValueText<Items>(node, gevent);
+                                break;
+                            }
+                            case PlayerActions.TriggerGiveTo:
+                            {
+                                PutCharacter1(node, gevent);
+                                break;
+                            }
+                            case PlayerActions.Sit:
+                            {
+                                //todo implement chairs
+                                break;
+                            }
+                            case PlayerActions.LayDown:
+                            {
+                                //todo implement beds
+                                break;
+                            }
+                            case PlayerActions.ToggleRadialFor:
+                            {
+                                PutEnumOption2<RadialTriggerOptions>(node, gevent);
+                                if (gevent.Option2 == (int)RadialTriggerOptions.Character)
+                                {
+                                    PutEnumValueText<StoryCharacters>(node, gevent);
+                                }
+                                else
+                                {
+                                    PutEnumValueText<Items>(node, gevent);
+                                }
+                                break;
+                            }
+                            case PlayerActions.GrabFromInventory:
+                            {
+                                PutEnumValueText<Items>(node, gevent);
+                                break;
+                            }
+                        }
                         break;
                     }
                     case GameEvents.PlaySoundboardClip:
@@ -3264,12 +3353,55 @@ public partial class Main : Form
                     }
                     case GameEvents.Pose:
                     {
-                        //todo
+                        PutCharacter1(node, gevent);
+                        //todo add charactergroups but i dont care for now
+                        PutEnumOption<BoolCritera>(node, gevent);
+                        if (Enum.GetNames<Females>().Contains(gevent.Character))
+                        {
+                            gevent.Option2 = (int)Gender.Female;
+                        }
+                        else
+                        {
+                            gevent.Option2 = (int)Gender.Male;
+                        }
+
+                        if (gevent.Option == (int)BoolCritera.True)
+                        {
+                            if (gevent.Option2 == (int)Gender.Female)
+                            {
+                                PutEnumValue<FemalePoses>(node, gevent);
+                            }
+                            else
+                            {
+                                PutEnumValue<MalePoses>(node, gevent);
+                            }
+                        }
                         break;
                     }
                     case GameEvents.Quest:
                     {
-                        //todo
+                        var box = GetComboBox();
+                        List<Quest> Quests = [];
+                        foreach (var item in Stories.Values)
+                        {
+                            foreach (var quest in item.Quests)
+                            {
+                                Quests.Add(quest);
+                                box.Items.Add(quest.ID);
+                            }
+                        }
+                        box.SelectedItem = gevent.Key;
+                        box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) =>
+                        {
+                            gevent.Key = box.SelectedItem.ToString()!;
+                            gevent.Value = Quests.Find(n => n.ID == gevent.Key)?.Name ?? "#";
+                        });
+                        box.SelectedIndexChanged += (_, _) => ShowProperties(node);
+                        PropertyInspector.Controls.Add(box, GeventPropertyCounter++, 1);
+
+                        PutEnumOption<QuestActions>(node, gevent);
+                        gevent.Character = string.Empty;
+                        gevent.Character2 = string.Empty;
                         break;
                     }
                     case GameEvents.RandomizeIntValue:
