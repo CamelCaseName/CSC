@@ -1086,6 +1086,7 @@ public partial class Main : Form
         CharacterStory story = new(newCharacterName);
         Stories[newCharacterName] = story;
         SelectedCharacter = newCharacterName;
+        AddCharacterAsItemToStory(newCharacterName);
 
         ExtractAndAddStories(newCharacterName);
     }
@@ -1118,11 +1119,63 @@ public partial class Main : Form
             foreach (var character in Enum.GetNames<StoryCharacters>())
             {
                 AddCharacterStory(character);
+                AddCharacterAsItemToStory(character);
             }
             SetupStartPositions();
         }
     }
 
+    private static void AddCharacterAsItemToStory(string character) => Story.ItemOverrides.Add(new()
+    {
+        ItemName = character,
+        DisplayInEditor = true,
+        DisplayName = character,
+        UseDefaultRadialOptions = true,
+        ItemActions = [
+                            new(){
+                            ActionName = "Inspect",
+                            OnTakeActionEvents = [
+                                new(){
+                                    EventType = GameEvents.DisplayGameMessage,
+                                    Option = (int)GameMessageType.CenterScreenText,
+                                    Value = "It's " + character,
+                                    Character = AnybodyCharacters.Anybody.ToString(),
+                                }
+                                ]
+                        },
+                        new(){
+                            ActionName = "Talk",
+                            OnTakeActionEvents = [
+                                new(){
+                                    EventType = GameEvents.Dialogue,
+                                    Option = (int)DialogueAction.TriggerStartDialogue,
+                                    Character = character,
+                                }
+                                ]
+                        },
+                        new(){
+                            ActionName = "Give",
+                            Criteria = [
+                                new(){
+                                    BoolValue = BoolCritera.True,
+                                    CompareType = CompareTypes.PlayerInventory,
+                                    PlayerInventoryOption = PlayerInventoryOptions.HasAtLeastOneItem,
+                                    EqualsValue = EqualsValues.Equals,
+                                    EquationValue = ComparisonEquations.Equals,
+                                    ValueFormula = ValueSpecificFormulas.EqualsValue,
+                                    ItemComparison = ItemComparisonTypes.IsActive,
+                                }
+                                ],
+                            OnTakeActionEvents = [
+                                new(){
+                                    EventType = GameEvents.Player,
+                                    Option = (int)PlayerActions.TriggerGiveTo,
+                                    Character = character,
+                                }
+                                ]
+                        }
+                            ]
+    });
     private void Reset()
     {
         Story = null!;
@@ -1945,17 +1998,18 @@ public partial class Main : Form
             var settings = new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore,
-                MissingMemberHandling = MissingMemberHandling.Error
+                MissingMemberHandling = MissingMemberHandling.Error,
+                Formatting = Formatting.Indented,
             };
             if (StoryName == FileName)
             {
-                var data = JsonConvert.SerializeObject(Story);
-                File.WriteAllText(Path.Combine(StoryFolder, FileName + ".story"), data);
+                var data = JsonConvert.SerializeObject(Story, settings);
+                File.WriteAllText(Path.Combine(StoryFolder, FileName + ".story"), data, System.Text.Encoding.Unicode);
             }
             else
             {
-                var data = JsonConvert.SerializeObject(Stories[FileName]);
-                File.WriteAllText(Path.Combine(StoryFolder, FileName + ".character"), data);
+                var data = JsonConvert.SerializeObject(Stories[FileName], settings);
+                File.WriteAllText(Path.Combine(StoryFolder, FileName + ".character"), data, System.Text.Encoding.Unicode);
             }
         }
         catch (JsonReaderException ex)

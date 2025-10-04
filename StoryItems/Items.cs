@@ -121,7 +121,6 @@ namespace CSC.StoryItems
     public sealed class GameEvent
     {
         public EventSpecialHandling Handling { get; set; } = EventSpecialHandling.None;
-        public int SortOrder2 { get; set; } = 0;
 
         public string Version { get; set; } = "2.0";
 
@@ -189,10 +188,12 @@ namespace CSC.StoryItems
             {
                 Name = "Gamestart-Gamestarts",
                 Type = EventTypes.GameStarts,
+                CharacterToReactTo = "Player",
                 Critera = [new() { CompareType = CompareTypes.IsNewGame, BoolValue = BoolCritera.True }],
                 Events = [
                     new(){
                         SortOrder = 2,
+                        Character = AnybodyCharacters.Anybody.ToString(),
                         EventType = GameEvents.DisplayGameMessage,
                         Option = (int)GameMessageType.Narration,
                         Value = "Welcome to "+name+"! Have fun here :)"
@@ -255,7 +256,7 @@ namespace CSC.StoryItems
         public MainStory() { }
         public bool AllowPlayerFemale { get; set; } = true;
         public bool AllowPlayerMale { get; set; } = true;
-        public bool UseEekDefaultItemEnableBehavior { get; set; } = true;
+        public bool UseEekDefaultItemEnableBehavior { get; set; } = false;
         public List<Achievement> Achievements { get; set; } = [];
         public List<CharacterGroup> CharacterGroups { get; set; } = [];
         public List<CriteriaGroup> CriteriaGroups { get; set; } = [];
@@ -445,18 +446,31 @@ namespace CSC.StoryItems
 
             var resp = new Response() { Text = "Goodbye " + name + "!" };
 
-            Dialogues.Add(new Dialogue() { Text = "Hello, i'm " + name + " :D", Responses = [resp] });
+            Dialogues.Add(new Dialogue()
+            {
+                Text = "Hello, i'm " + name + " :D I was made in the CCSC",
+                ShowGlobalResponses = true,
+                ShowGlobalGoodByeResponses = false,
+                SpeakingToCharacterName = "Player"
+            });
+            GlobalResponses.Add(resp);
 
             Reactions.Add(new EventTrigger()
             {
+                CharacterToReactTo = name,
                 Name = name + "-GameStart",
+                Type = EventTypes.GameStarts,
                 Events = [new GameEvent() {
                     Character = name,
                     EventType = GameEvents.WarpTo,
                     Option = (int)WarpToOption.MoveTarget,
-                    Value = MoveTargets.MasterBedroom.ToString() }],
+                    Value = MoveTargets.Kitchen.ToString(),
+                    }],
                 Critera = [new Criterion() {
-                    CompareType = CompareTypes.IsNewGame }]
+                    CompareType = CompareTypes.IsNewGame,
+                    BoolValue = BoolCritera.True,
+                    ItemComparison = ItemComparisonTypes.IsActive,
+                }]
             });
         }
         public CharacterStory()

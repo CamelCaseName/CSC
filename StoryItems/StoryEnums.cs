@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Converters;//Token:0x\w|d|\s|:*\n
-using System.Text.Json.Serialization;
 
 namespace CSC.StoryItems
 {
@@ -7,7 +6,6 @@ namespace CSC.StoryItems
     //searchtermtoremovealltokencomments
     public static class StoryEnums
     {
-        [JsonConverter(typeof(StringEnumConverter))]
         public enum CompareTypes
         {
             Never = 1000,
@@ -61,7 +59,8 @@ namespace CSC.StoryItems
             UseLegacyIntimacy = 960,
             None = 10000
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DialogueStatuses
         {
             WasNotShown,
@@ -69,7 +68,8 @@ namespace CSC.StoryItems
             IsCurrentlyShowing = 20,
             NotCurrentlyShowing = 30
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DoorOptionValues
         {
             IsOpen,
@@ -77,13 +77,15 @@ namespace CSC.StoryItems
             IsLocked,
             IsUnlocked
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum EqualsValues
         {
             Equals,
             DoesNotEqual
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ComparisonEquations
         {
             Equals,
@@ -91,7 +93,8 @@ namespace CSC.StoryItems
             GreaterThan = 20,
             LessThan = 30
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ItemComparisonTypes
         {
             IsActive = 10,
@@ -101,7 +104,8 @@ namespace CSC.StoryItems
             IsInventoriedOrHeldByPlayer,
             IsVisibleTo = 30
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ItemFromItemGroupComparisonTypes
         {
             IsActive = 10,
@@ -112,26 +116,30 @@ namespace CSC.StoryItems
             IsVisibleTo = 30,
             IsInPlayerInventory = 35
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum PlayerInventoryOptions
         {
             HasItem,
             HasAtLeastOneItem
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum PoseOptions
         {
             IsCurrentlyPosing,
             CurrentPose = 10
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Gender
         {
             None = 2,
             Female = 1,
             Male = 0
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum SocialStatuses
         {
             Mood,
@@ -143,13 +151,15 @@ namespace CSC.StoryItems
             TalkTo = 50,
             SendText = 60
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum BoolCritera
         {
             False,
             True
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ClothingChangeOptions
         {
             ClothingType,
@@ -160,12 +170,14 @@ namespace CSC.StoryItems
             RemoveFromOutfit
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ClothingOnOff
         {
             On,
             Off,
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum SetEnum
         {
             Set0,
@@ -174,7 +186,8 @@ namespace CSC.StoryItems
             Set3,
         }
 
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ValueSpecificFormulas
         {
             EqualsValue,
@@ -182,7 +195,7 @@ namespace CSC.StoryItems
             GreaterThanValue,
             LessThanValue
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
         public enum EventTypes
         {
             Never,
@@ -250,7 +263,8 @@ namespace CSC.StoryItems
             Ejaculates,
             None = 1000
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum InteractiveStates
         {
             Naked,
@@ -316,7 +330,8 @@ namespace CSC.StoryItems
             EyesAlwaysClosedWhenIdling,
             DontMoveForObstacles
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum InteractiveProperties
         {
             PlayerCombatMode = 1,
@@ -339,7 +354,8 @@ namespace CSC.StoryItems
             GivingOral,
             InCutScene = 200
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum PersonalityTraits
         {
             Nice,
@@ -360,7 +376,8 @@ namespace CSC.StoryItems
             Perverse,
             Exhibitionism
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ClothingType
         {
             Top,
@@ -373,19 +390,20 @@ namespace CSC.StoryItems
             Hair
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ClothingOptions
         {
             Change,
             ToggleWetEffect,
             ToggleBloodyEffect
         }
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum AddRemoveActions
         {
             Add,
             Remove
         }
 
-        [JsonConverter(typeof(StringEnumConverter))]
         public enum GameEvents
         {
             AddForce = 250,
@@ -435,6 +453,7 @@ namespace CSC.StoryItems
             WarpTo = 210,
             None = 1000
         }
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum IntimacyOptions
         {
             SexualAct,
@@ -442,6 +461,7 @@ namespace CSC.StoryItems
             DecreaseActionSpeed
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum GameMessageType
         {
             CenterScreenText,
@@ -449,7 +469,8 @@ namespace CSC.StoryItems
             ThoughtBubble = 20
         }
 
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ResponseReactionTypes
         {
             VeryBad,
@@ -458,7 +479,8 @@ namespace CSC.StoryItems
             Good,
             VeryGood
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ResponseTypes
         {
             Generic,
@@ -471,7 +493,8 @@ namespace CSC.StoryItems
             Intimidating = 70,
             Apology = 80
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ResponseTones
         {
             Friendly = 10,
@@ -495,7 +518,8 @@ namespace CSC.StoryItems
             SmallTalk = 210,
             PersonalQuestion = 220
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ConversationalTopics
         {
             Art = 30,
@@ -520,14 +544,16 @@ namespace CSC.StoryItems
             Sports = 190,
             Clothes = 200
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Importance
         {
             None,
             Important,
             VeryImportant
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum QuestStatus
         {
             NotObtained,
@@ -536,7 +562,8 @@ namespace CSC.StoryItems
             Failed,
             Missed
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum StoryAspects
         {
             CharacterPersonality,
@@ -548,7 +575,8 @@ namespace CSC.StoryItems
             BackgroundChatter,
             Values
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum PassCondition
         {
             AllSetsAreTrue,
@@ -556,7 +584,8 @@ namespace CSC.StoryItems
             AllSetsAreFalse,
             AnySetIsFalse
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DoorAction
         {
             Open,
@@ -566,7 +595,8 @@ namespace CSC.StoryItems
             OpenSlowly,
             CloseSlowly
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DialogueAction
         {
             Trigger,
@@ -574,7 +604,8 @@ namespace CSC.StoryItems
             SetStartDialogue = 5,
             TriggerStartDialogue = 10
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum CutsceneAction
         {
             PlayScene,
@@ -583,7 +614,8 @@ namespace CSC.StoryItems
             EndScene,
             EndAnySceneWithPlayer
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ItemEventAction
         {
             SetEnabled,
@@ -596,7 +628,8 @@ namespace CSC.StoryItems
             ApplyHotSpots,
             SetInventoryIcon
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ItemGroupAction
         {
             SetEnabled,
@@ -610,12 +643,14 @@ namespace CSC.StoryItems
             AddToPlayerInventory,
             GrabFromPlayerInventory
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Modification
         {
             Equals,
             Add
         }
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum TurnOptions
         {
             Around,
@@ -624,6 +659,7 @@ namespace CSC.StoryItems
             Toward
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum WarpToOption
         {
             MoveTarget,
@@ -631,6 +667,7 @@ namespace CSC.StoryItems
             Item
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ImportanceSpecified
         {
             Unspecified,
@@ -638,7 +675,8 @@ namespace CSC.StoryItems
             Important,
             VeryImportant
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum SendEvents
         {
             TurnAround,
@@ -672,7 +710,8 @@ namespace CSC.StoryItems
             Orgasm,
             GameOver
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum QuestActions
         {
             Start,
@@ -680,7 +719,8 @@ namespace CSC.StoryItems
             Complete,
             Fail
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum PlayerActions
         {
             Inventory,
@@ -694,7 +734,8 @@ namespace CSC.StoryItems
             DropCurrentlyHeldItem,
             FlashBreasts
         }
-        [JsonConverter(typeof(StringEnumConverter))]
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum EventSpecialHandling
         {
             None,
@@ -705,6 +746,7 @@ namespace CSC.StoryItems
             CutSceneEvents
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Characters
         {
             Amy,
@@ -729,6 +771,7 @@ namespace CSC.StoryItems
             LizKatz
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum IntimateCharacters
         {
             None,
@@ -749,6 +792,7 @@ namespace CSC.StoryItems
             LizKatz
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum StoryCharacters
         {
             Amy,
@@ -766,6 +810,7 @@ namespace CSC.StoryItems
             Vickie,
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum AnybodyCharacters
         {
             Anybody,
@@ -792,6 +837,7 @@ namespace CSC.StoryItems
             LizKatz
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum BGCEmotes
         {
             Happy,
@@ -805,6 +851,7 @@ namespace CSC.StoryItems
             None = 10
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ClothingSet
         {
             AnySet,
@@ -812,6 +859,7 @@ namespace CSC.StoryItems
             Set1
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum CutscenePlaying
         {
             AnyCutScenePlaying = 1,
@@ -819,6 +867,7 @@ namespace CSC.StoryItems
             CensoredSexScenePlaying
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Doors
         {
             BathroomDoor,
@@ -859,6 +908,7 @@ namespace CSC.StoryItems
             UtilityClosetDoor
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum SexualActs
         {
             None,
@@ -879,6 +929,7 @@ namespace CSC.StoryItems
             InSexCutScene = 1000
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum IntimacyEvents
         {
             StartFingering = 7000,
@@ -898,6 +949,7 @@ namespace CSC.StoryItems
             End = 10060
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ZoneEnums
         {
             ArtRoomZone,
@@ -931,6 +983,7 @@ namespace CSC.StoryItems
             ApartmentZone
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Poses
         {
             HandsBehindHead,
@@ -974,11 +1027,13 @@ namespace CSC.StoryItems
             WallSex2Secondary
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum PlayerPrefs
         {
             ShowTutorial
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum LocationTargetOption
         {
             MoveTarget,
@@ -988,6 +1043,7 @@ namespace CSC.StoryItems
 
         //fromhpcontent.asset,replacefollowingquieryby","
         //\s*\n\s+Roamable:\d\s*\n\s+AcceptableSexLocation:\d\s*\n\s+AcceptableWallSexLocation:\d\s*\n\s+AcceptableNavRecoveryTarget:\d\s*\n\s+NonWallSexUsesMyTransform:\d
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum MoveTargets
         {
             AboveCompubrah2,
@@ -1171,6 +1227,7 @@ namespace CSC.StoryItems
 
         //(\s*\n\s+)EnableItemFunctions: \d(\s*\n\s+)ItemFunctions:\s*\n\s+[- \w*\s\n]*: \d[\s*\n\s+\w+: \d]+- Name: 
         //replace with ,
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Items
         {
             ACUnit,
@@ -1545,6 +1602,7 @@ namespace CSC.StoryItems
             YouTool,
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Cutscenes
         {
             AshleyFinale_c,
@@ -1665,12 +1723,14 @@ namespace CSC.StoryItems
             F_DerekSupporter_c
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum TriggerOptions
         {
             PerformEvent,
             SetEnabled
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Packages
         {
             Base,
@@ -1685,6 +1745,7 @@ namespace CSC.StoryItems
             Supporter,
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum SupportedClipNames
         {
             DunDunDUNNNnnn,
@@ -1709,6 +1770,7 @@ namespace CSC.StoryItems
             LKdoorbell_final
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum Emotions
         {
             Happy,
@@ -1733,6 +1795,7 @@ namespace CSC.StoryItems
             HappyAlt1 = 300
         }
 
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum BodyRegion
         {
             Anywhere,
@@ -1743,6 +1806,7 @@ namespace CSC.StoryItems
             Feet = 50,
             Hands = 60
         }
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ClothingTypeOrName
         {
 
