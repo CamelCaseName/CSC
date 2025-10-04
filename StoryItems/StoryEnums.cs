@@ -26,8 +26,7 @@ namespace CSC.StoryItems
             InVicinityAndVision = 21,
             Item = 15,
             IsBeingSpokenTo = 81,
-            IsAloneWithPlayer,
-            IsDLCActive = 85,
+            IsPackageInstalled = 85,
             IsOnlyInVicinityOf = 77,
             IsOnlyInVisionOf,
             IsOnlyInVicinityAndVisionOf,
@@ -36,7 +35,6 @@ namespace CSC.StoryItems
             IsCurrentlyUsing = 190,
             IsExplicitGameVersion = 2000,
             IsGameUncensored,
-            IsPackageInstalled,
             IsInFrontOf = 151,
             IsInHouse = 912,
             IsNewGame = 900,
@@ -50,6 +48,7 @@ namespace CSC.StoryItems
             Posing = 120,
             Property = 133,
             Quest = 100,
+            Opportunity,
             SameZoneAs = 911,
             ScreenFadeVisible = 180,
             Social = 50,
@@ -61,6 +60,22 @@ namespace CSC.StoryItems
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum Packages
+        { 
+            Base,
+            Christmas,
+            DojaCat,
+            ExplicitContent,
+            Halloween,
+            LizKatz,
+            Valentine,
+            BusinessAndPleasure,
+            AI,
+            Supporter,
+            NocturnalTemptations
+        }
+
+            [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum DialogueStatuses
         {
             WasNotShown,
@@ -453,6 +468,64 @@ namespace CSC.StoryItems
             WarpTo = 210,
             None = 1000
         }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum RoamingOptions
+        {
+            Allow,
+            ChangeLocation,
+            ProhibitLocation,
+            AllowLocation,
+            ClearAllowRoamList,
+            ClearProhibitRoamList,
+            ClearAllRoamLists,
+            SetRoamingDelayToMaximum,
+            SetRoamingDelayToMinimum,
+            StopMyCurrentRoamingMotion,
+            StopAllCurrentRoamingMotionTo
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum SendEventOptions
+        {
+            None,
+            TurnAround = 10,
+            TurnLeft,
+            TurnRight,
+            StepForward = 20,
+            StepBackwards,
+            StepLeft,
+            StepRight,
+            PickupLeftHand = 50,
+            PickupRightHand,
+            Throw,
+            ThrowPunch = 60,
+            SwingWeapon1HRight = 65,
+            JumpUp = 70,
+            JumpDown,
+            JumpAndFall,
+            Point = 80,
+            SipDrinkLeft = 90,
+            SipDrinkRight,
+            SipDrinkSittingLeft,
+            SipDrinkSittingRight,
+            SipDrinkHotTubLeft,
+            SipDrinkHotTubRight,
+            StopUsingActionItem = 100,
+            Cheer = 110,
+            Cheer2,
+            Cheer3,
+            EdgeSlip = 115,
+            StartPeeing = 120,
+            StopPeeing,
+            ToggleGenitals = 130,
+            StartStripTease,
+            StopStripTease,
+            Orgasm = 140,
+            StubToe = 150,
+            GameOver = 10000
+        }
+
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum IntimacyOptions
         {
@@ -811,6 +884,33 @@ namespace CSC.StoryItems
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+        public enum NoneCharacters
+        {
+            Nonde,
+            Amy,
+            Arin,
+            Ashley,
+            Brittney,
+            Compubrah,
+            Dan,
+            Derek,
+            Frank,
+            Katherine,
+            Leah,
+            Lety,
+            Madison,
+            Patrick,
+            PhoneCall,
+            Player,
+            Rachael,
+            Stephanie,
+            Vickie,
+            Amala,
+            DojaCat,
+            LizKatz
+        }
+
+        [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum AnybodyCharacters
         {
             Anybody,
@@ -950,7 +1050,7 @@ namespace CSC.StoryItems
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
-        public enum ZoneEnums
+        public enum Zones
         {
             ArtRoomZone,
             BalloonZone,
@@ -1731,18 +1831,12 @@ namespace CSC.StoryItems
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
-        public enum Packages
+        public enum WalkToTargetOptions
         {
-            Base,
-            Christmas,
-            DojaCat,
-            ExplicitContent,
-            Halloween,
-            LizKatz,
-            Valentine,
-            BusinessandPleasure,
-            AI,
-            Supporter,
+            MoveTarget,
+            Character,
+            Item,
+            Cancel
         }
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
