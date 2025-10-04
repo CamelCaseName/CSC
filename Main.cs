@@ -124,6 +124,7 @@ public partial class Main : Form
     private bool subtracting;
     private bool adding;
     private Point startSelectingMousePos = Point.Empty;
+    private string StoryFolder = string.Empty;
     public const string HousePartyVersion = "1.4.2";
 
     public static string StoryName { get; private set; } = NoCharacter;
@@ -159,8 +160,6 @@ public partial class Main : Form
     public int LeftClickFrameCounter { get; private set; }
 
     //todo populate propertyinspector for most basic events.
-    //todo check with original csc for minimum requirements to build story
-    //todo add file export
 
     //todo add info when trying to link incompatible notes
     //todo add search
@@ -1067,23 +1066,19 @@ public partial class Main : Form
 
     private void AddStory()
     {
-        DialogResult res = MessageBox.Show("Do you want to create a new Story?", "New Story?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-        if (res != DialogResult.Yes)
+        if (Story is null)
         {
-            return;
+            var newStoryName = string.Empty;
+            var res = Dialogs.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
+
+            if (res != DialogResult.OK)
+            {
+                return;
+            }
+
+            AddStory(newStoryName);
+            SetupStartPositions();
         }
-
-        var newStoryName = string.Empty;
-        res = Dialogs.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
-
-        if (res != DialogResult.OK)
-        {
-            return;
-        }
-
-        AddStory(newStoryName);
-        SetupStartPositions();
     }
 
     private void AddCharacterStory(string newCharacterName)
@@ -1115,13 +1110,7 @@ public partial class Main : Form
                 return;
             }
         }
-        Story = null!;
-        Stories.Clear();
-        StoryName = NoCharacter;
-        SelectedCharacter = NoCharacter;
-        nodes.Clear();
-        StoryTreeReset();
-        Graph.Invalidate();
+        Reset();
 
         AddStory();
         if (Story is not null)
@@ -1132,6 +1121,17 @@ public partial class Main : Form
             }
             SetupStartPositions();
         }
+    }
+
+    private void Reset()
+    {
+        Story = null!;
+        Stories.Clear();
+        StoryName = NoCharacter;
+        SelectedCharacter = NoCharacter;
+        nodes.Clear();
+        StoryTreeReset();
+        Graph.Invalidate();
     }
 
     private void StoryTreeReset()
@@ -1588,6 +1588,17 @@ public partial class Main : Form
 
     private void OpenButton_Click(object sender, EventArgs e)
     {
+        if (Story is not null)
+        {
+            DialogResult res = MessageBox.Show("This will overwrite your current story and NOT SAVE", "Overwrite?", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+
+            if (res != DialogResult.OK)
+            {
+                return;
+            }
+        }
+        Reset();
+
         var dialog = new OpenFileDialog();
         var result = dialog.ShowDialog();
 
@@ -1606,7 +1617,8 @@ public partial class Main : Form
 
     private void LoadAllFilesIntoStore(string FilePath)
     {
-        foreach (var file in Directory.GetFiles(Path.GetDirectoryName(FilePath)!))
+        StoryFolder = Path.GetDirectoryName(FilePath)!;
+        foreach (var file in Directory.GetFiles(StoryFolder))
         {
             if (Path.GetExtension(file) == ".story")
             {
@@ -1885,7 +1897,79 @@ public partial class Main : Form
 
     private void Save_Click(object sender, EventArgs e)
     {
+        if (Story is null)
+        {
+            return;
+        }
+        if (string.IsNullOrEmpty(StoryFolder) || !Directory.Exists(StoryFolder))
+        {
+            var folder = new FolderBrowserDialog()
+            {
+                Description = "select story save location",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true,
+                OkRequiresInteraction = true,
+                AddToRecent = true,
+                ShowPinnedPlaces = true,
+                RootFolder = Environment.SpecialFolder.Recent
+            };
+            var res = folder.ShowDialog();
 
+            if (res == DialogResult.OK)
+            {
+                StoryFolder = folder.SelectedPath;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        ExportFile(StoryName);
+        foreach (var character in Stories.Keys)
+        {
+            ExportFile(character);
+        }
+    }
+
+    private void ExportFile(string FileName)
+    {
+        if (Path.GetFileNameWithoutExtension(StoryFolder) != StoryName)
+        {
+            var path = Directory.CreateDirectory(Path.Combine(StoryFolder, StoryName));
+            StoryFolder = path.FullName;
+        }
+
+        try
+        {
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Error
+            };
+            if (StoryName == FileName)
+            {
+                var data = JsonConvert.SerializeObject(Story);
+                File.WriteAllText(Path.Combine(StoryFolder, FileName + ".story"), data);
+            }
+            else
+            {
+                var data = JsonConvert.SerializeObject(Stories[FileName]);
+                File.WriteAllText(Path.Combine(StoryFolder, FileName + ".character"), data);
+            }
+        }
+        catch (JsonReaderException ex)
+        {
+            Debug.WriteLine(ex.Message);
+            return;
+        }
+        catch (AggregateException ex)
+        {
+            Debug.WriteLine(ex.Message);
+            return;
+        }
+
+        return;
     }
 
     private Node UpdateClickedNode(PointF graphPos)
