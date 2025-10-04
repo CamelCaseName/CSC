@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Windows.Forms;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC;
@@ -106,7 +107,7 @@ public partial class Main : Form
     private readonly List<SizeF> SelectedNodeOffsets = [];
     private SizeF CircleSize = new(15, 15);
     private CachedBitmap? oldGraph;
-    private static MainStory Story = new();
+    private static MainStory Story = null!;
     public static readonly Dictionary<string, CharacterStory> Stories = [];
     private static readonly Dictionary<string, NodeStore> nodes = [];
     private static string _selectedCharacter = NoCharacter;
@@ -1021,74 +1022,124 @@ public partial class Main : Form
     {
         if (string.IsNullOrEmpty(StoryName) || StoryName == NoCharacter || Story is null)
         {
-            DialogResult res = MessageBox.Show("Do you want to create a new Story?", "New Story?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (res != DialogResult.Yes)
-            {
-                return;
-            }
-
-            var newStoryName = string.Empty;
-            res = Dialogs.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
-
-            if (res != DialogResult.OK)
-            {
-                return;
-            }
-
-            Story = new(newStoryName);
-            StoryName = newStoryName;
-            SelectedCharacter = Player;
-
-            ExtractAndAddStories(Player, newStoryName);
+            AddStory();
         }
         else if (Story is not null)
         {
-            List<object> list = [.. Enum.GetNames<StoryCharacters>()];
-            foreach (var key in Stories.Keys)
-            {
-                list.Remove(key);
-            }
-            if (list.Count == 0)
-            {
-                MessageBox.Show("Cannot add any more characters", "No more!", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            AddCharacterStory();
+        }
+    }
 
-            //add character story if it is not alredy and only characters supported in CSC
-            DialogResult res = MessageBox.Show("Do you want to add a new character?", "New Character?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+    private void AddCharacterStory()
+    {
+        List<object> list = [.. Enum.GetNames<StoryCharacters>()];
+        foreach (var key in Stories.Keys)
+        {
+            list.Remove(key);
+        }
+        if (list.Count == 0)
+        {
+            MessageBox.Show("Cannot add any more characters", "No more!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
 
-            if (res != DialogResult.Yes)
-            {
-                return;
-            }
+        //add character story if it is not alredy and only characters supported in CSC
+        DialogResult res = MessageBox.Show("Do you want to add a new character?", "New Character?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            var newChar = string.Empty;
+        if (res != DialogResult.Yes)
+        {
+            return;
+        }
 
-            res = Dialogs.ShowDropdownBox(ref newChar, [.. list], "Character to add:", "Select Character");
+        var newChar = string.Empty;
+
+        res = Dialogs.ShowDropdownBox(ref newChar, [.. list], "Character to add:", "Select Character");
+
+        if (res != DialogResult.OK)
+        {
+            return;
+        }
+
+        AddCharacterStory(newChar);
+        SetupStartPositions();
+        return;
+    }
+
+    private void AddStory()
+    {
+        DialogResult res = MessageBox.Show("Do you want to create a new Story?", "New Story?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+        if (res != DialogResult.Yes)
+        {
+            return;
+        }
+
+        var newStoryName = string.Empty;
+        res = Dialogs.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
+
+        if (res != DialogResult.OK)
+        {
+            return;
+        }
+
+        AddStory(newStoryName);
+        SetupStartPositions();
+    }
+
+    private void AddCharacterStory(string newCharacterName)
+    {
+        CharacterStory story = new(newCharacterName);
+        Stories[newCharacterName] = story;
+        SelectedCharacter = newCharacterName;
+
+        ExtractAndAddStories(newCharacterName);
+    }
+
+    private void AddStory(string newStoryName)
+    {
+        Story = new(newStoryName);
+        StoryName = newStoryName;
+        SelectedCharacter = Player;
+
+        ExtractAndAddStories(Player, newStoryName);
+    }
+
+    private void NewStory_Click(object sender, EventArgs e)
+    {
+        if (Story is not null)
+        {
+            DialogResult res = MessageBox.Show("This will overwrite your current story and NOT SAVE", "Overwrite?", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
 
             if (res != DialogResult.OK)
             {
                 return;
             }
-
-            CharacterStory story = new(newChar);
-            Stories[newChar] = story;
-            SelectedCharacter = newChar;
-
-            ExtractAndAddStories(newChar);
         }
-        SetupStartPositions();
+        Story = null!;
+        Stories.Clear();
+        StoryName = NoCharacter;
+        SelectedCharacter = NoCharacter;
+        nodes.Clear();
+        StoryTreeReset();
+        Graph.Invalidate();
+
+        AddStory();
+        if (Story is not null)
+        {
+            foreach (var character in Enum.GetNames<StoryCharacters>())
+            {
+                AddCharacterStory(character);
+            }
+            SetupStartPositions();
+        }
     }
 
-    private void AddChild_Click(object sender, EventArgs e)
+    private void StoryTreeReset()
     {
-
-    }
-
-    private void AddParent_Click(object sender, EventArgs e)
-    {
-
+        StoryTree.Nodes.Clear();
+        TreeNode treeNode1 = new TreeNode("Characters");
+        TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
+        StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
     }
 
     private void DrawEdge(Graphics g, Node parent, Node child, Pen pen, PointF start = default, PointF end = default)
@@ -1680,14 +1731,6 @@ public partial class Main : Form
         StoryTree.ExpandAll();
     }
 
-    private void ResetButton_Click(object sender, EventArgs e)
-    {
-        nodes.Clear();
-        visited.Clear();
-        Graph.Invalidate();
-        SelectedCharacter = NoCharacter;
-    }
-
     private void SetPanOffset(Point location)
     {
         StartPanOffsetX = location.X;
@@ -1715,7 +1758,7 @@ public partial class Main : Form
 
     private void SetStartPositionsForNodesInList(string store, int intX, int intY, NodeStore nodeStore, List<Node> nodeList, bool inListOnly = false)
     {
-        int ParentEdgeMaxStartValue = 1;
+        int ParentEdgeMaxStartValue = 0;
         maxYperX.Clear();
         maxYperX.ExtendToIndex(intX, intY);
 
@@ -1840,7 +1883,7 @@ public partial class Main : Form
         return intX;
     }
 
-    private void Start_Click(object sender, EventArgs e)
+    private void Save_Click(object sender, EventArgs e)
     {
 
     }
@@ -2860,7 +2903,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Clothing:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumOptions2<ClothingOptions>(node, gevent);
 
                         switch ((ClothingOptions)gevent.Option2)
@@ -2947,7 +2990,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Dialogue:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumOptions<DialogueAction>(node, gevent);
                         if (gevent.Option == 1)
                         {
@@ -2967,7 +3010,7 @@ public partial class Main : Form
                     }
                     case GameEvents.DisableNPC:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         break;
                     }
                     case GameEvents.DisplayGameMessage:
@@ -2996,7 +3039,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Emote:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumValue<Emotions>(node, gevent);
                         PutNumberValue2(gevent);
 
@@ -3004,12 +3047,12 @@ public partial class Main : Form
                     }
                     case GameEvents.EnableNPC:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         break;
                     }
                     case GameEvents.EventTriggers:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         gevent.Character2 = "#";
                         gevent.Key = "";
 
@@ -3059,7 +3102,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Intimacy:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumOptions<IntimacyOptions>(node, gevent);
                         if (gevent.Option == 0)
                         {
@@ -3089,7 +3132,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Personality:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumOptions<PersonalityTraits>(node, gevent);
                         PutEnumOptions2<Modification>(node, gevent);
                         PutNumberValue(gevent);
@@ -3097,7 +3140,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Property:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumValue<InteractiveProperties>(node, gevent);
                         PutEnumOptions<BoolCritera>(node, gevent);
 
@@ -3106,7 +3149,7 @@ public partial class Main : Form
                     case GameEvents.MatchValue:
                     case GameEvents.CombineValue:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
 
                         PutValueKey(node, gevent.Character, gevent);
 
@@ -3122,7 +3165,7 @@ public partial class Main : Form
                     case GameEvents.ModifyValue:
                     {
                         gevent.Character2 = "#";
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
 
                         PutValueKey(node, gevent.Character, gevent);
 
@@ -3154,7 +3197,7 @@ public partial class Main : Form
                     }
                     case GameEvents.RandomizeIntValue:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
 
                         PutValueKey(node, gevent.Character, gevent);
 
@@ -3169,7 +3212,7 @@ public partial class Main : Form
                     }
                     case GameEvents.ResetReactionCooldown:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutCharacter2(node, gevent);
                         PutEnumOptions<EventTypes>(node, gevent);
                         break;
@@ -3191,7 +3234,7 @@ public partial class Main : Form
                     }
                     case GameEvents.Social:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
 
                         PutEnumOptions<SocialStatuses>(node, gevent);
 
@@ -3235,7 +3278,7 @@ public partial class Main : Form
                     }
                     case GameEvents.State:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumValue<InteractiveStates>(node, gevent);
                         PutEnumOptions<AddRemoveActions>(node, gevent);
                         break;
@@ -3248,7 +3291,7 @@ public partial class Main : Form
                     case GameEvents.Turn:
                     case GameEvents.TurnInstantly:
                     {
-                        PutCharacter(node, gevent);
+                        PutCharacter1(node, gevent);
                         PutEnumOptions<TurnOptions>(node, gevent);
 
                         if (gevent.Option == 3)
@@ -3934,7 +3977,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(value, GeventPropertyCounter++, 1);
     }
 
-    private void PutCharacter(Node node, GameEvent gevent)
+    private void PutCharacter1(Node node, GameEvent gevent)
     {
         ComboBox character = GetComboBox();
         character.Items.AddRange(Enum.GetNames(typeof(Characters)));

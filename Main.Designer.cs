@@ -35,11 +35,9 @@ namespace CSC
             TreeNode treeNode1 = new TreeNode("Characters");
             TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
             Menu = new ToolStrip();
-            StartButton = new ToolStripButton();
-            ResetButton = new ToolStripButton();
+            SaveButton = new ToolStripButton();
+            NewStory = new ToolStripButton();
             Add = new ToolStripButton();
-            AddChild = new ToolStripButton();
-            AddParent = new ToolStripButton();
             OpenButton = new ToolStripButton();
             StoryTree = new TreeView();
             HierarchyAndRest = new SplitContainer();
@@ -69,36 +67,34 @@ namespace CSC
             // Menu
             // 
             Menu.BackColor = Color.FromArgb(50, 50, 50);
-            Menu.Items.AddRange(new ToolStripItem[] { StartButton, ResetButton, Add, AddChild, AddParent, OpenButton });
+            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
             Menu.Size = new Size(1431, 25);
             Menu.TabIndex = 0;
             Menu.Text = "toolStrip1";
             // 
-            // StartButton
+            // SaveButton
             // 
-            StartButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            StartButton.ForeColor = Color.FromArgb(224, 224, 224);
-            StartButton.Image = (Image)resources.GetObject("StartButton.Image");
-            StartButton.ImageTransparentColor = Color.Magenta;
-            StartButton.Name = "StartButton";
-            StartButton.Size = new Size(35, 22);
-            StartButton.Text = "Start";
-            StartButton.Click += Start_Click;
+            SaveButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            SaveButton.ForeColor = Color.FromArgb(224, 224, 224);
+            SaveButton.Image = (Image)resources.GetObject("SaveButton.Image");
+            SaveButton.ImageTransparentColor = Color.Magenta;
+            SaveButton.Name = "SaveButton";
+            SaveButton.Size = new Size(50, 22);
+            SaveButton.Text = "Save all";
+            SaveButton.Click += Save_Click;
             // 
-            // ResetButton
+            // NewStory
             // 
-            ResetButton.BackColor = Color.FromArgb(50, 50, 50);
-            ResetButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            ResetButton.Enabled = false;
-            ResetButton.ForeColor = Color.FromArgb(224, 224, 224);
-            ResetButton.Image = (Image)resources.GetObject("ResetButton.Image");
-            ResetButton.ImageTransparentColor = Color.Magenta;
-            ResetButton.Name = "ResetButton";
-            ResetButton.Size = new Size(39, 22);
-            ResetButton.Text = "Reset";
-            ResetButton.Click += ResetButton_Click;
+            NewStory.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            NewStory.ForeColor = Color.FromArgb(224, 224, 224);
+            NewStory.Image = (Image)resources.GetObject("NewStory.Image");
+            NewStory.ImageTransparentColor = Color.Magenta;
+            NewStory.Name = "NewStory";
+            NewStory.Size = new Size(65, 22);
+            NewStory.Text = "New Story";
+            NewStory.Click += NewStory_Click;
             // 
             // Add
             // 
@@ -107,33 +103,9 @@ namespace CSC
             Add.Image = (Image)resources.GetObject("Add.Image");
             Add.ImageTransparentColor = Color.Magenta;
             Add.Name = "Add";
-            Add.Size = new Size(33, 22);
-            Add.Text = "Add";
+            Add.Size = new Size(63, 22);
+            Add.Text = "Add Story";
             Add.Click += Add_Click;
-            // 
-            // AddChild
-            // 
-            AddChild.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            AddChild.Enabled = false;
-            AddChild.ForeColor = Color.FromArgb(224, 224, 224);
-            AddChild.Image = (Image)resources.GetObject("AddChild.Image");
-            AddChild.ImageTransparentColor = Color.Magenta;
-            AddChild.Name = "AddChild";
-            AddChild.Size = new Size(64, 22);
-            AddChild.Text = "Add Child";
-            AddChild.Click += AddChild_Click;
-            // 
-            // AddParent
-            // 
-            AddParent.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            AddParent.Enabled = false;
-            AddParent.ForeColor = Color.FromArgb(224, 224, 224);
-            AddParent.Image = (Image)resources.GetObject("AddParent.Image");
-            AddParent.ImageTransparentColor = Color.Magenta;
-            AddParent.Name = "AddParent";
-            AddParent.Size = new Size(70, 22);
-            AddParent.Text = "Add Parent";
-            AddParent.Click += AddParent_Click;
             // 
             // OpenButton
             // 
@@ -335,11 +307,9 @@ namespace CSC
         #endregion
 
         private ToolStrip Menu;
-        private ToolStripButton StartButton;
+        private ToolStripButton SaveButton;
         private ToolStripButton Add;
-        private ToolStripButton AddChild;
-        private ToolStripButton AddParent;
-        private ToolStripButton ResetButton;
+        private ToolStripButton NewStory;
         private ToolStripButton OpenButton;
         private TreeView StoryTree;
         private SplitContainer HierarchyAndRest;
