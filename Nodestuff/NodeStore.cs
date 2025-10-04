@@ -73,11 +73,6 @@ namespace CSC.Nodestuff
             Positions.Clear();
         }
 
-        public void Delete(Node node)
-        {
-            Remove(node);
-        }
-
         public bool Contains(Node node)
         {
             bool contains = ContainsKey(node);
@@ -322,6 +317,8 @@ namespace CSC.Nodestuff
             AddParents(replacement, parents);
 
             Remove(node);
+            Main.ClearNodePos(node, node.FileName);
+            Main.ClearNodePos(node, replacement.FileName);
         }
 
         internal bool AreConnected(Node node1, Node node2)

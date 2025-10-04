@@ -201,7 +201,6 @@ namespace CSC.StoryItems
             Set3,
         }
 
-
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ValueSpecificFormulas
         {
@@ -551,7 +550,6 @@ namespace CSC.StoryItems
             Narration = 10,
             ThoughtBubble = 20
         }
-
 
         [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
         public enum ResponseReactionTypes

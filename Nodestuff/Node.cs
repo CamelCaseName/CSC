@@ -159,7 +159,6 @@ namespace CSC.Nodestuff
                 }
                 else
                 {
-                    Positions.Add(Main.SelectedCharacter, PointF.Empty);
                     return PointF.Empty;
                 }
             }
@@ -280,14 +279,6 @@ namespace CSC.Nodestuff
                                 break;
                             }
                             case CompareTypes.IsBeingSpokenTo:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsAloneWithPlayer:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsDLCActive:
                             {
                                 break;
                             }
@@ -570,7 +561,7 @@ namespace CSC.Nodestuff
                                 }
                                 case GameEvents.ModifyValue:
                                 {
-                                    return (gevent.Option == 0 ? "Equals " : "Add ") + gevent.Character + ":" + gevent.Value + " to " + gevent.Key;
+                                    return (gevent.Option == 0 ? "Equals " : "Add ") + gevent.Character + ":" + gevent.Key + " to " + gevent.Value;
                                 }
                                 case GameEvents.Player:
                                 {

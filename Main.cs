@@ -129,11 +129,12 @@ public partial class Main : Form
     public const string HousePartyVersion = "1.4.2";
 
     public static string StoryName { get; private set; } = NoCharacter;
+    
     public static string SelectedCharacter
     {
         get
         {
-            if (_selectedCharacter == NoCharacter || _selectedCharacter == StoryName)
+            if (_selectedCharacter == StoryName && StoryName != NoCharacter)
             {
                 return Player;
             }
@@ -158,6 +159,7 @@ public partial class Main : Form
     }
 
     public int RightClickFrameCounter { get; private set; } = 0;
+    
     public int LeftClickFrameCounter { get; private set; }
 
     //todo add info when trying to link incompatible notes
@@ -166,6 +168,7 @@ public partial class Main : Form
     //maybe turn it into a store where you put in the type and get out the relevant fields in order
     //this can then be used for linking as well
     //todo unify all node creation so its always the same
+    //todo add option to view all referenced values in other files, like reverse the strike brush
     //todo add grouping
 
     public Main()
@@ -269,10 +272,6 @@ public partial class Main : Form
 
         PropertyInspector.SizeChanged += (_, _) => UpdatePropertyColoumnWidths();
 
-        nodes.Add(Player, new());
-        Scaling.Add(Player, 0.3f);
-        OffsetX.Add(Player, 0);
-        OffsetY.Add(Player, 0);
         nodes.Add(NoCharacter, new());
         Scaling.Add(NoCharacter, 0.3f);
         OffsetX.Add(NoCharacter, 0);
@@ -919,6 +918,14 @@ public partial class Main : Form
         nodes[file].Positions.ClearNode(node);
     }
 
+    public static void clearAllNodePos(Node node)
+    {
+        foreach (var pos in nodes.Values)
+        {
+            pos.Positions.ClearNode(node);
+        }
+    }
+
     public static void SetNodePos(Node node, string file)
     {
         nodes[file].Positions.SetNode(node);
@@ -1190,12 +1197,12 @@ public partial class Main : Form
     private void StoryTreeReset()
     {
         StoryTree.Nodes.Clear();
-        TreeNode treeNode1 = new TreeNode("Characters");
-        TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
-        StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
+        TreeNode treeNode1 = new("Characters");
+        TreeNode treeNode2 = new("Story Root", [treeNode1]);
+        StoryTree.Nodes.AddRange([treeNode2]);
     }
 
-    private void DrawEdge(Graphics g, Node parent, Node child, Pen pen, PointF start = default, PointF end = default)
+    private static void DrawEdge(Graphics g, Node parent, Node child, Pen pen, PointF start = default, PointF end = default)
     {
         int third = 0;
 
@@ -1249,15 +1256,15 @@ public partial class Main : Form
     {
         if (third == 0)
         {
-            start = start + new SizeF(parent.Size.Width, parent.Size.Height / 2);
+            start += new SizeF(parent.Size.Width, parent.Size.Height / 2);
         }
         else if (third == 1)
         {
-            start = start + new SizeF(parent.Size.Width, parent.Size.Height / 5);
+            start += new SizeF(parent.Size.Width, parent.Size.Height / 5);
         }
         else if (third == 2)
         {
-            start = start + new SizeF(parent.Size.Width, parent.Size.Height / 5 * 4);
+            start += new SizeF(parent.Size.Width, parent.Size.Height / 5 * 4);
         }
 
         return start;
@@ -1334,7 +1341,7 @@ public partial class Main : Form
 
         if (Scaling[SelectedCharacter] > 0.28f)
         {
-            var scaledRect = GetScaledRect(g, node.RectangleNonF, Scaling[SelectedCharacter]);
+            var scaledRect = GetScaledRect(node.RectangleNonF, Scaling[SelectedCharacter]);
             scaledRect.Location += new Size(3, 3);
             scaledRect.Size -= new Size(6, 6);
 
@@ -1486,7 +1493,7 @@ public partial class Main : Form
             {
                 Debugger.Break();
             }
-            scaledFont = GetScaledFont(g, new(DefaultFont.FontFamily, 8f), Scaling[SelectedCharacter]);
+            scaledFont = GetScaledFont(new(DefaultFont.FontFamily, 8f), Scaling[SelectedCharacter]);
 
             DrawAllNodes(g);
         }
@@ -1706,7 +1713,7 @@ public partial class Main : Form
             var settings = new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore,
-                MissingMemberHandling = MissingMemberHandling.Error
+                MissingMemberHandling = MissingMemberHandling.Ignore
             };
             if (Path.GetExtension(FilePath) == ".story")
             {
@@ -2499,7 +2506,7 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
                         PutEnumKey<PersonalityTraits>(node, criterion);
                         PutComparison(node, criterion);
-                        PutNumericValue(node, criterion);
+                        PutNumericValue(criterion);
                         break;
                     }
                     case CompareTypes.PlayerGender:
@@ -2517,8 +2524,10 @@ public partial class Main : Form
                         state.SelectedItem = criterion.PlayerInventoryOption.ToString();
                         state.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.PlayerInventoryOption = Enum.Parse<PlayerInventoryOptions>(state.SelectedItem!.ToString()!));
                         PropertyInspector.Controls.Add(state);
-
-                        PutItem(node, criterion);
+                        if (criterion.PlayerInventoryOption == PlayerInventoryOptions.HasItem)
+                        {
+                            PutItem(node, criterion);
+                        }
                         PutBoolValue(node, criterion);
                         break;
                     }
@@ -2527,7 +2536,7 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
                         PutEnumKey<PlayerPrefs>(node, criterion);
                         PutComparison(node, criterion);
-                        PutTextValue(node, criterion);
+                        PutTextValue(criterion);
 
                         break;
                     }
@@ -2622,7 +2631,7 @@ public partial class Main : Form
                         PropertyInspector.Controls.Add(social);
 
                         PutComparison(node, criterion);
-                        PutNumericValue(node, criterion);
+                        PutNumericValue(criterion);
                         break;
                     }
                     case CompareTypes.State:
@@ -4571,7 +4580,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(startCondition);
     }
 
-    private void PutTextValue(Node node, Criterion criterion)
+    private void PutTextValue(Criterion criterion)
     {
         TextBox obj2 = new()
         {
@@ -4600,7 +4609,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(option);
     }
 
-    private void PutNumericValue(Node node, Criterion criterion)
+    private void PutNumericValue(Criterion criterion)
     {
         NumericUpDown option = new()
         {
@@ -4822,7 +4831,7 @@ public partial class Main : Form
         OffsetY[SelectedCharacter] += BeforeZoomNodeY - AfterZoomNodeY;
     }
 
-    private static Font GetScaledFont(Graphics g, Font f, float scale)
+    private static Font GetScaledFont(Font f, float scale)
     {//see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
 
         if (f.SizeInPoints * scale < 0)
@@ -4838,7 +4847,7 @@ public partial class Main : Form
                         f.GdiVerticalFont);
     }
 
-    private static Rectangle GetScaledRect(Graphics g, Rectangle r, float scale)
+    private static Rectangle GetScaledRect(Rectangle r, float scale)
     {
         return new Rectangle((int)Math.Ceiling(r.X * scale),
                             (int)Math.Ceiling(r.Y * scale),
@@ -4916,7 +4925,6 @@ public partial class Main : Form
             PointF ScreenPos;
             if (oldPoint is null)
             {
-                //todo also add the same anti overlay code from the node child/parent pulling context menu here
                 var pos = Graph.PointToClient(Cursor.Position);
                 ScreenToGraph(pos.X, pos.Y, out float ScreenPosX, out float ScreenPosY);
                 ScreenPosX -= NodeSizeX / 2;
@@ -4929,10 +4937,13 @@ public partial class Main : Form
                 ScreenPos -= new SizeF(NodeSizeX / 2, NodeSizeY / 2);
             }
 
+            ShoveNodesToRight(newNode, ScreenPos);
+
             newNode.Position = ScreenPos;
         }
         else
         {
+            ShoveNodesToRight(newNode, clickedNode.Position + new Size(scaleX, 0));
             newNode.Position = clickedNode.Position + new Size(scaleX, 0);
         }
 
