@@ -1176,6 +1176,7 @@ public partial class Main : Form
                         }
                             ]
     });
+
     private void Reset()
     {
         Story = null!;
@@ -3245,7 +3246,7 @@ public partial class Main : Form
                         if (gevent.Option == 0)
                         {
                             PutEnumValue<IntimacyEvents>(node, gevent);
-                            if (Enum.Parse<IntimacyEvents>(gevent.Value) is IntimacyEvents.End or IntimacyEvents.StartMasturbation)
+                            if (!(Enum.Parse<IntimacyEvents>(gevent.Value) is IntimacyEvents.End or IntimacyEvents.StartMasturbation))
                             {
                                 PutCharacter2(node, gevent);
                             }
@@ -3958,12 +3959,12 @@ public partial class Main : Form
     {
         var options = GetComboBox();
         options.Items.AddRange(Enum.GetNames<E>());
-        if (!Enum.GetNames<E>().Contains(gevent.Value))
+        if (!int.TryParse(gevent.Value, out int x))
         {
             gevent.Value = "0";
         }
-        options.SelectedItem = gevent.Value;
-        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = options.SelectedItem.ToString()!);
+        options.SelectedItem = (Enum.GetName<E>((E)(object)int.Parse(gevent.Value)));
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
         options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
@@ -4608,7 +4609,6 @@ public partial class Main : Form
             newNode.Position = clickedNode.Position + new Size(scaleX, 0);
         }
 
-        NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
         clickedNode = newNode;
         ShowProperties(newNode);
 
@@ -4717,7 +4717,7 @@ public partial class Main : Form
             }
             case SpawnableNodeType.Dialogue:
             {
-                int id = (Stories[character].Dialogues!.Count + 1);
+                int id = (Stories[character].Dialogues!.Count);
                 newNode = new Node(id.ToString(), NodeType.Dialogue, string.Empty, nodes[character].Positions)
                 {
                     RawData = new Dialogue() { ID = id },
@@ -4727,11 +4727,10 @@ public partial class Main : Form
                 Stories[character].Dialogues!.Add(newNode.Data<Dialogue>()!);
 
                 if (clickedNode != Node.NullNode)
+                {
+                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                }
 
-                    if (clickedNode != Node.NullNode)
-                    {
-                        NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
-                    }
                 break;
             }
             case SpawnableNodeType.AlternateText:

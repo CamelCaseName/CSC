@@ -329,7 +329,7 @@ namespace CSC.StoryItems
         public bool DoesNotCountAsMet { get; set; } = false;
         public bool ShowResponses { get; set; } = true;
         public string SpeakingToCharacterName { get; set; } = Main.Player;
-        public string CurrentSpeaker { get; set; } = Main.Player;
+        public string CurrentSpeaker { get; set; } = string.Empty;
         public List<GameEvent> StartEvents { get; set; } = [];
 
         public string Text { get; set; } = string.Empty;
