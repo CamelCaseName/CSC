@@ -317,8 +317,11 @@ namespace CSC.Nodestuff
             AddParents(replacement, parents);
 
             Remove(node);
+            var pos = node.Position;
             Main.ClearNodePos(node, node.FileName);
             Main.ClearNodePos(node, replacement.FileName);
+            Main.SetNodePos(replacement, node.FileName);
+            replacement.Position = pos;
         }
 
         internal bool AreConnected(Node node1, Node node2)

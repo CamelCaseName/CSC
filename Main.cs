@@ -129,7 +129,7 @@ public partial class Main : Form
     public const string HousePartyVersion = "1.4.2";
 
     public static string StoryName { get; private set; } = NoCharacter;
-    
+
     public static string SelectedCharacter
     {
         get
@@ -144,7 +144,7 @@ public partial class Main : Form
             }
         }
 
-        private set
+        set
         {
 
             if (value == string.Empty || value is null)
@@ -159,8 +159,10 @@ public partial class Main : Form
     }
 
     public int RightClickFrameCounter { get; private set; } = 0;
-    
+
     public int LeftClickFrameCounter { get; private set; }
+
+    //todo save node positioning to some file and add option to clear saved positions
 
     //todo add info when trying to link incompatible notes
     //todo add search
@@ -168,7 +170,7 @@ public partial class Main : Form
     //maybe turn it into a store where you put in the type and get out the relevant fields in order
     //this can then be used for linking as well
     //todo unify all node creation so its always the same
-    //todo add option to view all referenced values in other files, like reverse the strike brush
+    //todo add option to view all referenced values in other files, like reverse strike brush
     //todo add grouping
 
     public Main()
@@ -918,7 +920,7 @@ public partial class Main : Form
         nodes[file].Positions.ClearNode(node);
     }
 
-    public static void clearAllNodePos(Node node)
+    public static void ClearAllNodePos(Node node)
     {
         foreach (var pos in nodes.Values)
         {
@@ -1691,6 +1693,7 @@ public partial class Main : Form
             }
         }
 
+        //makes no sense
         NodeLinker.InterlinkBetweenFiles(nodes);
 
         SetupStartPositions();
@@ -1769,7 +1772,7 @@ public partial class Main : Form
 
         if (FileName == Player)
         {
-            NodeLinker.DissectStory(Story, tempStore, storyName!);
+            NodeLinker.DissectStory(Story, tempStore);
         }
         else
         {

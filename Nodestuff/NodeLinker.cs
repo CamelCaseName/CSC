@@ -1,6 +1,7 @@
 ﻿using CSC.StoryItems;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
+using System.Runtime.ConstrainedExecution;
 using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 
@@ -411,8 +412,6 @@ namespace CSC.Nodestuff
             }
 
             NodeLinker.UpdateLinks(addToThis, Main.SelectedCharacter, nodes);
-
-            addFrom = Node.NullNode;
         }
 
         public static void Unlink(NodeStore nodes, Node removeFrom, Node removeThis, bool removeAll = false)
@@ -829,6 +828,8 @@ namespace CSC.Nodestuff
         public static void Interlinknodes(NodeStore store, string filename)
         {
             FileName = filename;
+            var lastSelected = Main.SelectedCharacter;
+            Main.SelectedCharacter = filename;
             DateTime start = DateTime.UtcNow;
             //lists to save new stuff
 
@@ -838,13 +839,10 @@ namespace CSC.Nodestuff
                 var nodes = store.KeyNodes().ToList();
                 //link up different stories and dialogues
                 //doesnt matter that we add some in here, we only care about the ones added so far
-                for (int x = 0; x < 2; x++)
+                for (int i = 0; i < count; i++)
                 {
-                    for (int i = 0; i < count; i++)
-                    {
-                        //link all useful criteria and add influencing values as parents
-                        AnalyzeAndConnectNode(store, nodes[i], nodes, true);
-                    }
+                    //link all useful criteria and add influencing values as parents
+                    AnalyzeAndConnectNode(store, nodes[i], nodes, true);
                 }
             }
 
@@ -857,11 +855,15 @@ namespace CSC.Nodestuff
             MergeDoors(store, true);
 
             Debug.WriteLine($"completed for {FileName}/{store.Count} nodes in {(DateTime.UtcNow - start).Milliseconds}ms");
+
+            Main.SelectedCharacter = lastSelected;
         }
 
         public static void UpdateLinks(Node node, string fileName, NodeStore store)
         {
             FileName = fileName;
+            var lastSelected = Main.SelectedCharacter;
+            Main.SelectedCharacter = fileName;
             var family = store[node];
 
             List<Node> childs = [.. family.Childs];
@@ -872,7 +874,7 @@ namespace CSC.Nodestuff
             List<Node> parents = [.. family.Parents];
             foreach (var parent in parents)
             {
-                store.RemoveChild(node, parent);
+                store.RemoveParent(node, parent);
             }
             var nodes = store.KeyNodes().ToList();
 
@@ -885,6 +887,7 @@ namespace CSC.Nodestuff
             {
                 AnalyzeAndConnectNode(store, parent, nodes, false);
             }
+            Main.SelectedCharacter = lastSelected;
         }
 
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn, bool dupeTo = false)
@@ -1021,7 +1024,6 @@ namespace CSC.Nodestuff
                                 {
                                     result.DupeToOtherSorting(node.FileName);
                                 }
-
 
                                 //dialogue influences this criteria
                                 nodes.AddParent(node, result);
@@ -2306,12 +2308,15 @@ namespace CSC.Nodestuff
 
         public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores)
         {
+            var lastSelected = Main.SelectedCharacter;
             foreach (var store in stores.Keys)
             {
                 if (store == Main.NoCharacter)
                 {
                     continue;
                 }
+
+                Main.SelectedCharacter = store;
 
                 var tempList = stores[store].Nodes;
                 foreach (var node in tempList)
@@ -2322,13 +2327,13 @@ namespace CSC.Nodestuff
                         Debugger.Break();
                     }
 
-                    if (node.FileName != store)
+                    if (node.FileName != store && node.DataType == typeof(MissingReferenceInfo))
                     {
                         if (stores.TryGetValue(node.FileName, out var nodeStore))
                         {
                             var templist2 = nodeStore.Nodes;
 
-                            if (node.Type == NodeType.Dialogue && node.FileName == "Patrick")
+                            if (node.Type == NodeType.Dialogue)
                             {
                                 if (node.ID == string.Empty)
                                 {
@@ -2343,7 +2348,7 @@ namespace CSC.Nodestuff
                                 {
                                     foundNode.DupeToOtherSorting(store);
                                     stores[store].Replace(node, foundNode);
-                                    Main.clearAllNodePos(node);
+                                    Main.ClearAllNodePos(node);
                                 }
                             }
                         }
@@ -2351,7 +2356,9 @@ namespace CSC.Nodestuff
                 }
             }
             //check some comparevaluenodes.again because the referenced values havent been added yet
-            RecheckValues(stores, true);
+            RecheckValues(stores);
+
+            Main.SelectedCharacter = lastSelected;
         }
 
         public static void ClearLinkCache()
@@ -2395,7 +2402,7 @@ namespace CSC.Nodestuff
             }
         }
 
-        private static void RecheckValues(Dictionary<string, NodeStore> stores, bool dupeTo = false)
+        private static void RecheckValues(Dictionary<string, NodeStore> stores)
         {
             List<Node> values = [.. Values];
             foreach (Node node in values)
@@ -2405,15 +2412,19 @@ namespace CSC.Nodestuff
                 {
                     foreach (var result in values.FindAll(n => n.Type == NodeType.Value && n.DataType == typeof(MissingReferenceInfo) && n.ID == node.ID && n.FileName == node.FileName))
                     {
-                        foreach (var store in stores.Values)
+                        foreach (var store in stores)
                         {
-                            if (store.Contains(result))
+                            var last = Main.SelectedCharacter;
+                            Main.SelectedCharacter = store.Key;
+
+                            if (store.Value.Contains(result))
                             {
-                                store.Replace(result, node);
+                                store.Value.Replace(result, node);
                             }
+                            Main.SelectedCharacter = last;
                         }
                         Values.Remove(result);
-                        Main.clearAllNodePos(result);
+                        Main.ClearAllNodePos(result);
                     }
                 }
             }
@@ -2455,7 +2466,7 @@ namespace CSC.Nodestuff
             }
         }
 
-        public static void DissectStory(MainStory story, NodeStore nodes, string StoryName)
+        public static void DissectStory(MainStory story, NodeStore nodes)
         {
             if (story is not null && nodes is not null)
             {
