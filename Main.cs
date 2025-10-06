@@ -4,9 +4,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Windows.Forms;
 using static CSC.StoryItems.StoryEnums;
-using static System.Windows.Forms.Design.AxImporter;
 
 namespace CSC;
 
@@ -161,8 +159,6 @@ public partial class Main : Form
     public int RightClickFrameCounter { get; private set; } = 0;
 
     public int LeftClickFrameCounter { get; private set; }
-
-    //todo save node positioning to some file and add option to clear saved positions
 
     //todo add info when trying to link incompatible notes
     //todo add search
@@ -1693,12 +1689,92 @@ public partial class Main : Form
         //makes no sense
         NodeLinker.InterlinkBetweenFiles(nodes);
 
-        SetupStartPositions();
+        if (!TryLoadOldPositions())
+        {
+            SetupStartPositions();
+        }
 
         Graph.Invalidate();
 
         StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[1].Nodes[Stories.Count - 1];
     }
+
+    private bool TryLoadOldPositions()
+    {
+        string positionPath = GetAppDataPathForCurrentStory();
+
+        if (!File.Exists(positionPath))
+        {
+            return false;
+        }
+
+        var fileContent = File.ReadAllText(positionPath, System.Text.Encoding.Unicode);
+        var positions = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<long, PointF>>>(fileContent)!;
+
+        var lastCharacter = SelectedCharacter;
+
+        var hadNodesNewlySet = false;
+
+        foreach (var fileStore in positions.Keys)
+        {
+            List<Node> notSet = [];
+            SelectedCharacter = fileStore;
+            foreach (var node in nodes[fileStore].Nodes)
+            {
+                node.Position = positions[fileStore][new NodeID(node.Type, node.ID, node.DataType)];
+                if (node.Position == PointF.Empty)
+                {
+                    notSet.Add(node);
+                }
+            }
+            if (notSet.Count > 0)
+            {
+                SetStartPositionsForNodesInList(10, 0, nodes[fileStore], notSet, true);
+                hadNodesNewlySet = true;
+            }
+            CenterOnNode(nodes[fileStore].Nodes.First(), 0.8f);
+        }
+
+        SelectedCharacter = lastCharacter;
+
+        if (hadNodesNewlySet)
+        {
+            MessageBox.Show("Some nodes were new this time around, you'll find them in each file around the 0/0 mark.");
+        }
+
+        return true;
+    }
+
+    private static void SavePositions()
+    {
+        string positionPath = GetAppDataPathForCurrentStory();
+
+        var lastCharacter = SelectedCharacter;
+        Dictionary<string, Dictionary<long, PointF>> positions = [];
+
+        foreach (var nodeStore in nodes)
+        {
+            SelectedCharacter = nodeStore.Key;
+            positions.Add(nodeStore.Key, []);
+            foreach (var node in nodeStore.Value.Nodes)
+            {
+                positions[nodeStore.Key][new NodeID(node.Type, node.ID, node.DataType)] = node.Position;
+            }
+        }
+
+        var fileContent = System.Text.Json.JsonSerializer.Serialize(positions)!;
+        if (!File.Exists(positionPath))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(positionPath)!);
+        }
+        File.WriteAllText(positionPath, fileContent, System.Text.Encoding.Unicode);
+
+        SelectedCharacter = lastCharacter;
+
+        MessageBox.Show("Saved!");
+    }
+
+    private static string GetAppDataPathForCurrentStory() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CCSC", "Positions", StoryName, "Positions.json");
 
     private void LoadFileIntoStore(string FilePath)
     {
@@ -1822,13 +1898,13 @@ public partial class Main : Form
 
             NodeStore nodeStore = nodes[store];
             var nodeList = nodeStore.Nodes;
-            SetStartPositionsForNodesInList(store, 100, 1, nodeStore, nodeList);
+            SetStartPositionsForNodesInList(100, 1, nodeStore, nodeList);
 
             CenterOnNode(nodes[store].Nodes.First(), 0.8f);
         }
     }
 
-    private void SetStartPositionsForNodesInList(string store, int intX, int intY, NodeStore nodeStore, List<Node> nodeList, bool inListOnly = false)
+    private void SetStartPositionsForNodesInList(int intX, int intY, NodeStore nodeStore, List<Node> nodeList, bool inListOnly = false)
     {
         int ParentEdgeMaxStartValue = 0;
         maxYperX.Clear();
@@ -1839,7 +1915,7 @@ public partial class Main : Form
             maxYperX[i] = intY;
         }
 
-        nodeList.Sort(new NodeParentComparer(nodes[store]));
+        nodeList.Sort(new NodeParentComparer(nodeStore));
         visited.Clear();
         foreach (var key in nodeList)
         {
@@ -1990,6 +2066,7 @@ public partial class Main : Form
         {
             ExportFile(character);
         }
+        SavePositions();
     }
 
     private void ExportFile(string FileName)
@@ -5366,7 +5443,7 @@ public partial class Main : Form
         {
             return;
         }
-        SetStartPositionsForNodesInList(SelectedCharacter, (int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected, true);
+        SetStartPositionsForNodesInList((int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected, true);
 
         Graph.Invalidate();
     }
@@ -5377,7 +5454,7 @@ public partial class Main : Form
         {
             return;
         }
-        SetStartPositionsForNodesInList(SelectedCharacter, (int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected);
+        SetStartPositionsForNodesInList((int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected);
 
         Graph.Invalidate();
     }

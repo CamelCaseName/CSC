@@ -1,15 +1,47 @@
 ﻿using CSC.StoryItems;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing.Design;
+using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
+    public readonly struct NodeID(NodeType Type, string ID, Type DataType)
+    {
+        public NodeType Type { get; } = Type;
+        public string ID { get; } = ID;
+        public Type DataType { get; } = DataType;
+
+        public static implicit operator long(NodeID id)
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                long hash = 17;
+                hash = hash * 23 + (int)id.Type;
+                hash = hash * 23 + CalculateHash(id.ID);
+                hash = hash * 23 + CalculateHash(id.DataType.ToString());
+                return hash;
+            }
+        }
+
+        static long CalculateHash(string read)
+        {
+            UInt64 hashedValue = 3074457345618258791ul;
+            for (int i = 0; i < read.Length; i++)
+            {
+                hashedValue += read[i];
+                hashedValue *= 3074457345618258799ul;
+            }
+            return (long)hashedValue;
+        }
+    }
+
     public enum ClickedNodeTypes
     {
         Null,
@@ -19,6 +51,7 @@ namespace CSC.Nodestuff
         Edit
     }
 
+    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum NodeType
     {
         Achievement,
@@ -92,11 +125,7 @@ namespace CSC.Nodestuff
     public sealed class Node
     {
         public static readonly Node NullNode = new();
-
-        public Gender Gender = Gender.None;
-        public Guid Guid = Guid.NewGuid();
         public string ID;
-        public int Mass = 1;
         public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
         public string StaticText;
         public NodeType Type;
@@ -1000,8 +1029,6 @@ namespace CSC.Nodestuff
             }
         }
 
-        public bool Visited { get; internal set; }
-
         public static Node CreateCriteriaNode(Criterion criterion, Node node, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
@@ -1026,11 +1053,6 @@ namespace CSC.Nodestuff
             {
                 Node tempNode = CreateCriteriaNode(criterion, this, nodes);
                 tempNode.RawData = criterion;
-                if (criterion.CompareType == CompareTypes.PlayerGender)
-                {
-                    tempNode.Gender = criterion.Value == "Female" ? Gender.Female : criterion.Value == "Male" ? Gender.Male : Gender.None;
-                }
-
                 nodes.AddParent(this, tempNode);
             }
         }
