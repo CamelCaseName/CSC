@@ -1,9 +1,11 @@
+using CSC.Components;
 using CSC.Nodestuff;
 using CSC.StoryItems;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC;
@@ -276,6 +278,8 @@ public partial class Main : Form
         highlightNode = Node.NullNode;
         movedNode = Node.NullNode;
         nodeToLinkFrom = Node.NullNode;
+
+        Graph.Invalidate();
     }
 
     public void HandleKeyBoard(object? sender, KeyEventArgs e)
@@ -579,6 +583,12 @@ public partial class Main : Form
         var pos = Graph.PointToClient(Cursor.Position);
         ScreenToGraph(pos.X, pos.Y, out float GraphPosX, out float GraphPosY);
         var graphPos = new PointF(GraphPosX, GraphPosY);
+
+        if (adjustedMouseClipBounds.Contains(graphPos))
+        {
+            cursorPos.Text = $"Cursor position: ({graphPos.X:0000.00}|{graphPos.Y:0000.00})";
+            cursorPos.Invalidate();
+        }
 
         if (MovingChild)
         {
@@ -1184,7 +1194,15 @@ public partial class Main : Form
         Stories.Clear();
         StoryName = NoCharacter;
         SelectedCharacter = NoCharacter;
-        nodes.Clear();
+        var keys = nodes.Keys;
+        foreach (var item in keys)
+        {
+            if (item == NoCharacter)
+            {
+                continue;
+            }
+            nodes.Remove(item);
+        }
         StoryTreeReset();
         Graph.Invalidate();
     }
@@ -1306,6 +1324,10 @@ public partial class Main : Form
 
     private void DrawNode(Graphics g, Node node, SolidBrush brush, bool lightText = false)
     {
+        if (node == Node.NullNode)
+        {
+            return;
+        }
         if (Scaling[SelectedCharacter] > 0.28f)
         {
             GetLinkCircleRects(node, out RectangleF leftRect, out RectangleF rightRect);
@@ -1462,10 +1484,6 @@ public partial class Main : Form
 
     private void Main_Paint(object sender, PaintEventArgs e)
     {
-        if (_selectedCharacter == NoCharacter)
-        {
-            return;
-        }
         var g = e.Graphics;
 
         if (oldGraph is null || (nodeToLinkFrom == Node.NullNode && !selecting))
@@ -1692,6 +1710,7 @@ public partial class Main : Form
         if (!TryLoadOldPositions())
         {
             SetupStartPositions();
+            SavePositions();
         }
 
         Graph.Invalidate();
@@ -1717,11 +1736,15 @@ public partial class Main : Form
 
         foreach (var fileStore in positions.Keys)
         {
+            if(fileStore == NoCharacter)
+            {
+                continue;
+            }
             List<Node> notSet = [];
             SelectedCharacter = fileStore;
             foreach (var node in nodes[fileStore].Nodes)
             {
-                node.Position = positions[fileStore][new NodeID(node.Type, node.ID, node.DataType)];
+                node.Position = positions[fileStore][new NodeID(node.Type, node.ID, node.OrigFileName, node.DataType)];
                 if (node.Position == PointF.Empty)
                 {
                     notSet.Add(node);
@@ -1754,11 +1777,15 @@ public partial class Main : Form
 
         foreach (var nodeStore in nodes)
         {
+            if (nodeStore.Key == NoCharacter)
+            {
+                continue;
+            }
             SelectedCharacter = nodeStore.Key;
             positions.Add(nodeStore.Key, []);
             foreach (var node in nodeStore.Value.Nodes)
             {
-                positions[nodeStore.Key][new NodeID(node.Type, node.ID, node.DataType)] = node.Position;
+                positions[nodeStore.Key][new NodeID(node.Type, node.ID, node.OrigFileName, node.DataType)] = node.Position;
             }
         }
 
@@ -1770,8 +1797,6 @@ public partial class Main : Form
         File.WriteAllText(positionPath, fileContent, System.Text.Encoding.Unicode);
 
         SelectedCharacter = lastCharacter;
-
-        MessageBox.Show("Saved!");
     }
 
     private static string GetAppDataPathForCurrentStory() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CCSC", "Positions", StoryName, "Positions.json");
@@ -1976,7 +2001,7 @@ public partial class Main : Form
             maxYperX.ExtendToIndex(newChildX, maxYperX[intX]);
 
             int rest = (int)float.Round(node.Size.Height / NodeSizeY);
-            rest = rest < 0 ? 1 : rest;
+            rest = rest <= 0 ? 1 : rest;
 
             var newPos = new PointF(intX * scaleX, maxYperX[intX] * scaleY);
             //if we are more right along the screen this is a child
@@ -2067,6 +2092,8 @@ public partial class Main : Form
             ExportFile(character);
         }
         SavePositions();
+
+        MessageBox.Show("Saved files!");
     }
 
     private void ExportFile(string FileName)

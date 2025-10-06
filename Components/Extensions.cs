@@ -4,7 +4,7 @@ using System.Drawing.Text;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CSC
+namespace CSC.Components
 {
     public static class Extensions
     {
@@ -57,7 +57,7 @@ namespace CSC
     {
         public static string StringParse<T>(string value) where T : struct, Enum
         {
-            if (Enum.TryParse<T>(value, out T result))
+            if (Enum.TryParse(value, out T result))
             {
                 return result.ToString()!;
             }
@@ -69,7 +69,7 @@ namespace CSC
 
         public static T CastParse<T>(string value) where T : struct, Enum
         {
-            if (Enum.TryParse<T>(value, out T result))
+            if (Enum.TryParse(value, out T result))
             {
                 return result;
             }

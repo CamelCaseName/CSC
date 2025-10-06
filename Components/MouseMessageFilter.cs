@@ -1,4 +1,4 @@
-namespace CSC
+namespace CSC.Components
 {
     class MouseMessageFilter : IMessageFilter
     {
@@ -10,7 +10,7 @@ namespace CSC
 
             if (m.Msg == WM_MOUSEMOVE)
             {
-                if(Main.ActiveForm is null)
+                if(Form.ActiveForm is null)
                 {
                     return false;
                 }

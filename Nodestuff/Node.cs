@@ -1,4 +1,5 @@
-﻿using CSC.StoryItems;
+﻿using CSC.Components;
+using CSC.StoryItems;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel;
@@ -12,20 +13,22 @@ using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
-    public readonly struct NodeID(NodeType Type, string ID, Type DataType)
+    public readonly struct NodeID(NodeType Type, string ID, string Filename, Type DataType)
     {
         public NodeType Type { get; } = Type;
         public string ID { get; } = ID;
+        public string Filename { get; } = Filename;
         public Type DataType { get; } = DataType;
 
-        public static implicit operator long(NodeID id)
+        public static implicit operator long(NodeID n)
         {
             unchecked // Overflow is fine, just wrap
             {
                 long hash = 17;
-                hash = hash * 23 + (int)id.Type;
-                hash = hash * 23 + CalculateHash(id.ID);
-                hash = hash * 23 + CalculateHash(id.DataType.ToString());
+                hash = hash * 23 + (int)n.Type;
+                hash = hash * 23 + CalculateHash(n.ID);
+                hash = hash * 23 + CalculateHash(n.Filename);
+                hash = hash * 23 + CalculateHash(n.DataType.ToString());
                 return hash;
             }
         }
@@ -134,6 +137,9 @@ namespace CSC.Nodestuff
         private Type dataType = typeof(MissingReferenceInfo);
 
         private string fileName = Main.NoCharacter;
+        private string origfilename = Main.NoCharacter;
+        private bool setOnce = false;
+        public string OrigFileName => origfilename;
 
         public Node(string iD, NodeType type, string text)
         {
@@ -174,6 +180,11 @@ namespace CSC.Nodestuff
 
             set
             {
+                if (!setOnce)
+                {
+                    origfilename = value;
+                    setOnce = true;
+                }
                 fileName = value;
             }
         }

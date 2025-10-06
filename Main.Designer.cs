@@ -35,10 +35,10 @@ namespace CSC
             TreeNode treeNode1 = new TreeNode("Characters");
             TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
             Menu = new ToolStrip();
+            OpenButton = new ToolStripButton();
             SaveButton = new ToolStripButton();
             NewStory = new ToolStripButton();
             Add = new ToolStripButton();
-            OpenButton = new ToolStripButton();
             StoryTree = new TreeView();
             HierarchyAndRest = new SplitContainer();
             GraphAndProperties = new SplitContainer();
@@ -52,6 +52,7 @@ namespace CSC
             SortSelectedMenu = new ToolStripMenuItem();
             SortSelectedConnectedMenu = new ToolStripMenuItem();
             Seperator1 = new ToolStripSeparator();
+            cursorPos = new ToolStripLabel();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
             HierarchyAndRest.Panel1.SuspendLayout();
@@ -67,12 +68,23 @@ namespace CSC
             // Menu
             // 
             Menu.BackColor = Color.FromArgb(50, 50, 50);
-            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add });
+            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add, cursorPos });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
             Menu.Size = new Size(1431, 25);
             Menu.TabIndex = 0;
             Menu.Text = "toolStrip1";
+            // 
+            // OpenButton
+            // 
+            OpenButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            OpenButton.ForeColor = Color.FromArgb(224, 224, 224);
+            OpenButton.Image = (Image)resources.GetObject("OpenButton.Image");
+            OpenButton.ImageTransparentColor = Color.Magenta;
+            OpenButton.Name = "OpenButton";
+            OpenButton.Size = new Size(40, 22);
+            OpenButton.Text = "Open";
+            OpenButton.Click += OpenButton_Click;
             // 
             // SaveButton
             // 
@@ -106,17 +118,6 @@ namespace CSC
             Add.Size = new Size(63, 22);
             Add.Text = "Add Story";
             Add.Click += Add_Click;
-            // 
-            // OpenButton
-            // 
-            OpenButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            OpenButton.ForeColor = Color.FromArgb(224, 224, 224);
-            OpenButton.Image = (Image)resources.GetObject("OpenButton.Image");
-            OpenButton.ImageTransparentColor = Color.Magenta;
-            OpenButton.Name = "OpenButton";
-            OpenButton.Size = new Size(40, 22);
-            OpenButton.Text = "Open";
-            OpenButton.Click += OpenButton_Click;
             // 
             // StoryTree
             // 
@@ -273,6 +274,14 @@ namespace CSC
             Seperator1.Name = "Seperator1";
             Seperator1.Size = new Size(152, 6);
             // 
+            // cursorPos
+            // 
+            cursorPos.Alignment = ToolStripItemAlignment.Right;
+            cursorPos.ForeColor = Color.White;
+            cursorPos.Name = "cursorPos";
+            cursorPos.Size = new Size(59, 22);
+            cursorPos.Text = "cursorPos";
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
@@ -324,5 +333,6 @@ namespace CSC
         private ToolStripMenuItem SortSelectedMenu;
         private ToolStripMenuItem SortSelectedConnectedMenu;
         private ToolStripSeparator Seperator1;
+        private ToolStripLabel cursorPos;
     }
 }
