@@ -166,9 +166,6 @@ public partial class Main : Form
 
     //todo add info when trying to link incompatible notes
     //todo add search
-    //todo use the csc dll to populate the rest of the events and criteria i havent done yet, 
-    //maybe turn it into a store where you put in the type and get out the relevant fields in order
-    //this can then be used for linking as well
     //todo unify all node creation so its always the same
     //todo add option to view all referenced values in other files, like reverse strike brush
     //todo add grouping
@@ -388,11 +385,11 @@ public partial class Main : Form
 
             foreach (var child in childs)
             {
-                NodeLinker.Unlink(nodes[SelectedCharacter], removedNode, child, true);
+                NodeLinker.Unlink(nodes[SelectedCharacter], removedNode, child);
             }
             foreach (var parent in parents)
             {
-                NodeLinker.Unlink(nodes[SelectedCharacter], parent, removedNode, true);
+                NodeLinker.Unlink(nodes[SelectedCharacter], parent, removedNode);
             }
             nodes[SelectedCharacter].Remove(removedNode);
             removedNode.RemoveFromSorting(SelectedCharacter);
@@ -2193,7 +2190,7 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
                         PutEnumValue<ClothingType>(node, criterion);
                         PutEnumOption<ClothingSet>(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.CoinFlip:
@@ -2247,23 +2244,33 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
 
                         ComboBox group = GetComboBox();
+                        Dictionary<string, CriteriaGroup> groups = [];
                         for (int i = 0; i < Story.CriteriaGroups!.Count; i++)
                         {
                             group.Items.Add(Story.CriteriaGroups[i].Name!);
+                            groups.Add(Story.CriteriaGroups[i].Name!, Story.CriteriaGroups[i]);
                         }
                         group.SelectedItem = criterion.Value!;
                         group.SelectedIndex = group.SelectedIndex;
-                        group.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = group.SelectedItem!.ToString()!);
+                        group.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) =>
+                        {
+                            if (groups.TryGetValue(group.SelectedItem!.ToString()!, out var val))
+                            {
+                                criterion.Value = val.Name;
+                                criterion.Key = val.Id;
+                                criterion.Key2 = val.PassCondition.ToString();
+                            }
+                        });
                         PropertyInspector.Controls.Add(group);
 
-                        PutBoolValue(node, criterion);
+                        PutEnumOption<BoolCritera>(node, criterion);
                         break;
                     }
                     case CompareTypes.CutScene:
                     {
                         PutCompareType(node, criterion);
                         PutEnumValue<CutscenePlaying>(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Dialogue:
@@ -2348,7 +2355,7 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
                         PutZone(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.InVicinity:
@@ -2360,7 +2367,7 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
                         PutCompareType(node, criterion);
                         PutCharacter2(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Item:
@@ -2380,21 +2387,21 @@ public partial class Main : Form
                     {
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsCharacterEnabled:
                     {
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsCurrentlyBeingUsed:
                     {
                         PutCompareType(node, criterion);
                         PutItem(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsCurrentlyUsing:
@@ -2402,19 +2409,19 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
                         PutItem(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsExplicitGameVersion:
                     {
                         PutCompareType(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsGameUncensored:
                     {
                         PutCompareType(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsPackageInstalled:
@@ -2428,27 +2435,27 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
                         PutCompareType(node, criterion);
                         PutCharacter2(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsInHouse:
                     {
                         PutCharacter1(node, criterion);
                         PutCompareType(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsNewGame:
                     {
                         PutCompareType(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsZoneEmpty:
                     {
                         PutCompareType(node, criterion);
                         PutZone(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.ItemFromItemGroup:
@@ -2492,7 +2499,7 @@ public partial class Main : Form
                                 break;
                             }
                         }
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
 
                         break;
                     }
@@ -2500,7 +2507,7 @@ public partial class Main : Form
                     {
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Personality:
@@ -2531,7 +2538,7 @@ public partial class Main : Form
                         {
                             PutItem(node, criterion);
                         }
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.PlayerPrefs:
@@ -2562,7 +2569,7 @@ public partial class Main : Form
                         }
                         else
                         {
-                            PutBoolValue(node, criterion);
+                            PutBoolCriteria(node, criterion);
                         }
                         break;
                     }
@@ -2571,7 +2578,7 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
                         PutEnumValue<InteractiveProperties>(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Quest:
@@ -2613,13 +2620,13 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
                         PutCompareType(node, criterion);
                         PutCharacter2(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.ScreenFadeVisible:
                     {
                         PutCompareType(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Social:
@@ -2642,7 +2649,7 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
                         PutEnumValue<InteractiveStates>(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Value:
@@ -2688,13 +2695,13 @@ public partial class Main : Form
                         PutCharacter1(node, criterion);
                         PutCompareType(node, criterion);
                         PutCharacter2(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.UseLegacyIntimacy:
                     {
                         PutCompareType(node, criterion);
-                        PutBoolValue(node, criterion);
+                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Never:
@@ -3237,7 +3244,7 @@ public partial class Main : Form
                     }
                     case GameEvents.ItemFromItemGroup:
                     {
-                        //todo just as involved as the item gameevent type
+                        //todo (itemgroups) just as involved as the item gameevent type
                         break;
                     }
                     case GameEvents.LookAt:
@@ -3621,7 +3628,7 @@ public partial class Main : Form
                     }
                     case GameEvents.UnlockAchievement:
                     {
-                        //todo but not really important anyways
+                        //todo (achievements) but not really important anyways
                         break;
                     }
                     case GameEvents.WalkTo:
@@ -4640,26 +4647,16 @@ public partial class Main : Form
     {
         ComboBox equ = GetComboBox();
         equ.Items.AddRange(Enum.GetNames(typeof(ComparisonEquations)));
-        if (int.TryParse(criterion.Value!, out int res))
+        if (!Enum.TryParse<ComparisonEquations>(criterion.EquationValue!.ToString()!, out var res))
         {
-            if (res < equ.Items.Count && res >= 1)
-            {
-                equ.SelectedIndex = res - 1;
-            }
-            else
-            {
-                equ.SelectedIndex = 0;
-                criterion.Value = 0.ToString();
-            }
+            equ.SelectedIndex = 0;
+            criterion.EquationValue = 0;
         }
         else
         {
-            equ.SelectedIndex = 0;
-            criterion.Value = 0.ToString();
+            equ.SelectedItem = criterion.EquationValue!.ToString()!;
         }
-        equ.Select(equ.SelectedItem?.ToString()?.Length ?? 0, 0);
-        equ.PerformLayout();
-        equ.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = (equ.SelectedIndex).ToString());
+        equ.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.EquationValue = Enum.Parse<ComparisonEquations>(equ.SelectedItem!.ToString()!));
         PropertyInspector.Controls.Add(equ);
     }
 
@@ -4715,7 +4712,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(compareType);
     }
 
-    private void PutBoolValue(Node node, Criterion criterion)
+    private void PutBoolCriteria(Node node, Criterion criterion)
     {
         ComboBox boolValue = GetComboBox();
         boolValue.Items.AddRange(Enum.GetNames(typeof(BoolCritera)));

@@ -21,807 +21,1034 @@ namespace CSC.Nodestuff
         public static string FileName { get; private set; } = Main.NoCharacter;
 
         //todo needs some more linking for criteria or events with other node types so we auto populate. should reuse the code from the node spawning#
+        private static void AllLink(Node source, Node destination, bool link)
+        {
+            string Add = link ? "Add " : "Remove ";
+            if (source.DataType == typeof(Criterion))
+            {
+                if (destination.DataType == typeof(ItemAction))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemAction>()!.Criteria!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<ItemAction>()!.Criteria!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(UseWith))
+                {
+                    if (link)
+                    {
+                        destination.Data<UseWith>()!.Criteria!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<UseWith>()!.Criteria!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(CriteriaListWrapper))
+                {
+                    if (link)
+                    {
+                        destination.Data<CriteriaListWrapper>()!.CriteriaList!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<CriteriaListWrapper>()!.CriteriaList!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        destination.Data<GameEvent>()!.Criteria!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<GameEvent>()!.Criteria!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(EventTrigger))
+                {
+                    if (link)
+                    {
+                        destination.Data<EventTrigger>()!.Critera!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<EventTrigger>()!.Critera!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(AlternateText))
+                {
+                    if (link)
+                    {
+                        destination.Data<AlternateText>()!.Critera!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<AlternateText>()!.Critera!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Response))
+                {
+                    if (link)
+                    {
+                        destination.Data<Response>()!.ResponseCriteria!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<Response>()!.ResponseCriteria!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(BackgroundChatter))
+                {
+                    if (link)
+                    {
+                        destination.Data<BackgroundChatter>()!.Critera!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<BackgroundChatter>()!.Critera!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(ItemInteraction))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemInteraction>()!.Critera!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<ItemInteraction>()!.Critera!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(ItemGroupInteraction))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemGroupInteraction>()!.Criteria!.Add(source.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        destination.Data<ItemGroupInteraction>()!.Criteria!.Remove(source.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(ItemGroup))
+                {
+                    if (link)
+                    {
+                        var crit = source.Data<Criterion>()!;
+                        crit.CompareType = CompareTypes.ItemFromItemGroup;
+                        crit.Key = destination.Data<CriteriaGroup>()!.Name;
+                        crit.ItemFromItemGroupComparison = ItemFromItemGroupComparisonTypes.IsActive;
+                    }
+                    else
+                    {
+                        source.Data<Criterion>()!.CompareType = CompareTypes.None;
+                    }
+                }
+                else if (destination.DataType == typeof(Quest))
+                {
+                    if (link)
+                    {
+                        var crit = source.Data<Criterion>()!;
+                        crit.CompareType = CompareTypes.Quest;
+                        crit.Key = destination.Data<Quest>()!.ID;
+                        crit.Key2 = destination.Data<Quest>()!.Name;
+                        crit.Value = QuestStatus.NotObtained.ToString();
+                    }
+                    else
+                    {
+                        source.Data<Criterion>()!.CompareType = CompareTypes.None;
+                    }
+                }
+                else if (destination.DataType == typeof(Trait))
+                {
+                    if (link)
+                    {
+                        var c = source.Data<Criterion>()!;
+                        c.CompareType = CompareTypes.Personality;
+                        c.Character = Main.SelectedCharacter;
+                        c.Key = ((int)destination.Data<Trait>()!.Type).ToString();
+                        c.EquationValue = ComparisonEquations.Equals;
+                    }
+                    else
+                    {
+                        source.Data<Criterion>()!.CompareType = CompareTypes.None;
+                    }
+                }
+            }
+            else if (source.DataType == typeof(GameEvent))
+            {
+                if (destination.DataType == typeof(ItemAction))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemAction>()!.OnTakeActionEvents!.Add(source.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        destination.Data<ItemAction>()!.OnTakeActionEvents!.Remove(source.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(UseWith))
+                {
+                    if (link)
+                    {
+                        destination.Data<UseWith>()!.OnSuccessEvents!.Add(source.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        destination.Data<UseWith>()!.OnSuccessEvents!.Remove(source.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(EventTrigger))
+                {
+                    if (link)
+                    {
+                        destination.Data<EventTrigger>()!.Events!.Add(source.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        destination.Data<EventTrigger>()!.Events!.Remove(source.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(MainStory))
+                {
+                    if (link)
+                    {
+                        destination.Data<MainStory>()!.GameStartEvents!.Add(source.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        destination.Data<MainStory>()!.GameStartEvents!.Remove(source.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Response))
+                {
+                    if (link)
+                    {
+                        destination.Data<Response>()!.ResponseEvents!.Add(source.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        destination.Data<Response>()!.ResponseEvents!.Remove(source.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Dialogue))
+                {
+                    var result = MessageBox.Show("Add as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            destination.Data<Dialogue>()!.StartEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            destination.Data<Dialogue>()!.StartEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            destination.Data<Dialogue>()!.CloseEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            destination.Data<Dialogue>()!.CloseEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                }
+                else if (destination.DataType == typeof(BackgroundChatter))
+                {
+                    if (link)
+                    {
+                        destination.Data<BackgroundChatter>()!.StartEvents!.Add(source.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        destination.Data<BackgroundChatter>()!.StartEvents!.Remove(source.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(ItemInteraction))
+                {
+                    var result = MessageBox.Show(Add + "as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            destination.Data<ItemInteraction>()!.OnAcceptEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            destination.Data<ItemInteraction>()!.OnAcceptEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            destination.Data<ItemInteraction>()!.OnRefuseEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            destination.Data<ItemInteraction>()!.OnRefuseEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                }
+                else if (destination.DataType == typeof(ItemGroupInteraction))
+                {
+                    var result = MessageBox.Show(Add + "as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            destination.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            destination.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            destination.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            destination.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<GameEvent>()!.Criteria.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<GameEvent>()!.Criteria.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Quest))
+                {
+                    if (link)
+                    {
+                        var e = source.Data<GameEvent>()!;
+                        e.Key = destination.Data<Quest>()!.ID;
+                        e.Value = destination.Data<Quest>()!.Name;
+                        e.Option = (int)QuestActions.Start;
+                        e.Character = string.Empty;
+                        e.Character2 = string.Empty;
+                    }
+                    else
+                    {
+                        source.Data<GameEvent>()!.EventType = GameEvents.None;
+                    }
+                }
+                else if (destination.DataType == typeof(Trait))
+                {
+                    if (link)
+                    {
+                        var e = source.Data<GameEvent>()!;
+                        e.EventType = GameEvents.Personality;
+                        e.Character = Main.SelectedCharacter;
+                        e.Option = (int)destination.Data<Trait>()!.Type;
+                        e.Option2 = (int)Modification.Equals;
+                        e.Value = destination.Data<Trait>()!.Value.ToString();
+                    }
+                    else
+                    {
+                        source.Data<GameEvent>()!.EventType = GameEvents.None;
+                    }
+                }
+            }
+            else if (source.DataType == typeof(ItemAction))
+            {
+                if (destination.DataType == typeof(InteractiveitemBehaviour))
+                {
+                    if (link)
+                    {
+                        destination.Data<InteractiveitemBehaviour>()!.ItemActions.Add(source.Data<ItemAction>()!);
+                    }
+                    else
+                    {
+                        destination.Data<InteractiveitemBehaviour>()!.ItemActions.Remove(source.Data<ItemAction>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(ItemGroupBehavior))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemGroupBehavior>()!.ItemActions.Add(source.Data<ItemAction>()!);
+                    }
+                    else
+                    {
+                        destination.Data<ItemGroupBehavior>()!.ItemActions.Remove(source.Data<ItemAction>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<ItemAction>()!.Criteria.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<ItemAction>()!.Criteria.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        source.Data<ItemAction>()!.OnTakeActionEvents.Add(destination.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        source.Data<ItemAction>()!.OnTakeActionEvents.Remove(destination.Data<GameEvent>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(UseWith))
+            {
+                if (destination.DataType == typeof(InteractiveitemBehaviour))
+                {
+                    if (link)
+                    {
+                        destination.Data<InteractiveitemBehaviour>()!.UseWiths.Add(source.Data<UseWith>()!);
+                    }
+                    else
+                    {
+                        destination.Data<InteractiveitemBehaviour>()!.UseWiths.Remove(source.Data<UseWith>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(ItemGroupBehavior))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemGroupBehavior>()!.UseWiths.Add(source.Data<UseWith>()!);
+                    }
+                    else
+                    {
+                        destination.Data<ItemGroupBehavior>()!.UseWiths.Remove(source.Data<UseWith>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<UseWith>()!.Criteria.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<UseWith>()!.Criteria.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        source.Data<UseWith>()!.OnSuccessEvents.Add(destination.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        source.Data<UseWith>()!.OnSuccessEvents.Remove(destination.Data<GameEvent>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(InteractiveitemBehaviour))
+            {
+                if (destination.DataType == typeof(ItemAction))
+                {
+                    if (link)
+                    {
+                        source.Data<InteractiveitemBehaviour>()!.ItemActions.Add(destination.Data<ItemAction>()!);
+                    }
+                    else
+                    {
+                        source.Data<InteractiveitemBehaviour>()!.ItemActions.Remove(destination.Data<ItemAction>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(UseWith))
+                {
+                    if (link)
+                    {
+                        source.Data<InteractiveitemBehaviour>()!.UseWiths.Add(destination.Data<UseWith>()!);
+                    }
+                    else
+                    {
+                        source.Data<InteractiveitemBehaviour>()!.UseWiths.Remove(destination.Data<UseWith>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(InteractiveitemBehaviour))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemGroup>()!.ItemsInGroup.Add(source.Data<InteractiveitemBehaviour>()!.ItemName);
+                    }
+                    else
+                    {
+                        destination.Data<ItemGroup>()!.ItemsInGroup.Remove(source.Data<InteractiveitemBehaviour>()!.ItemName);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(ItemGroupBehavior))
+            {
+                if (destination.DataType == typeof(ItemAction))
+                {
+                    if (link)
+                    {
+                        source.Data<ItemGroupBehavior>()!.ItemActions.Add(destination.Data<ItemAction>()!);
+                    }
+                    else
+                    {
+                        source.Data<ItemGroupBehavior>()!.ItemActions.Remove(destination.Data<ItemAction>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(UseWith))
+                {
+                    if (link)
+                    {
+                        source.Data<ItemGroupBehavior>()!.UseWiths.Add(destination.Data<UseWith>()!);
+                    }
+                    else
+                    {
+                        source.Data<ItemGroupBehavior>()!.UseWiths.Remove(destination.Data<UseWith>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(InteractiveitemBehaviour))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemGroup>()!.ItemsInGroup.Add(source.Data<InteractiveitemBehaviour>()!.ItemName);
+                    }
+                    else
+                    {
+                        destination.Data<ItemGroup>()!.ItemsInGroup.Remove(source.Data<InteractiveitemBehaviour>()!.ItemName);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(Achievement))
+            {
+                if (destination.DataType == typeof(GameEvent))
+                {
+                    //todo (achievements) when i decide to implement achievements
+                }
+            }
+            else if (source.DataType == typeof(CriteriaListWrapper))
+            {
+                if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<CriteriaListWrapper>()!.CriteriaList.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<CriteriaListWrapper>()!.CriteriaList.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(CriteriaGroup))
+                {
+                    if (link)
+                    {
+                        destination.Data<CriteriaGroup>()!.CriteriaList.Add(source.Data<CriteriaListWrapper>()!);
+                    }
+                    else
+                    {
+                        destination.Data<CriteriaGroup>()!.CriteriaList.Remove(source.Data<CriteriaListWrapper>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(CriteriaGroup))
+            {
+                if (destination.DataType == typeof(CriteriaListWrapper))
+                {
+                    if (link)
+                    {
+                        source.Data<CriteriaGroup>()!.CriteriaList.Add(destination.Data<CriteriaListWrapper>()!);
+                    }
+                    else
+                    {
+                        source.Data<CriteriaGroup>()!.CriteriaList.Remove(destination.Data<CriteriaListWrapper>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        var crit = destination.Data<Criterion>()!;
+                        crit.CompareType = CompareTypes.CriteriaGroup;
+                        crit.Value = source.Data<CriteriaGroup>()!.Name;
+                    }
+                    else
+                    {
+                        destination.Data<Criterion>()!.CompareType = CompareTypes.Never;
+                    }
+                }
+            }
+            else if (source.DataType == typeof(ItemGroup))
+            {
+                if (destination.DataType == typeof(ItemInteraction))
+                {
+                    if (link)
+                    {
+                        source.Data<ItemGroup>()!.ItemsInGroup.Add(destination.Data<ItemInteraction>()!.ItemName);
+                    }
+                    else
+                    {
+                        source.Data<ItemGroup>()!.ItemsInGroup.Remove(destination.Data<ItemInteraction>()!.ItemName);
+                    }
+                }
+                else if (destination.DataType == typeof(InteractiveitemBehaviour))
+                {
+                    if (link)
+                    {
+                        source.Data<ItemGroup>()!.ItemsInGroup.Add(destination.Data<InteractiveitemBehaviour>()!.ItemName);
+                    }
+                    else
+                    {
+                        source.Data<ItemGroup>()!.ItemsInGroup.Remove(destination.Data<InteractiveitemBehaviour>()!.ItemName);
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        var crit = destination.Data<Criterion>()!;
+                        crit.CompareType = CompareTypes.ItemFromItemGroup;
+                        crit.Key = source.Data<CriteriaGroup>()!.Name;
+                        crit.ItemFromItemGroupComparison = ItemFromItemGroupComparisonTypes.IsActive;
+                    }
+                    else
+                    {
+                        destination.Data<Criterion>()!.CompareType = CompareTypes.Never;
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    //todo (itemgroups) seems mega involved
+                }
+            }
+            else if (source.DataType == typeof(EventTrigger))
+            {
+                if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<EventTrigger>()!.Critera.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<EventTrigger>()!.Critera.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        source.Data<EventTrigger>()!.Events.Add(destination.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        source.Data<EventTrigger>()!.Events.Remove(destination.Data<GameEvent>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(CharacterGroup))
+            {
+                if (destination.DataType == typeof(GameEvent))
+                {
+                    //todo too involved to include for now
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    //todo too involved to include for now
+                }
+            }
+            else if (source.DataType == typeof(AlternateText))
+            {
+                if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<AlternateText>()!.Critera.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<AlternateText>()!.Critera.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Dialogue))
+                {
+                    if (link)
+                    {
+                        destination.Data<Dialogue>()!.AlternateTexts.Add(source.Data<AlternateText>()!);
+                    }
+                    else
+                    {
+                        destination.Data<Dialogue>()!.AlternateTexts.Remove(source.Data<AlternateText>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(Response))
+            {
+                if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<Response>()!.ResponseCriteria.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<Response>()!.ResponseCriteria.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        source.Data<Response>()!.ResponseEvents.Add(destination.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        source.Data<Response>()!.ResponseEvents.Remove(destination.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Dialogue))
+                {
+                    var result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to add the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            source.Data<Response>()!.Next = destination.Data<Dialogue>()!.ID;
+                        }
+                        else
+                        {
+                            source.Data<Response>()!.Next = 0;
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            destination.Data<Dialogue>()!.Responses.Add(source.Data<Response>()!);
+                        }
+                        else
+                        {
+                            destination.Data<Dialogue>()!.Responses.Remove(source.Data<Response>()!);
+                        }
+                    }
+                }
+            }
+            else if (source.DataType == typeof(Dialogue))
+            {
+                if (destination.DataType == typeof(GameEvent))
+                {
+                    var result = MessageBox.Show(Add + "as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            source.Data<Dialogue>()!.StartEvents!.Add(destination.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            source.Data<Dialogue>()!.StartEvents!.Remove(destination.Data<GameEvent>()!);
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            source.Data<Dialogue>()!.CloseEvents!.Add(destination.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            source.Data<Dialogue>()!.CloseEvents!.Remove(destination.Data<GameEvent>()!);
+                        }
+                    }
+                }
+                else if (destination.DataType == typeof(Response))
+                {
+                    var result = MessageBox.Show(Add + "as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            source.Data<Dialogue>()!.Responses.Add(destination.Data<Response>()!);
+                        }
+                        else
+                        {
+                            source.Data<Dialogue>()!.Responses.Remove(destination.Data<Response>()!);
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            destination.Data<Response>()!.Next = source.Data<Dialogue>()!.ID;
+                        }
+                        else
+                        {
+                            destination.Data<Response>()!.Next = 0;
+                        }
+                    }
+                }
+                else if (destination.DataType == typeof(AlternateText))
+                {
+                    if (link)
+                    {
+                        source.Data<Dialogue>()!.AlternateTexts.Add(destination.Data<AlternateText>()!);
+                    }
+                    else
+                    {
+                        source.Data<Dialogue>()!.AlternateTexts.Remove(destination.Data<AlternateText>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(BackgroundChatter))
+            {
+                if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        source.Data<BackgroundChatter>()!.Critera.Add(destination.Data<Criterion>()!);
+                    }
+                    else
+                    {
+                        source.Data<BackgroundChatter>()!.Critera.Remove(destination.Data<Criterion>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        source.Data<BackgroundChatter>()!.StartEvents.Add(destination.Data<GameEvent>()!);
+                    }
+                    else
+                    {
+                        source.Data<BackgroundChatter>()!.StartEvents.Remove(destination.Data<GameEvent>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(BackgroundChatterResponse))
+                {
+                    if (link)
+                    {
+                        source.Data<BackgroundChatter>()!.Responses.Add(destination.Data<BackgroundChatterResponse>()!);
+                    }
+                    else
+                    {
+                        source.Data<BackgroundChatter>()!.Responses.Remove(destination.Data<BackgroundChatterResponse>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(BackgroundChatterResponse))
+            {
+                if (destination.DataType == typeof(BackgroundChatter))
+                {
+                    if (link)
+                    {
+                        destination.Data<BackgroundChatter>()!.Responses.Add(source.Data<BackgroundChatterResponse>()!);
+                    }
+                    else
+                    {
+                        destination.Data<BackgroundChatter>()!.Responses.Remove(source.Data<BackgroundChatterResponse>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(Trait))
+            {
+                if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        var e = destination.Data<GameEvent>()!;
+                        e.EventType = GameEvents.Personality;
+                        e.Character = Main.SelectedCharacter;
+                        e.Option = (int)source.Data<Trait>()!.Type;
+                        e.Option2 = (int)Modification.Equals;
+                        e.Value = source.Data<Trait>()!.Value.ToString();
+                    }
+                    else
+                    {
+                        destination.Data<GameEvent>()!.EventType = GameEvents.None;
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        var c = destination.Data<Criterion>()!;
+                        c.CompareType = CompareTypes.Personality;
+                        c.Character = Main.SelectedCharacter;
+                        c.Key = ((int)source.Data<Trait>()!.Type).ToString();
+                        c.EquationValue = ComparisonEquations.Equals;
+                    }
+                    else
+                    {
+                        destination.Data<Criterion>()!.CompareType = CompareTypes.Never;
+                    }
+                }
+            }
+            else if (source.DataType == typeof(ExtendedDetail))
+            {
+                if (destination.DataType == typeof(Quest))
+                {
+                    if (link)
+                    {
+                        destination.Data<Quest>()!.ExtendedDetails.Add(source.Data<ExtendedDetail>()!);
+                    }
+                    else
+                    {
+                        destination.Data<Quest>()!.ExtendedDetails.Remove(source.Data<ExtendedDetail>()!);
+                    }
+                }
+            }
+            else if (source.DataType == typeof(Quest))
+            {
+                if (destination.DataType == typeof(ExtendedDetail))
+                {
+                    if (link)
+                    {
+                        source.Data<Quest>()!.ExtendedDetails.Add(destination.Data<ExtendedDetail>()!);
+                    }
+                    else
+                    {
+                        source.Data<Quest>()!.ExtendedDetails.Remove(destination.Data<ExtendedDetail>()!);
+                    }
+                }
+                else if (destination.DataType == typeof(Criterion))
+                {
+                    if (link)
+                    {
+                        var crit = destination.Data<Criterion>()!;
+                        crit.CompareType = CompareTypes.Quest;
+                        crit.Key = source.Data<Quest>()!.ID;
+                        crit.Key2 = source.Data<Quest>()!.Name;
+                        crit.Value = QuestStatus.NotObtained.ToString();
+                    }
+                    else
+                    {
+                        destination.Data<Criterion>()!.CompareType = CompareTypes.Never;
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    if (link)
+                    {
+                        var e = destination.Data<GameEvent>()!;
+                        e.Key = source.Data<Quest>()!.ID;
+                        e.Value = source.Data<Quest>()!.Name;
+                        e.Option = (int)QuestActions.Start;
+                        e.Character = string.Empty;
+                        e.Character2 = string.Empty;
+                    }
+                    else
+                    {
+                        destination.Data<GameEvent>()!.EventType = GameEvents.None;
+                    }
+                }
+            }
+            else if (source.DataType == typeof(ItemInteraction))
+            {
+                if (destination.DataType == typeof(ItemGroup))
+                {
+                    if (link)
+                    {
+                        destination.Data<ItemGroup>()!.ItemsInGroup.Add(source.Data<ItemInteraction>()!.ItemName);
+                    }
+                    else
+                    {
+                        destination.Data<ItemGroup>()!.ItemsInGroup.Remove(source.Data<ItemInteraction>()!.ItemName);
+                    }
+                }
+                else if (destination.DataType == typeof(GameEvent))
+                {
+                    var result = MessageBox.Show(Add + "as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (link)
+                        {
+                            source.Data<ItemInteraction>()!.OnAcceptEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            source.Data<ItemInteraction>()!.OnAcceptEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        if (link)
+                        {
+                            source.Data<ItemInteraction>()!.OnRefuseEvents!.Add(source.Data<GameEvent>()!);
+                        }
+                        else
+                        {
+                            source.Data<ItemInteraction>()!.OnRefuseEvents!.Remove(source.Data<GameEvent>()!);
+                        }
+                    }
+                }
+            }
+            else if (source.DataType == typeof(ItemGroupInteraction))
+            {
+                //todo (itemgroup) dont how how yet, dont care :D
+            }
+            else if (source.DataType == typeof(string))
+            {
+                //todo detect node type from node type and use string then?
+                //should be only values i think
+            }
+        }
+
         public static void Link(NodeStore nodes, Node addFrom, Node addToThis)
         {
             if (addToThis.DataType == typeof(MissingReferenceInfo))
             {
                 return;
             }
-
-            bool linked = false;
-
-            if (addFrom.DataType == typeof(Criterion))
+            if (addFrom.DataType == typeof(MissingReferenceInfo))
             {
-                if (addToThis.DataType == typeof(ItemAction))
-                {
-                    addToThis.Data<ItemAction>()!.Criteria!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(UseWith))
-                {
-                    addToThis.Data<UseWith>()!.Criteria!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(CriteriaListWrapper))
-                {
-                    addToThis.Data<CriteriaListWrapper>()!.CriteriaList!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(GameEvent))
-                {
-                    addToThis.Data<GameEvent>()!.Criteria!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(EventTrigger))
-                {
-                    addToThis.Data<EventTrigger>()!.Critera!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(AlternateText))
-                {
-                    addToThis.Data<AlternateText>()!.Critera!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(Response))
-                {
-                    addToThis.Data<Response>()!.ResponseCriteria!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(BackgroundChatter))
-                {
-                    addToThis.Data<BackgroundChatter>()!.Critera!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(ItemInteraction))
-                {
-                    addToThis.Data<ItemInteraction>()!.Critera!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(ItemGroupInteraction))
-                {
-                    addToThis.Data<ItemGroupInteraction>()!.Criteria!.Add(addFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-
-                if (linked)
-                {
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(GameEvent))
-            {
-                if (addToThis.DataType == typeof(ItemAction))
-                {
-                    addToThis.Data<ItemAction>()!.OnTakeActionEvents!.Add(addFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(UseWith))
-                {
-                    addToThis.Data<UseWith>()!.OnSuccessEvents!.Add(addFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(EventTrigger))
-                {
-                    addToThis.Data<EventTrigger>()!.Events!.Add(addFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(MainStory))
-                {
-                    addToThis.Data<MainStory>()!.GameStartEvents!.Add(addFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(Response))
-                {
-                    addToThis.Data<Response>()!.ResponseEvents!.Add(addFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(Dialogue))
-                {
-                    var result = MessageBox.Show("Add as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        addToThis.Data<Dialogue>()!.StartEvents!.Add(addFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                    else if (result == DialogResult.No)
-                    {
-                        addToThis.Data<Dialogue>()!.CloseEvents!.Add(addFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                }
-                else if (addToThis.DataType == typeof(BackgroundChatter))
-                {
-                    addToThis.Data<BackgroundChatter>()!.StartEvents!.Add(addFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (addToThis.DataType == typeof(ItemInteraction))
-                {
-                    var result = MessageBox.Show("Add as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        addToThis.Data<ItemInteraction>()!.OnAcceptEvents!.Add(addFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                    else if (result == DialogResult.No)
-                    {
-                        addToThis.Data<ItemInteraction>()!.OnRefuseEvents!.Add(addFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                }
-                else if (addToThis.DataType == typeof(ItemGroupInteraction))
-                {
-                    var result = MessageBox.Show("Add as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        addToThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Add(addFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                    else if (result == DialogResult.No)
-                    {
-                        addToThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Add(addFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                }
-                else if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<GameEvent>()!.Criteria.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-
-                if (linked)
-                {
-                    nodes.AddChild(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(ItemAction))
-            {
-                if (addToThis.DataType == typeof(InteractiveitemBehaviour))
-                {
-                    addToThis.Data<InteractiveitemBehaviour>()!.ItemActions.Add(addFrom.Data<ItemAction>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(ItemGroupBehavior))
-                {
-                    addToThis.Data<ItemGroupBehavior>()!.ItemActions.Add(addFrom.Data<ItemAction>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<ItemAction>()!.Criteria.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(GameEvent))
-                {
-                    addFrom.Data<ItemAction>()!.OnTakeActionEvents.Add(addToThis.Data<GameEvent>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(UseWith))
-            {
-                if (addToThis.DataType == typeof(InteractiveitemBehaviour))
-                {
-                    addToThis.Data<InteractiveitemBehaviour>()!.UseWiths.Add(addFrom.Data<UseWith>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(ItemGroupBehavior))
-                {
-                    addToThis.Data<ItemGroupBehavior>()!.UseWiths.Add(addFrom.Data<UseWith>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<UseWith>()!.Criteria.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(GameEvent))
-                {
-                    addFrom.Data<UseWith>()!.OnSuccessEvents.Add(addToThis.Data<GameEvent>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(InteractiveitemBehaviour))
-            {
-                if (addToThis.DataType == typeof(ItemAction))
-                {
-                    addFrom.Data<InteractiveitemBehaviour>()!.ItemActions.Add(addToThis.Data<ItemAction>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(UseWith))
-                {
-                    addFrom.Data<InteractiveitemBehaviour>()!.UseWiths.Add(addToThis.Data<UseWith>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(ItemGroupBehavior))
-            {
-                if (addToThis.DataType == typeof(ItemAction))
-                {
-                    addFrom.Data<ItemGroupBehavior>()!.ItemActions.Add(addToThis.Data<ItemAction>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(UseWith))
-                {
-                    addFrom.Data<ItemGroupBehavior>()!.UseWiths.Add(addToThis.Data<UseWith>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(Achievement))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(CriteriaListWrapper))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(CriteriaGroup))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(ItemGroup))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(EventTrigger))
-            {
-                if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<EventTrigger>()!.Critera.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(GameEvent))
-                {
-                    addFrom.Data<EventTrigger>()!.Events.Add(addToThis.Data<GameEvent>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(CharacterGroup))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(AlternateText))
-            {
-                if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<AlternateText>()!.Critera.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(Dialogue))
-                {
-                    addToThis.Data<Dialogue>()!.AlternateTexts.Add(addFrom.Data<AlternateText>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(Response))
-            {
-                if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<Response>()!.ResponseCriteria.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(GameEvent))
-                {
-                    addFrom.Data<Response>()!.ResponseEvents.Add(addToThis.Data<GameEvent>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(Dialogue))
-                {
-                    var result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to add the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        addFrom.Data<Response>()!.Next = addToThis.Data<Dialogue>()!.ID;
-                        nodes.AddParent(addToThis, addFrom);
-                    }
-                    else if (result == DialogResult.No)
-                    {
-                        addToThis.Data<Dialogue>()!.Responses.Add(addFrom.Data<Response>()!);
-                        nodes.AddChild(addToThis, addFrom);
-                    }
-                }
-            }
-            else if (addFrom.DataType == typeof(Dialogue))
-            {
-                if (addToThis.DataType == typeof(GameEvent))
-                {
-                    var result = MessageBox.Show("Add as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        addFrom.Data<Dialogue>()!.StartEvents!.Add(addToThis.Data<GameEvent>()!);
-                        nodes.AddParent(addToThis, addFrom);
-                    }
-                    else if (result == DialogResult.No)
-                    {
-                        addFrom.Data<Dialogue>()!.CloseEvents!.Add(addToThis.Data<GameEvent>()!);
-                        nodes.AddParent(addToThis, addFrom);
-                    }
-                }
-                else if (addToThis.DataType == typeof(Response))
-                {
-                    var result = MessageBox.Show("Add as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        addFrom.Data<Dialogue>()!.Responses.Add(addToThis.Data<Response>()!);
-                        nodes.AddParent(addToThis, addFrom);
-                    }
-                    else if (result == DialogResult.No)
-                    {
-                        addToThis.Data<Response>()!.Next = addFrom.Data<Dialogue>()!.ID;
-                        nodes.AddChild(addToThis, addFrom);
-                    }
-                }
-                else if (addToThis.DataType == typeof(AlternateText))
-                {
-                    addFrom.Data<Dialogue>()!.AlternateTexts.Add(addToThis.Data<AlternateText>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(BackgroundChatter))
-            {
-                if (addToThis.DataType == typeof(Criterion))
-                {
-                    addFrom.Data<BackgroundChatter>()!.Critera.Add(addToThis.Data<Criterion>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(GameEvent))
-                {
-                    addFrom.Data<BackgroundChatter>()!.StartEvents.Add(addToThis.Data<GameEvent>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-                else if (addToThis.DataType == typeof(BackgroundChatterResponse))
-                {
-                    addFrom.Data<BackgroundChatter>()!.Responses.Add(addToThis.Data<BackgroundChatterResponse>()!);
-                    nodes.AddParent(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(BackgroundChatterResponse))
-            {
-                if (addToThis.DataType == typeof(BackgroundChatter))
-                {
-                    addToThis.Data<BackgroundChatter>()!.Responses.Add(addFrom.Data<BackgroundChatterResponse>()!);
-                    nodes.AddChild(addToThis, addFrom);
-                }
-            }
-            else if (addFrom.DataType == typeof(Trait))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(ExtendedDetail))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(Quest))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(ItemInteraction))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(ItemGroupInteraction))
-            {
-                //todo
-            }
-            else if (addFrom.DataType == typeof(string))
-            {
-                //todo
+                return;
             }
 
+            AllLink(addFrom, addToThis, true);
+
+            NodeLinker.UpdateLinks(addFrom, Main.SelectedCharacter, nodes);
             NodeLinker.UpdateLinks(addToThis, Main.SelectedCharacter, nodes);
         }
 
-        public static void Unlink(NodeStore nodes, Node removeFrom, Node removeThis, bool removeAll = false)
+        public static void Unlink(NodeStore nodes, Node removeFrom, Node removeThis)
         {
             if (removeThis.DataType == typeof(MissingReferenceInfo))
             {
                 return;
             }
-
-            bool linked = false;
-
-            if (removeFrom.DataType == typeof(Criterion))
+            if (removeFrom.DataType == typeof(MissingReferenceInfo))
             {
-                if (removeThis.DataType == typeof(ItemAction))
-                {
-                    removeThis.Data<ItemAction>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(UseWith))
-                {
-                    removeThis.Data<UseWith>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(CriteriaListWrapper))
-                {
-                    removeThis.Data<CriteriaListWrapper>()!.CriteriaList!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(GameEvent))
-                {
-                    removeThis.Data<GameEvent>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(EventTrigger))
-                {
-                    removeThis.Data<EventTrigger>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(AlternateText))
-                {
-                    removeThis.Data<AlternateText>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(Response))
-                {
-                    removeThis.Data<Response>()!.ResponseCriteria!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(BackgroundChatter))
-                {
-                    removeThis.Data<BackgroundChatter>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(ItemInteraction))
-                {
-                    removeThis.Data<ItemInteraction>()!.Critera!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(ItemGroupInteraction))
-                {
-                    removeThis.Data<ItemGroupInteraction>()!.Criteria!.Remove(removeFrom.Data<Criterion>()!);
-                    linked = true;
-                }
-
-                if (linked)
-                {
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(GameEvent))
-            {
-                if (removeThis.DataType == typeof(ItemAction))
-                {
-                    removeThis.Data<ItemAction>()!.OnTakeActionEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(UseWith))
-                {
-                    removeThis.Data<UseWith>()!.OnSuccessEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(EventTrigger))
-                {
-                    removeThis.Data<EventTrigger>()!.Events!.Remove(removeFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(MainStory))
-                {
-                    removeThis.Data<MainStory>()!.GameStartEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(Response))
-                {
-                    removeThis.Data<Response>()!.ResponseEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(Dialogue))
-                {
-                    DialogResult result = DialogResult.None;
-                    if (!removeAll)
-                    {
-                        result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
-                    if (result == DialogResult.Yes || removeAll)
-                    {
-                        removeThis.Data<Dialogue>()!.StartEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                    if (result == DialogResult.No || removeAll)
-                    {
-                        removeThis.Data<Dialogue>()!.CloseEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                }
-                else if (removeThis.DataType == typeof(BackgroundChatter))
-                {
-                    removeThis.Data<BackgroundChatter>()!.StartEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                    linked = true;
-                }
-                else if (removeThis.DataType == typeof(ItemInteraction))
-                {
-                    DialogResult result = DialogResult.None;
-                    if (!removeAll)
-                    {
-                        result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
-                    if (result == DialogResult.Yes || removeAll)
-                    {
-                        removeThis.Data<ItemInteraction>()!.OnAcceptEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                    if (result == DialogResult.No || removeAll)
-                    {
-                        removeThis.Data<ItemInteraction>()!.OnRefuseEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                }
-                else if (removeThis.DataType == typeof(ItemGroupInteraction))
-                {
-                    DialogResult result = DialogResult.None;
-                    if (!removeAll)
-                    {
-                        result = MessageBox.Show("Remove as OnAcceptEvent? Hit yes for OnAcceptEvent, no for OnRefuseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
-                    if (result == DialogResult.Yes || removeAll)
-                    {
-                        removeThis.Data<ItemGroupInteraction>()!.OnAcceptEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                    if (result == DialogResult.No || removeAll)
-                    {
-                        removeThis.Data<ItemGroupInteraction>()!.OnRefuseEvents!.Remove(removeFrom.Data<GameEvent>()!);
-                        linked = true;
-                    }
-                }
-                else if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<GameEvent>()!.Criteria.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-
-                if (linked)
-                {
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(ItemAction))
-            {
-                if (removeThis.DataType == typeof(InteractiveitemBehaviour))
-                {
-                    removeThis.Data<InteractiveitemBehaviour>()!.ItemActions.Remove(removeFrom.Data<ItemAction>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(ItemGroupBehavior))
-                {
-                    removeThis.Data<ItemGroupBehavior>()!.ItemActions.Remove(removeFrom.Data<ItemAction>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<ItemAction>()!.Criteria.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(GameEvent))
-                {
-                    removeFrom.Data<ItemAction>()!.OnTakeActionEvents.Remove(removeThis.Data<GameEvent>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(UseWith))
-            {
-                if (removeThis.DataType == typeof(InteractiveitemBehaviour))
-                {
-                    removeThis.Data<InteractiveitemBehaviour>()!.UseWiths.Remove(removeFrom.Data<UseWith>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(ItemGroupBehavior))
-                {
-                    removeThis.Data<ItemGroupBehavior>()!.UseWiths.Remove(removeFrom.Data<UseWith>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<UseWith>()!.Criteria.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(GameEvent))
-                {
-                    removeFrom.Data<UseWith>()!.OnSuccessEvents.Remove(removeThis.Data<GameEvent>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(InteractiveitemBehaviour))
-            {
-                if (removeThis.DataType == typeof(ItemAction))
-                {
-                    removeFrom.Data<InteractiveitemBehaviour>()!.ItemActions.Remove(removeThis.Data<ItemAction>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(UseWith))
-                {
-                    removeFrom.Data<InteractiveitemBehaviour>()!.UseWiths.Remove(removeThis.Data<UseWith>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(ItemGroupBehavior))
-            {
-                if (removeThis.DataType == typeof(ItemAction))
-                {
-                    removeFrom.Data<ItemGroupBehavior>()!.ItemActions.Remove(removeThis.Data<ItemAction>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(UseWith))
-                {
-                    removeFrom.Data<ItemGroupBehavior>()!.UseWiths.Remove(removeThis.Data<UseWith>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(Achievement))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(CriteriaListWrapper))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(CriteriaGroup))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(ItemGroup))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(EventTrigger))
-            {
-                if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<EventTrigger>()!.Critera.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(GameEvent))
-                {
-                    removeFrom.Data<EventTrigger>()!.Events.Remove(removeThis.Data<GameEvent>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(CharacterGroup))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(AlternateText))
-            {
-                if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<AlternateText>()!.Critera.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(Dialogue))
-                {
-                    removeThis.Data<Dialogue>()!.AlternateTexts.Remove(removeFrom.Data<AlternateText>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(Response))
-            {
-                if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<Response>()!.ResponseCriteria.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(GameEvent))
-                {
-                    removeFrom.Data<Response>()!.ResponseEvents.Remove(removeThis.Data<GameEvent>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(Dialogue))
-                {
-                    DialogResult result = DialogResult.None;
-                    if (!removeAll)
-                    {
-                        result = MessageBox.Show("Lead to this dialogue from the response? Hit yes for that, no to Remove the response as a normal response to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
-                    if (result == DialogResult.Yes || removeAll)
-                    {
-                        removeFrom.Data<Response>()!.Next = 0;
-                        nodes.RemoveParent(removeThis, removeFrom);
-                    }
-                    if (result == DialogResult.No || removeAll)
-                    {
-                        removeThis.Data<Dialogue>()!.Responses.Remove(removeFrom.Data<Response>()!);
-                        nodes.RemoveChild(removeThis, removeFrom);
-                    }
-                }
-            }
-            else if (removeFrom.DataType == typeof(Dialogue))
-            {
-                if (removeThis.DataType == typeof(GameEvent))
-                {
-                    DialogResult result = DialogResult.None;
-                    if (!removeAll)
-                    {
-                        result = MessageBox.Show("Remove as StartEvent? Hit yes for StartEvent, no for CloseEvent", "Select Event Type", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
-                    if (result == DialogResult.Yes || removeAll)
-                    {
-                        removeFrom.Data<Dialogue>()!.StartEvents!.Remove(removeThis.Data<GameEvent>()!);
-                        nodes.RemoveParent(removeThis, removeFrom);
-                    }
-                    if (result == DialogResult.No || removeAll)
-                    {
-                        removeFrom.Data<Dialogue>()!.CloseEvents!.Remove(removeThis.Data<GameEvent>()!);
-                        nodes.RemoveParent(removeThis, removeFrom);
-                    }
-                }
-                else if (removeThis.DataType == typeof(Response))
-                {
-                    DialogResult result = DialogResult.None;
-                    if (!removeAll)
-                    {
-                        result = MessageBox.Show("Remove as a response? Hit yes for Response, no for the response leading to this dialogue", "Select Response place", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
-                    if (result == DialogResult.Yes || removeAll)
-                    {
-                        removeFrom.Data<Dialogue>()!.Responses.Remove(removeThis.Data<Response>()!);
-                        nodes.RemoveParent(removeThis, removeFrom);
-                    }
-                    if (result == DialogResult.No || removeAll)
-                    {
-                        removeThis.Data<Response>()!.Next = 0;
-                        nodes.RemoveChild(removeThis, removeFrom);
-                    }
-                }
-                else if (removeThis.DataType == typeof(AlternateText))
-                {
-                    removeFrom.Data<Dialogue>()!.AlternateTexts.Remove(removeThis.Data<AlternateText>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(BackgroundChatter))
-            {
-                if (removeThis.DataType == typeof(Criterion))
-                {
-                    removeFrom.Data<BackgroundChatter>()!.Critera.Remove(removeThis.Data<Criterion>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(GameEvent))
-                {
-                    removeFrom.Data<BackgroundChatter>()!.StartEvents.Remove(removeThis.Data<GameEvent>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-                else if (removeThis.DataType == typeof(BackgroundChatterResponse))
-                {
-                    removeFrom.Data<BackgroundChatter>()!.Responses.Remove(removeThis.Data<BackgroundChatterResponse>()!);
-                    nodes.RemoveParent(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(BackgroundChatterResponse))
-            {
-                if (removeThis.DataType == typeof(BackgroundChatter))
-                {
-                    removeThis.Data<BackgroundChatter>()!.Responses.Remove(removeFrom.Data<BackgroundChatterResponse>()!);
-                    nodes.RemoveChild(removeThis, removeFrom);
-                }
-            }
-            else if (removeFrom.DataType == typeof(Trait))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(ExtendedDetail))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(Quest))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(ItemInteraction))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(ItemGroupInteraction))
-            {
-                //todo
-            }
-            else if (removeFrom.DataType == typeof(string))
-            {
-                //todo
+                return;
             }
 
+            AllLink(removeFrom, removeThis, false);
+
+            NodeLinker.UpdateLinks(removeFrom, Main.SelectedCharacter, nodes);
             NodeLinker.UpdateLinks(removeThis, Main.SelectedCharacter, nodes);
         }
 
