@@ -1,11 +1,10 @@
 using CSC.Components;
 using CSC.Nodestuff;
 using CSC.StoryItems;
-using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.IO;
+using System.Text.Json;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC;
@@ -162,10 +161,11 @@ public partial class Main : Form
 
     public int LeftClickFrameCounter { get; private set; }
 
+    //todo add option to view all referenced values in other files, like reverse strike brush
+
     //todo add info when trying to link incompatible notes
     //todo add search
     //todo unify all node creation so its always the same
-    //todo add option to view all referenced values in other files, like reverse strike brush
     //todo add grouping
 
     public Main()
@@ -1736,7 +1736,7 @@ public partial class Main : Form
 
         foreach (var fileStore in positions.Keys)
         {
-            if(fileStore == NoCharacter)
+            if (fileStore == NoCharacter)
             {
                 continue;
             }
@@ -1744,8 +1744,11 @@ public partial class Main : Form
             SelectedCharacter = fileStore;
             foreach (var node in nodes[fileStore].Nodes)
             {
-                node.Position = positions[fileStore][new NodeID(node.Type, node.ID, node.OrigFileName, node.DataType)];
-                if (node.Position == PointF.Empty)
+                if (positions[fileStore].TryGetValue(new NodeID(node.Type, node.ID, node.OrigFileName, node.DataType), out var point))
+                {
+                    node.Position = point;
+                }
+                else
                 {
                     notSet.Add(node);
                 }
@@ -1811,26 +1814,26 @@ public partial class Main : Form
         //else create new
         try
         {
-            var settings = new JsonSerializerSettings
+            var settings = new JsonSerializerOptions
             {
-                NullValueHandling = NullValueHandling.Ignore,
-                MissingMemberHandling = MissingMemberHandling.Ignore
+                PropertyNameCaseInsensitive = true,
+                UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Skip
             };
             if (Path.GetExtension(FilePath) == ".story")
             {
-                Story = JsonConvert.DeserializeObject<MainStory>(fileString, settings) ?? new MainStory();
+                Story = JsonSerializer.Deserialize<MainStory>(fileString, settings) ?? new MainStory();
                 FileName = Player;
                 storyName = Path.GetFileNameWithoutExtension(FilePath);
             }
             else
             {
-                CharacterStory story = JsonConvert.DeserializeObject<CharacterStory>(fileString, settings) ?? new CharacterStory();
+                CharacterStory story = JsonSerializer.Deserialize<CharacterStory>(fileString, settings) ?? new CharacterStory();
                 FileName = story.CharacterName!;
                 Stories.Add(FileName, story);
 
             }
         }
-        catch (JsonReaderException ex)
+        catch (JsonException ex)
         {
             Debug.WriteLine(ex.Message);
             return;
@@ -2106,24 +2109,24 @@ public partial class Main : Form
 
         try
         {
-            var settings = new JsonSerializerSettings
+            var settings = new JsonSerializerOptions
             {
-                NullValueHandling = NullValueHandling.Ignore,
-                MissingMemberHandling = MissingMemberHandling.Error,
-                Formatting = Formatting.Indented,
+                PropertyNameCaseInsensitive = true,
+                UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Skip,
+                WriteIndented = true,
             };
             if (StoryName == FileName)
             {
-                var data = JsonConvert.SerializeObject(Story, settings);
+                var data = JsonSerializer.Serialize(Story, settings);
                 File.WriteAllText(Path.Combine(StoryFolder, FileName + ".story"), data, System.Text.Encoding.Unicode);
             }
             else
             {
-                var data = JsonConvert.SerializeObject(Stories[FileName], settings);
+                var data = JsonSerializer.Serialize(Stories[FileName], settings);
                 File.WriteAllText(Path.Combine(StoryFolder, FileName + ".character"), data, System.Text.Encoding.Unicode);
             }
         }
-        catch (JsonReaderException ex)
+        catch (JsonException ex)
         {
             Debug.WriteLine(ex.Message);
             return;

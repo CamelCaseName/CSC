@@ -1,14 +1,7 @@
 ﻿using CSC.Components;
 using CSC.StoryItems;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
-using System.ComponentModel;
-using System.ComponentModel.Design;
 using System.Diagnostics;
-using System.Drawing.Design;
-using System.Net.Security;
-using System.Runtime.InteropServices;
-using System.Windows.Forms.VisualStyles;
+using System.Text.Json.Serialization;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
@@ -54,7 +47,7 @@ namespace CSC.Nodestuff
         Edit
     }
 
-    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NodeType
     {
         Achievement,

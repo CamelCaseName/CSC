@@ -1,4 +1,5 @@
-﻿using static CSC.StoryItems.StoryEnums;
+﻿using System.Text.Json.Serialization;
+using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.StoryItems
 {
@@ -9,6 +10,7 @@ namespace CSC.StoryItems
         public string Character { get; set; } = "#";
 
         public string Character2 { get; set; } = "#";
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public CompareTypes CompareType { get; set; } = CompareTypes.Never;
         public DialogueStatuses DialogueStatus { get; set; } = DialogueStatuses.WasShown;
         public bool DisplayInEditor { get; set; } = true;
@@ -29,6 +31,8 @@ namespace CSC.StoryItems
 
         public string Value { get; set; } = "#";
         public int Option { get; set; } = 0;
+
+        [JsonConverter(typeof(JsonNumberEnumConverter<CompareTypes>))]
         public CompareTypes GroupSubCompareType { get; set; } = CompareTypes.Never;
         public string Version { get; set; } = "1.0";
     }
