@@ -35,6 +35,57 @@ namespace CSC.StoryItems
         [JsonConverter(typeof(JsonNumberEnumConverter<CompareTypes>))]
         public CompareTypes GroupSubCompareType { get; set; } = CompareTypes.Never;
         public string Version { get; set; } = "1.0";
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null || obj.GetType() != typeof(Criterion))
+            {
+                return false;
+            }
+
+            bool result = false;
+
+            if (obj is Criterion other)
+            {
+                result = true;
+                result &= BoolValue.Equals(other.BoolValue);
+                result &= Character.Equals(other.Character);
+                result &= Character2.Equals(other.Character2);
+                result &= CompareType.Equals(other.CompareType);
+                result &= DialogueStatus.Equals(other.DialogueStatus);
+                result &= DisplayInEditor.Equals(other.DisplayInEditor);
+                result &= DoorOptions.Equals(other.DoorOptions);
+                result &= EqualsValue.Equals(other.EqualsValue);
+                result &= EquationValue.Equals(other.EquationValue);
+                result &= ValueFormula.Equals(other.ValueFormula);
+                result &= ItemComparison.Equals(other.ItemComparison);
+                result &= ItemFromItemGroupComparison.Equals(other.ItemFromItemGroupComparison);
+                result &= Key.Equals(other.Key);
+                result &= Key2.Equals(other.Key2);
+                result &= Order.Equals(other.Order);
+                result &= PlayerInventoryOption.Equals(other.PlayerInventoryOption);
+                result &= PoseOption.Equals(other.PoseOption);
+                result &= SocialStatus.Equals(other.SocialStatus);
+                result &= Value.Equals(other.Value);
+                result &= Option.Equals(other.Option);
+                result &= GroupSubCompareType.Equals(other.GroupSubCompareType);
+                result &= Version.Equals(other.Version);
+            }
+
+            return result;
+        }
+
+        public static bool operator !=(Criterion c1, Criterion c2)
+        {
+            return !(c1 == c2);
+        }
+
+        public static bool operator ==(Criterion c1, Criterion c2)
+        {
+            return c1.Equals(c2);
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     public sealed class ItemAction
@@ -151,6 +202,66 @@ namespace CSC.StoryItems
         public bool UseConditions { get; set; } = false;
         public bool DisplayInEditor { get; set; } = true;
         public List<Criterion> Criteria { get; set; } = [];
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null || obj.GetType() != typeof(GameEvent))
+            {
+                return false;
+            }
+
+            bool result = false;
+
+            if (obj is GameEvent other)
+            {
+                result = true;
+                result &= Handling.Equals(other.Handling);
+                result &= Version.Equals(other.Version);
+                result &= Id.Equals(other.Id);
+                result &= Enabled.Equals(other.Enabled);
+                result &= EventType.Equals(other.EventType);
+                result &= GroupSubEventType.Equals(other.GroupSubEventType);
+                result &= Character.Equals(other.Character);
+                result &= Character2.Equals(other.Character2);
+                result &= Key.Equals(other.Key);
+                result &= Option.Equals(other.Option);
+                result &= Option2.Equals(other.Option2);
+                result &= Option3.Equals(other.Option3);
+                result &= Option4.Equals(other.Option4);
+                result &= Value.Equals(other.Value);
+                result &= Value2.Equals(other.Value2);
+                result &= SortOrder.Equals(other.SortOrder);
+                result &= Delay.Equals(other.Delay);
+                result &= OriginalDelay.Equals(other.OriginalDelay);
+                result &= StartDelayTime.Equals(other.StartDelayTime);
+                result &= UseConditions.Equals(other.UseConditions);
+                result &= Criteria.Count == other.Criteria.Count;
+                if (result)
+                {
+                    for (int i = 0; i < Criteria.Count; i++)
+                    {
+                        Criterion? crit = Criteria[i];
+                        Criterion? crit2 = other.Criteria[i];
+
+                        result &= crit.Equals(crit2);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public static bool operator !=(GameEvent g1, GameEvent g2)
+        {
+            return !(g1 == g2);
+        }
+
+        public static bool operator ==(GameEvent g1, GameEvent g2)
+        {
+            return g1.Equals(g2);
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     public sealed class EventTrigger

@@ -161,6 +161,8 @@ public partial class Main : Form
 
     public int LeftClickFrameCounter { get; private set; }
 
+    //todo exceptions when loading some clothing?
+    //todo run profiler and speed up linking.....
     //todo add option to view all referenced values in other files, like reverse strike brush
 
     //todo add info when trying to link incompatible notes
@@ -1728,7 +1730,7 @@ public partial class Main : Form
         }
 
         var fileContent = File.ReadAllText(positionPath, System.Text.Encoding.Unicode);
-        var positions = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<long, PointF>>>(fileContent)!;
+        var positions = JsonSerializer.Deserialize<Dictionary<string, Dictionary<long, PointF>>>(fileContent)!;
 
         var lastCharacter = SelectedCharacter;
 
@@ -1744,7 +1746,7 @@ public partial class Main : Form
             SelectedCharacter = fileStore;
             foreach (var node in nodes[fileStore].Nodes)
             {
-                if (positions[fileStore].TryGetValue(new NodeID(node.Type, node.ID, node.OrigFileName, node.DataType), out var point))
+                if (positions[fileStore].TryGetValue(new NodeID(fileStore, node.Type, node.ID, node.OrigFileName, node.DataType), out var point))
                 {
                     node.Position = point;
                 }
@@ -1755,6 +1757,10 @@ public partial class Main : Form
             }
             if (notSet.Count > 0)
             {
+                foreach (var node in notSet)
+                {
+                    Debug.WriteLine(fileStore + "|" + node.FileName + ":" + node.ID);
+                }
                 SetStartPositionsForNodesInList(10, 0, nodes[fileStore], notSet, true);
                 hadNodesNewlySet = true;
             }
@@ -1778,21 +1784,23 @@ public partial class Main : Form
         var lastCharacter = SelectedCharacter;
         Dictionary<string, Dictionary<long, PointF>> positions = [];
 
-        foreach (var nodeStore in nodes)
+        foreach (var nodeStore in nodes.Keys)
         {
-            if (nodeStore.Key == NoCharacter)
+            if (nodeStore == NoCharacter)
             {
                 continue;
             }
-            SelectedCharacter = nodeStore.Key;
-            positions.Add(nodeStore.Key, []);
-            foreach (var node in nodeStore.Value.Nodes)
+            SelectedCharacter = nodeStore;
+            positions.Add(nodeStore, []);
+            foreach (var node in nodes[nodeStore].Nodes)
             {
-                positions[nodeStore.Key][new NodeID(node.Type, node.ID, node.OrigFileName, node.DataType)] = node.Position;
+                var hash = new NodeID(nodeStore, node.Type, node.ID, node.OrigFileName, node.DataType);
+                
+                positions[nodeStore].Add(new NodeID(nodeStore, node.Type, node.ID, node.OrigFileName, node.DataType), node.Position);
             }
         }
 
-        var fileContent = System.Text.Json.JsonSerializer.Serialize(positions)!;
+        var fileContent = JsonSerializer.Serialize(positions)!;
         if (!File.Exists(positionPath))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(positionPath)!);
@@ -5349,6 +5357,7 @@ public partial class Main : Form
             case SpawnableNodeType.UseWith:
             {
                 string id = "use on item:";
+                //todo add auto linking to item name in ID
                 newNode = new Node(id, NodeType.UseWith, string.Empty, nodes[character].Positions)
                 {
                     RawData = new UseWith() { ItemName = id },

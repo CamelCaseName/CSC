@@ -6,11 +6,12 @@ using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
-    public readonly struct NodeID(NodeType Type, string ID, string Filename, Type DataType)
+    public readonly struct NodeID(string file, NodeType Type, string ID, string nodeOriginFilename, Type DataType)
     {
         public NodeType Type { get; } = Type;
         public string ID { get; } = ID;
-        public string Filename { get; } = Filename;
+        public string Filename { get; } = nodeOriginFilename;
+        public string File { get; } = file;
         public Type DataType { get; } = DataType;
 
         public static implicit operator long(NodeID n)
@@ -20,6 +21,7 @@ namespace CSC.Nodestuff
                 long hash = 17;
                 hash = hash * 23 + (int)n.Type;
                 hash = hash * 23 + CalculateHash(n.ID);
+                hash = hash * 17 + CalculateHash(n.File);
                 hash = hash * 23 + CalculateHash(n.Filename);
                 hash = hash * 23 + CalculateHash(n.DataType.ToString());
                 return hash;
@@ -28,7 +30,7 @@ namespace CSC.Nodestuff
 
         static long CalculateHash(string read)
         {
-            UInt64 hashedValue = 3074457345618258791ul;
+            ulong hashedValue = 3074457345618258791ul;
             for (int i = 0; i < read.Length; i++)
             {
                 hashedValue += read[i];
@@ -120,6 +122,8 @@ namespace CSC.Nodestuff
 
     public sealed class Node
     {
+        public static readonly string[] AllowedFileNames = [Main.Player, .. Enum.GetNames<Characters>().Cast<string>()];
+
         public static readonly Node NullNode = new();
         public string ID;
         public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
@@ -173,6 +177,11 @@ namespace CSC.Nodestuff
 
             set
             {
+                if (!AllowedFileNames.Contains(value))
+                {
+                    //todo remove once charactergroups are in
+                    value = Main.Player;
+                }
                 if (!setOnce)
                 {
                     origfilename = value;
@@ -230,6 +239,11 @@ namespace CSC.Nodestuff
         {
             get
             {
+                if (DataType == typeof(MissingReferenceInfo))
+                {
+                    return StaticText;
+                }
+
                 switch (Type)
                 {
                     case NodeType.Null:

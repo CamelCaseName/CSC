@@ -1,11 +1,12 @@
 ﻿using CSC.Components;
 using CSC.StoryItems;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
-    internal static class NodeLinker
+    internal static partial class NodeLinker
     {
         private static readonly List<Node> Doors = [];
         private static readonly List<Node> Values = [];
@@ -2486,9 +2487,19 @@ namespace CSC.Nodestuff
             else if (dupeTo)
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                var newNode = new Node(_action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
-                newList.Add(newNode);
-                nodes.AddChild(node, newNode);
+                if (node.DataType == typeof(ItemGroupBehavior))
+                {
+                    var newNode = new Node(node.Data<ItemGroupBehavior>()!.Name + " " + _action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
+                    newList.Add(newNode);
+                    nodes.AddChild(node, newNode);
+                }
+                else if (node.DataType == typeof(InteractiveitemBehaviour))
+                {
+                    var newNode = new Node(node.Data<InteractiveitemBehaviour>()!.ItemName + " " + _action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
+                    newList.Add(newNode);
+                    nodes.AddChild(node, newNode);
+                }
+
             }
         }
 
@@ -2534,6 +2545,10 @@ namespace CSC.Nodestuff
         public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores)
         {
             var lastSelected = Main.SelectedCharacter;
+
+            //check some comparevaluenodes.again because the referenced values havent been added yet
+            RecheckValues(stores);
+
             foreach (var store in stores.Keys)
             {
                 if (store == Main.NoCharacter)
@@ -2543,47 +2558,112 @@ namespace CSC.Nodestuff
 
                 Main.SelectedCharacter = store;
 
+                RemoveDuplicateGUIDs(stores[store], store);
+
                 var tempList = stores[store].Nodes;
-                foreach (var node in tempList)
+
+                for (int i = 0; i < tempList.Count; i++)
                 {
+                    Node? node = tempList[i];
                     if (node.FileName == Main.NoCharacter)
                     {
                         //currently we dont have any here <3
                         Debugger.Break();
                     }
 
-                    if (node.FileName != store && node.DataType == typeof(MissingReferenceInfo))
+                    if (node.FileName == store || node.DataType != typeof(MissingReferenceInfo) || !stores.TryGetValue(node.FileName, out var nodeStore))
                     {
-                        if (stores.TryGetValue(node.FileName, out var nodeStore))
-                        {
-                            var templist2 = nodeStore.Nodes;
+                        continue;
+                    }
 
-                            if (node.Type == NodeType.Dialogue)
+                    var templist2 = nodeStore.Nodes;
+
+                    if (node.Type == NodeType.Dialogue && node.ID == string.Empty)
+                    {
+                        node.ID = 0.ToString();
+                    }
+
+                    var result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                    foreach (var foundNode in result)
+                    {
+                        if (foundNode is not null)
+                        {
+                            foundNode.DupeToOtherSorting(store);
+                            stores[store].Replace(node, foundNode);
+                            Main.ClearAllNodePos(node);
+                        }
+                    }
+                }
+            }
+
+            Main.SelectedCharacter = lastSelected;
+        }
+
+        private static void RemoveDuplicateGUIDs(NodeStore store, string file)
+        {
+            var tempList = store.Nodes;
+
+            for (int i = 0; i < tempList.Count; i++)
+            {
+                Node? node = tempList[i];
+
+                for (int j = i + 1; j < tempList.Count; j++)
+                {
+                    Node? duplicateNode = tempList[j];
+                    //todo profile
+                    if ((long)new NodeID(file, node.Type, node.ID, node.OrigFileName, node.DataType)
+                     == (long)new NodeID(file, duplicateNode.Type, duplicateNode.ID, duplicateNode.OrigFileName, duplicateNode.DataType))
+                    {
+                        if (node.RawData!.Equals(duplicateNode.RawData) || (node.DataType == typeof(MissingReferenceInfo) && duplicateNode.DataType == typeof(MissingReferenceInfo)))
+                        {
+                            //???!"?§?"/($"§)$?"§`?
+                            store.Replace(node, duplicateNode);
+                            Main.ClearAllNodePos(node);
+                        }
+                        else
+                        {
+                            if (!GUIDRegex().IsMatch(duplicateNode.ID))
                             {
-                                if (node.ID == string.Empty)
-                                {
-                                    node.ID = 0.ToString();
-                                }
+                                continue;
                             }
 
-                            var result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
-                            foreach (var foundNode in result)
+                            duplicateNode.ID = Guid.NewGuid().ToString();
+                            if (duplicateNode.RawData is GameEvent g)
                             {
-                                if (foundNode is not null)
-                                {
-                                    foundNode.DupeToOtherSorting(store);
-                                    stores[store].Replace(node, foundNode);
-                                    Main.ClearAllNodePos(node);
-                                }
+                                g.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is EventTrigger e)
+                            {
+                                e.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is ItemGroup h)
+                            {
+                                h.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is ItemGroupBehavior f)
+                            {
+                                f.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is ItemGroupInteraction d)
+                            {
+                                d.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is Response r)
+                            {
+                                r.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is Achievement a)
+                            {
+                                a.Id = Guid.NewGuid().ToString();
+                            }
+                            else if (duplicateNode.RawData is Quest q)
+                            {
+                                q.ID = Guid.NewGuid().ToString();
                             }
                         }
                     }
                 }
             }
-            //check some comparevaluenodes.again because the referenced values havent been added yet
-            RecheckValues(stores);
-
-            Main.SelectedCharacter = lastSelected;
         }
 
         public static void ClearLinkCache()
@@ -2732,5 +2812,8 @@ namespace CSC.Nodestuff
                 _ => string.Empty,
             };
         }
+
+        [GeneratedRegex("[0-9a-fA-F\\-]{32,36}")]
+        private static partial Regex GUIDRegex();
     }
 }

@@ -38,7 +38,7 @@ namespace CSC.Nodestuff
                 //responses
                 foreach (BackgroundChatterResponse response in backgroundChatter.Responses ?? [])
                 {
-                    var nodeResponse = new Node($"{response.CharacterName}{response.ChatterId}", NodeType.BGCResponse, "see id", bgcNode) { RawData = response };
+                    var nodeResponse = new Node($"{response.Label}", NodeType.BGCResponse, $"{response.CharacterName} - BGC{response.ChatterId}", bgcNode) { RawData = response };
 
                     nodes.AddChild(bgcNode, nodeResponse);
                 }
@@ -74,7 +74,7 @@ namespace CSC.Nodestuff
                 //add all alternate texts to teh dialogue
                 foreach (AlternateText alternateText in dialogue.AlternateTexts ?? [])
                 {
-                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateText.Order}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue) { RawData = alternateText, FileName = story.CharacterName! };
+                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue) { RawData = alternateText, FileName = story.CharacterName! };
 
                     //increasse counter to ensure valid id
                     alternateTextCounter++;
@@ -188,7 +188,7 @@ namespace CSC.Nodestuff
                 foreach (ItemAction itemAction in itemGroupBehaviour.ItemActions ?? [])
                 {
                     //node to addevents to
-                    var nodeAction = new Node(itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeGroup) { RawData = itemAction };
+                    var nodeAction = new Node(itemGroupBehaviour.Name + " " + itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeGroup) { RawData = itemAction };
 
                     //add text that is shown when item is taken
                     nodeAction.AddEvents(itemAction.OnTakeActionEvents ?? [], nodes);
@@ -242,7 +242,7 @@ namespace CSC.Nodestuff
                 foreach (ItemAction itemAction in itemOverride.ItemActions ?? [])
                 {
                     //create action node to add criteria and events to
-                    var nodeAction = new Node(itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem) { RawData = itemAction };
+                    var nodeAction = new Node(itemOverride.ItemName + " " + itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem) { RawData = itemAction };
 
                     //add text that is shown when item is taken
                     nodeAction.AddEvents(itemAction.OnTakeActionEvents ?? [], nodes);
@@ -261,7 +261,7 @@ namespace CSC.Nodestuff
                 foreach (UseWith use in itemOverride.UseWiths ?? [])
                 {
                     //node to add all references to
-                    var useNode = new Node(use.ItemName ?? string.Empty, NodeType.UseWith, use.CustomCantDoThatMessage ?? string.Empty, nodeItem) { RawData = use };
+                    var useNode = new Node(itemOverride.ItemName + " " + use.ItemName ?? string.Empty, NodeType.UseWith, use.CustomCantDoThatMessage ?? string.Empty, nodeItem) { RawData = use };
 
                     //add criteria that influence this item
                     useNode.AddCriteria(use.Criteria ?? [], nodes);
@@ -283,8 +283,11 @@ namespace CSC.Nodestuff
             foreach (ItemInteraction item in story.StoryItems ?? [])
             {
                 //add items to list
-                var nodeItem = new Node(item.ItemName!, NodeType.ItemInteraction, item.ItemName!) { RawData = item };
-                nodeItem.FileName = story.CharacterName!;
+                var nodeItem = new Node(item.ItemName!, NodeType.ItemInteraction, item.ItemName!)
+                {
+                    RawData = item,
+                    FileName = story.CharacterName!
+                };
                 nodeItem.AddCriteria(item.Critera ?? [], nodes);
                 nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);
                 nodeItem.AddEvents(item.OnAcceptEvents ?? [], nodes);

@@ -17,6 +17,7 @@ namespace CSC.StoryItems
         private static readonly TypeCode s_enumTypeCode = Type.GetTypeCode(typeof(T));
         public sealed override bool CanConvert(Type typeToConvert) => typeToConvert == typeof(T);
 
+        //borrowed and adapted from the original .net jsonstringenumconverter
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             switch (reader.TokenType)
@@ -57,11 +58,10 @@ namespace CSC.StoryItems
         private bool TryParseEnumFromString(ref Utf8JsonReader reader, out T result)
         {
             int bufferLength = reader.ValueSpan.Length;
-            char[]? rentedBuffer = null;
 
             Span<char> charBuffer = bufferLength <= 128
                 ? stackalloc char[128]
-                : (rentedBuffer = ArrayPool<char>.Shared.Rent(bufferLength));
+                : throw new ArgumentException("Enum value of type " + typeof(T).Name + " value name at " + reader.Position.ToString() + " was longer than 127 characters");
 
             int charsWritten = reader.CopyString(charBuffer);
             charBuffer = charBuffer[..charsWritten];
