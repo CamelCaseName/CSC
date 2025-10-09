@@ -863,6 +863,7 @@ namespace CSC.StoryItems
             Lety,
             Madison,
             Patrick,
+            PhoneCall,
             Player,
             Rachael,
             Stephanie,
@@ -906,6 +907,7 @@ namespace CSC.StoryItems
             Lety,
             Madison,
             Patrick,
+            PhoneCall,
             Rachael,
             Stephanie,
             Vickie,
@@ -914,7 +916,7 @@ namespace CSC.StoryItems
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum NoneCharacters
         {
-            Nonde,
+            None,
             Amy,
             Arin,
             Ashley,

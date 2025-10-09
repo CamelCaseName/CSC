@@ -220,7 +220,7 @@ namespace CSC.Nodestuff
                 foreach (string item in itemGroup.ItemsInGroup ?? [])
                 {
                     //node to addevents to
-                    var nodeItem = new Node(item ?? string.Empty, NodeType.StoryItem, item ?? string.Empty, nodeGroup) { RawData = item };
+                    var nodeItem = new Node(item ?? string.Empty, NodeType.StoryItem, item ?? string.Empty) { RawData = item };
 
                     //add item to item group
                     nodes.AddChild(nodeGroup, nodeItem);
@@ -375,7 +375,9 @@ namespace CSC.Nodestuff
 
         public static void GetValues(CharacterStory story, NodeStore nodes)
         {
-            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values") { FileName = story.CharacterName!, RawData = story.StoryValues };
+            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values") { 
+                FileName = story.CharacterName!, 
+                RawData = story.StoryValues };
             nodes.Add(ValueStore);
             foreach (string value in story.StoryValues ?? [])
             {

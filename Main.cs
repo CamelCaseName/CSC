@@ -159,10 +159,9 @@ public partial class Main : Form
 
     public int RightClickFrameCounter { get; private set; } = 0;
 
-    public int LeftClickFrameCounter { get; private set; }
+    public int LeftClickFrameCounter { get; private set; } = 0;
 
-    //todo exceptions when loading some clothing?
-    //todo run profiler and speed up linking.....
+    //todo when adding an event to another somethign and the event is already part of another node we need to clone the event, sadly we cannot use the exact same event object in multiple places :(
     //todo add option to view all referenced values in other files, like reverse strike brush
 
     //todo add info when trying to link incompatible notes
@@ -208,14 +207,14 @@ public partial class Main : Form
         bgcNodeBrush = new SolidBrush(Color.FromArgb(40, 190, 255));
         bgcResponseNodeBrush = new SolidBrush(Color.FromArgb(150, 225, 255));
         characterGroupNodeBrush = new SolidBrush(Color.FromArgb(190, 180, 130));
-        clothingNodeBrush = new SolidBrush(Color.FromArgb(115, 235, 30));
+        clothingNodeBrush = new SolidBrush(Color.FromArgb(95, 235, 60));
         criteriaGroupNodeBrush = new SolidBrush(Color.FromArgb(150, 50, 50));
         criterionNodeBrush = new SolidBrush(Color.FromArgb(180, 20, 40));
         cutsceneNodeBrush = new SolidBrush(Color.FromArgb(235, 30, 160));
         dialogueNodeBrush = new SolidBrush(Color.FromArgb(45, 60, 185));
         doorNodeBrush = new SolidBrush(Color.FromArgb(200, 225, 65));
         eventNodeBrush = new SolidBrush(Color.FromArgb(50, 150, 50));
-        eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(40, 120, 70));
+        eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(60, 100, 70));
         inventoryNodeBrush = new SolidBrush(Color.FromArgb(65, 225, 185));
         itemActionNodeBrush = new SolidBrush(Color.FromArgb(85, 195, 195));
         itemGroupBehaviourNodeBrush = new SolidBrush(Color.FromArgb(160, 200, 195));
@@ -276,6 +275,11 @@ public partial class Main : Form
         OffsetX.Add(NoCharacter, 0);
         OffsetY.Add(NoCharacter, 0);
 
+        nodes.Add(Player, new());
+        Scaling.Add(Player, 0.3f);
+        OffsetX.Add(Player, 0);
+        OffsetY.Add(Player, 0);
+
         clickedNode = Node.NullNode;
         highlightNode = Node.NullNode;
         movedNode = Node.NullNode;
@@ -330,6 +334,11 @@ public partial class Main : Form
             ClearOverlayBitmap();
             Graph.Focus();
             Graph.Invalidate();
+
+            if (clickedNode == Node.NullNode && PropertyInspector.Controls.Count > 1)
+            {
+                PropertyInspector.Controls.Clear();
+            }
         }
         else if (e.KeyData == Keys.Delete)
         {
@@ -777,53 +786,47 @@ public partial class Main : Form
         {
             for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
             {
-                var maybeNode = GetNodeAtPoint(new PointF(x, y));
-                if (maybeNode != Node.NullNode)
+                var maybeNode = GetNodesAtPoint(new PointF(x, y));
+                if (maybeNode.Count > 0)
                 {
-                    if (subtracting)
-                    {
-                        selected.Remove(maybeNode);
-                    }
-                    else if (!selected.Contains(maybeNode))
-                    {
-                        selected.Add(maybeNode);
-                    }
+                    incorporateNode(maybeNode);
                 }
             }
         }
         //do rightmost edge
         for (int y = MinY; y < MaxY; y += (NodeSizeY / 2))
         {
-            var maybeNode = GetNodeAtPoint(new PointF(MaxX, y));
-            if (maybeNode != Node.NullNode)
+            var maybeNode = GetNodesAtPoint(new PointF(MaxX, y));
+            if (maybeNode.Count > 0)
             {
-                if (subtracting)
-                {
-                    selected.Remove(maybeNode);
-                }
-                else if (!selected.Contains(maybeNode))
-                {
-                    selected.Add(maybeNode);
-                }
+                incorporateNode(maybeNode);
             }
         }
         //do bottom edge
         for (int x = MinX; x < MaxX; x += (NodeSizeY / 2))
         {
-            var maybeNode = GetNodeAtPoint(new PointF(x, MaxY));
-            if (maybeNode != Node.NullNode)
+            var maybeNode = GetNodesAtPoint(new PointF(x, MaxY));
+            if (maybeNode.Count > 0)
             {
-                if (subtracting)
-                {
-                    selected.Remove(maybeNode);
-                }
-                else if (!selected.Contains(maybeNode))
-                {
-                    selected.Add(maybeNode);
-                }
+                incorporateNode(maybeNode);
             }
         }
         selecting = false;
+
+        void incorporateNode(List<Node> maybeNode)
+        {
+            foreach (var item in maybeNode)
+            {
+                if (subtracting)
+                {
+                    selected.Remove(item);
+                }
+                else if (!selected.Contains(item))
+                {
+                    selected.Add(item);
+                }
+            }
+        }
     }
 
     private void UpdateLeftClick(PointF screenPos)
@@ -1002,6 +1005,23 @@ public partial class Main : Form
             }
         }
         return Node.NullNode;
+    }
+
+    private List<Node> GetNodesAtPoint(PointF mouseGraphLocation)
+    {
+        if (adjustedMouseClipBounds.Contains(mouseGraphLocation))
+        {
+            List<Node> results = [];
+            foreach (var key in nodes[SelectedCharacter].Positions[mouseGraphLocation])
+            {
+                if (key.Rectangle.Contains(mouseGraphLocation))
+                {
+                    results.Add(key);
+                }
+            }
+            return results;
+        }
+        return [];
     }
 
     private Node TryGetNodeLinkStart(PointF mouseGraphLocation)
@@ -1205,8 +1225,12 @@ public partial class Main : Form
             }
             nodes.Remove(item);
         }
+
+        nodes.Add(Player, new());
+
         StoryTreeReset();
         Graph.Invalidate();
+        PropertyInspector.Controls.Clear();
     }
 
     private void StoryTreeReset()
@@ -1692,6 +1716,7 @@ public partial class Main : Form
 
     private void LoadAllFilesIntoStore(string FilePath)
     {
+        Cursor = Cursors.WaitCursor;
         StoryFolder = Path.GetDirectoryName(FilePath)!;
         foreach (var file in Directory.GetFiles(StoryFolder))
         {
@@ -1706,18 +1731,41 @@ public partial class Main : Form
             }
         }
 
-        //makes no sense
         NodeLinker.InterlinkBetweenFiles(nodes);
 
         if (!TryLoadOldPositions())
         {
             SetupStartPositions();
-            SavePositions();
+            SafeSavePositions();
         }
 
         Graph.Invalidate();
+        Cursor = Cursors.Default;
 
         StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[1].Nodes[Stories.Count - 1];
+    }
+
+    private void SafeSavePositions()
+    {
+        try
+        {
+            SavePositions();
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e.Message);
+            MessageBox.Show("It seems there are duplicate GUIDs in the story files. " +
+                "The CCSC will now try and resolve that, but it will take a while and then save the new GUIDs back");
+            Cursor = Cursors.WaitCursor;
+            NodeLinker.InterlinkBetweenFiles(nodes, true);
+            ExportAllFiles();
+            if (!TryLoadOldPositions())
+            {
+                SetupStartPositions();
+                SavePositions();
+            }
+            Cursor = Cursors.Default;
+        }
     }
 
     private bool TryLoadOldPositions()
@@ -1761,7 +1809,7 @@ public partial class Main : Form
                 {
                     Debug.WriteLine(fileStore + "|" + node.FileName + ":" + node.ID);
                 }
-                SetStartPositionsForNodesInList(10, 0, nodes[fileStore], notSet, true);
+                SetStartPositionsForNodesInList(10, 0, nodes[fileStore], notSet, false);
                 hadNodesNewlySet = true;
             }
             CenterOnNode(nodes[fileStore].Nodes.First(), 0.8f);
@@ -1794,8 +1842,6 @@ public partial class Main : Form
             positions.Add(nodeStore, []);
             foreach (var node in nodes[nodeStore].Nodes)
             {
-                var hash = new NodeID(nodeStore, node.Type, node.ID, node.OrigFileName, node.DataType);
-                
                 positions[nodeStore].Add(new NodeID(nodeStore, node.Type, node.ID, node.OrigFileName, node.DataType), node.Position);
             }
         }
@@ -1952,12 +1998,16 @@ public partial class Main : Form
         }
 
         nodeList.Sort(new NodeParentComparer(nodeStore));
+        bool restarted = false;
+        int skipCount = 0;
+    Restart:
         visited.Clear();
         foreach (var key in nodeList)
         {
             Family family = nodeStore[key];
-            if (family.Parents.Count > ParentEdgeMaxStartValue || visited.Contains(key))
+            if (!restarted && (family.Parents.Count > ParentEdgeMaxStartValue || visited.Contains(key)))
             {
+                skipCount++;
                 continue;
             }
 
@@ -1973,6 +2023,12 @@ public partial class Main : Form
 
             intX = SetStartPosForConnected(intX, nodeStore, key, inListOnly);
         }
+        if (!restarted && skipCount == nodeList.Count)
+        {
+            restarted = true;
+            goto Restart;
+        }
+
     }
 
     private int SetStartPosForConnected(int intX, NodeStore nodeStore, Node start, bool inListOnly = false)
@@ -2073,6 +2129,18 @@ public partial class Main : Form
         {
             return;
         }
+
+        if (!ExportAllFiles())
+        {
+            return;
+        }
+        SafeSavePositions();
+
+        MessageBox.Show("Saved files!");
+    }
+
+    private bool ExportAllFiles()
+    {
         if (string.IsNullOrEmpty(StoryFolder) || !Directory.Exists(StoryFolder))
         {
             var folder = new FolderBrowserDialog()
@@ -2093,7 +2161,7 @@ public partial class Main : Form
             }
             else
             {
-                return;
+                return false;
             }
         }
 
@@ -2102,9 +2170,8 @@ public partial class Main : Form
         {
             ExportFile(character);
         }
-        SavePositions();
 
-        MessageBox.Show("Saved files!");
+        return true;
     }
 
     private void ExportFile(string FileName)
@@ -3697,7 +3764,7 @@ public partial class Main : Form
                             box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = box.SelectedItem.ToString()!);
                             box.SelectedIndexChanged += (_, _) => ShowProperties(node);
 
-                            var chatter = GetLabel(Stories[gevent.Character].BackgroundChatter[int.Parse(box.SelectedItem!.ToString()!)].Text);
+                            var chatter = GetLabel(Stories[gevent.Character].BackgroundChatter[int.Parse(box.SelectedItem?.ToString() ?? "0")].Text);
                             PropertyInspector.Controls.Add(chatter, GeventPropertyCounter++, 1);
                         }
                         else

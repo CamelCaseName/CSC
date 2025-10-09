@@ -9,12 +9,13 @@ namespace CSC.Nodestuff
     internal static partial class NodeLinker
     {
         private static readonly List<Node> Doors = [];
-        private static readonly List<Node> Values = [];
+        private static readonly Dictionary<string, Node> Values = [];
         private static readonly List<Node> Socials = [];
         private static readonly List<Node> States = [];
         private static readonly List<Node> Clothing = [];
         private static readonly List<Node> Poses = [];
         private static readonly List<Node> InventoryItems = [];
+        private static readonly List<Node> StoryItems = [];
         private static readonly List<Node> Properties = [];
 
         public static string FileName { get; private set; } = Main.NoCharacter;
@@ -1116,6 +1117,7 @@ namespace CSC.Nodestuff
             Main.SelectedCharacter = lastSelected;
         }
 
+        //todo the fuck we have a bunch of cloned/borrowed criteria in the main story file??
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn, bool dupeTo = false)
         {
             AlternateText alternateText;
@@ -1134,6 +1136,7 @@ namespace CSC.Nodestuff
             Quest quest1;
             Response response;
             UseWith useWith;
+            string StoryItem;
 
             switch (node.Type)
             {
@@ -1166,7 +1169,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.CompareValues:
                         {
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key && n.FileName == criterion.Character);
+                            Values.TryGetValue(criterion.Character + criterion.Key, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1180,10 +1183,10 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddParent(node, value);
                             }
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key2 && n.FileName == criterion.Character2);
+                            Values.TryGetValue(criterion.Character2 + criterion.Key2, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1197,7 +1200,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(criterion.Key2!, NodeType.Value, criterion.Character + " value " + criterion.Key2 + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddParent(node, value);
                             }
                             break;
@@ -1291,7 +1294,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.Item:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1307,16 +1310,17 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
+                                    RawData = criterion.Key!,
                                     FileName = FileName!
                                 };
-                                searchIn.Add(item);
+                                StoryItems.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.IsCurrentlyBeingUsed:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1332,16 +1336,17 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
+                                    RawData = criterion.Key!,
                                     FileName = FileName!
                                 };
-                                searchIn.Add(item);
+                                StoryItems.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.IsCurrentlyUsing:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1357,16 +1362,17 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
+                                    RawData = criterion.Key!,
                                     FileName = FileName!
                                 };
-                                searchIn.Add(item);
+                                StoryItems.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
                         }
                         case CompareTypes.ItemFromItemGroup:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.ItemGroup && n.StaticText == criterion.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1382,9 +1388,10 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
+                                    RawData = criterion.Key!,
                                     FileName = FileName!
                                 };
-                                searchIn.Add(item);
+                                StoryItems.Add(item);
                                 nodes.AddParent(node, item);
                             }
                             break;
@@ -1436,7 +1443,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, item);
                             }
                             //find normal item if it exists
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == criterion.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1562,7 +1569,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.Value:
                         {
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == criterion.Key && n.FileName == criterion.Character);
+                            Values.TryGetValue(criterion.Character + criterion.Key, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1582,7 +1589,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(criterion.Key!, NodeType.Value, criterion.Character + " value " + criterion.Key + ", referenced values: " + GetSymbolsFromValueFormula(criterion.ValueFormula) + criterion.Value + ", ") { FileName = criterion.Character ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddParent(node, value);
                             }
                             break;
@@ -1612,7 +1619,7 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add value node, hasnt been referenced yet
-                                var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + ((ClothingType)int.Parse(gameEvent.Value!)).ToString() + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
+                                var clothing = new Node(gameEvent.Option + gameEvent.Value, NodeType.Clothing, gameEvent.Character + "'s  " + (gameEvent.Option4 == 0 ? (((ClothingType)int.Parse(gameEvent.Value!)).ToString()) : gameEvent.Value) + " in set " + (gameEvent.Option == 0 ? "any" : (gameEvent.Option - 1).ToString())) { FileName = gameEvent.Character! };
                                 Clothing.Add(clothing);
                                 nodes.AddChild(node, clothing);
                                 clothing.DupeToOtherSorting(node.FileName);
@@ -1622,7 +1629,7 @@ namespace CSC.Nodestuff
                         case GameEvents.MatchValue:
                         case GameEvents.CombineValue:
                         {
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                            Values.TryGetValue(gameEvent.Character + gameEvent.Key, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1636,11 +1643,11 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddChild(node, value);
                                 value.DupeToOtherSorting(node.FileName);
                             }
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Value && FileName == gameEvent.Character2);
+                            Values.TryGetValue(gameEvent.Character2 + gameEvent.Value, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1654,7 +1661,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Value!, NodeType.Value, gameEvent.Character2 + " value " + gameEvent.Value) { FileName = gameEvent.Character2 ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddParent(node, value);
                                 value.DupeToOtherSorting(node.FileName);
                             }
@@ -1767,7 +1774,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.Item:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1782,9 +1789,10 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
                                 {
+                                    RawData = gameEvent.Key!,
                                     FileName = FileName!
                                 };
-                                searchIn.Add(item);
+                                StoryItems.Add(item);
                                 nodes.AddChild(node, item);
                                 item.DupeToOtherSorting(node.FileName);
                             }
@@ -1792,7 +1800,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.ItemFromItemGroup:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1807,9 +1815,10 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
                                 {
+                                    RawData = gameEvent.Key!,
                                     FileName = FileName!
                                 };
-                                searchIn.Add(item);
+                                StoryItems.Add(item);
                                 nodes.AddChild(node, item);
                                 item.DupeToOtherSorting(node.FileName);
                             }
@@ -1862,7 +1871,7 @@ namespace CSC.Nodestuff
 
                         case GameEvents.ModifyValue:
                         {
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                            Values.TryGetValue(gameEvent.Character + gameEvent.Key, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1876,7 +1885,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddChild(node, value);
                                 value.DupeToOtherSorting(node.FileName);
                             }
@@ -1906,7 +1915,7 @@ namespace CSC.Nodestuff
                                 nodes.AddParent(node, item);
                                 item.DupeToOtherSorting(node.FileName);
                             }
-                            result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
+                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Value);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1982,7 +1991,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.RandomizeIntValue:
                         {
-                            result = Values.Find((n) => n.Type == NodeType.Value && n.ID == gameEvent.Key && FileName == gameEvent.Character);
+                            Values.TryGetValue(gameEvent.Character + gameEvent.Key, out result);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1996,7 +2005,7 @@ namespace CSC.Nodestuff
                             {
                                 //create and add value node, hasnt been referenced yet
                                 var value = new Node(gameEvent.Key!, NodeType.Value, gameEvent.Character + " value " + gameEvent.Key) { FileName = gameEvent.Character ?? string.Empty };
-                                Values.Add(value);
+                                Values.Add(value.FileName + value.ID, value);
                                 nodes.AddChild(node, value);
                                 value.DupeToOtherSorting(node.FileName);
                             }
@@ -2323,7 +2332,7 @@ namespace CSC.Nodestuff
                 {
                     foreach (var item in itemGroup.ItemsInGroup)
                     {
-                        result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == item);
+                        result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == item);
 
                         if (result is not null)
                         {
@@ -2337,8 +2346,8 @@ namespace CSC.Nodestuff
                         else if (dupeTo)
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var newNode = new Node(item, NodeType.StoryItem, item) { FileName = NodeLinker.FileName };
-                            searchIn.Add(newNode);
+                            var newNode = new Node(item, NodeType.StoryItem, item, item) { FileName = NodeLinker.FileName };
+                            StoryItems.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
                     }
@@ -2421,7 +2430,7 @@ namespace CSC.Nodestuff
                         HandleCriterion(nodes, node, searchIn, _criterion, dupeTo);
                     }
 
-                    result = searchIn.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
+                    result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == useWith.ItemName!);
                     if (result is not null)
                     {
                         if (dupeTo)
@@ -2434,9 +2443,27 @@ namespace CSC.Nodestuff
                     else if (dupeTo)
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty) { FileName = NodeLinker.FileName };
-                        searchIn.Add(newNode);
+                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty, useWith.ItemName!) { FileName = NodeLinker.FileName };
+                        StoryItems.Add(newNode);
                         nodes.AddChild(node, newNode);
+                    }
+                    break;
+                }
+                case NodeType.StoryItem when (StoryItem = node.Data<string>()!) is not null:
+                {
+                    result = StoryItems.Find(n => n.ID == StoryItem);
+                    if (result is not null)
+                    {
+                        if (dupeTo)
+                        {
+                            result.DupeToOtherSorting(node.FileName);
+                        }
+
+                        nodes.Replace(node, result);
+                    }
+                    else
+                    {
+                        StoryItems.Add(node);
                     }
                     break;
                 }
@@ -2542,7 +2569,7 @@ namespace CSC.Nodestuff
             }
         }
 
-        public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores)
+        public static void InterlinkBetweenFiles(Dictionary<string, NodeStore> stores, bool removeDuplicateGUIDs = false)
         {
             var lastSelected = Main.SelectedCharacter;
 
@@ -2558,8 +2585,6 @@ namespace CSC.Nodestuff
 
                 Main.SelectedCharacter = store;
 
-                RemoveDuplicateGUIDs(stores[store], store);
-
                 var tempList = stores[store].Nodes;
 
                 for (int i = 0; i < tempList.Count; i++)
@@ -2571,7 +2596,7 @@ namespace CSC.Nodestuff
                         Debugger.Break();
                     }
 
-                    if (node.FileName == store || node.DataType != typeof(MissingReferenceInfo) || !stores.TryGetValue(node.FileName, out var nodeStore))
+                    if (node.DataType != typeof(MissingReferenceInfo) || !stores.TryGetValue(node.FileName, out var nodeStore))
                     {
                         continue;
                     }
@@ -2594,12 +2619,17 @@ namespace CSC.Nodestuff
                         }
                     }
                 }
+
+                if (removeDuplicateGUIDs)
+                {
+                    RemoveDuplicateGUIDs(stores[store]);
+                }
             }
 
             Main.SelectedCharacter = lastSelected;
         }
 
-        private static void RemoveDuplicateGUIDs(NodeStore store, string file)
+        private static void RemoveDuplicateGUIDs(NodeStore store)
         {
             var tempList = store.Nodes;
 
@@ -2611,19 +2641,14 @@ namespace CSC.Nodestuff
                 {
                     Node? duplicateNode = tempList[j];
                     //todo profile
-                    if ((long)new NodeID(file, node.Type, node.ID, node.OrigFileName, node.DataType)
-                     == (long)new NodeID(file, duplicateNode.Type, duplicateNode.ID, duplicateNode.OrigFileName, duplicateNode.DataType))
+                    if (node.ID == duplicateNode.ID && node.OrigFileName == duplicateNode.OrigFileName)
                     {
-                        if (node.RawData!.Equals(duplicateNode.RawData) || (node.DataType == typeof(MissingReferenceInfo) && duplicateNode.DataType == typeof(MissingReferenceInfo)))
-                        {
-                            //???!"?§?"/($"§)$?"§`?
-                            store.Replace(node, duplicateNode);
-                            Main.ClearAllNodePos(node);
-                        }
-                        else
+                        if ((node.RawData!.Equals(duplicateNode.RawData)) || (node.DataType == typeof(MissingReferenceInfo) && duplicateNode.DataType == typeof(MissingReferenceInfo)))
                         {
                             if (!GUIDRegex().IsMatch(duplicateNode.ID))
                             {
+                                //todo storyitems from the mainstory object appear duplicated??
+                                Debugger.Break();
                                 continue;
                             }
 
@@ -2659,6 +2684,13 @@ namespace CSC.Nodestuff
                             else if (duplicateNode.RawData is Quest q)
                             {
                                 q.ID = Guid.NewGuid().ToString();
+                            }
+                        }
+                        else
+                        {
+                            if (node.Type == duplicateNode.Type)
+                            {
+                                Debugger.Break();
                             }
                         }
                     }
@@ -2709,7 +2741,7 @@ namespace CSC.Nodestuff
 
         private static void RecheckValues(Dictionary<string, NodeStore> stores)
         {
-            List<Node> values = [.. Values];
+            List<Node> values = [.. Values.Values];
             foreach (Node node in values)
             {
                 //we have the real nodehere, replace all false ones
@@ -2728,7 +2760,7 @@ namespace CSC.Nodestuff
                             }
                             Main.SelectedCharacter = last;
                         }
-                        Values.Remove(result);
+                        Values.Remove(result.FileName + result.ID);
                         Main.ClearAllNodePos(result);
                     }
                 }
@@ -2746,7 +2778,7 @@ namespace CSC.Nodestuff
                 {
                     if (node.DataType == typeof(string))
                     {
-                        Values.Add(node);
+                        Values[node.FileName + node.ID] = node;
                     }
                 }
                 StoryNodeExtractor.GetItemInteractions(story, nodes);
@@ -2780,7 +2812,7 @@ namespace CSC.Nodestuff
                 {
                     if (node.DataType == typeof(string))
                     {
-                        Values.Add(node);
+                        Values[node.FileName + node.ID] = node;
                     }
                 }
                 StoryNodeExtractor.GetItemOverrides(story, nodes);

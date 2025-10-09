@@ -122,7 +122,7 @@ namespace CSC.Nodestuff
 
     public sealed class Node
     {
-        public static readonly string[] AllowedFileNames = [Main.Player, .. Enum.GetNames<Characters>().Cast<string>()];
+        public static readonly string[] AllowedFileNames = [Main.Player, .. Enum.GetNames<Characters>().Cast<string>(), "Phone Call", "Liz Katz", "Doja Cat"];
 
         public static readonly Node NullNode = new();
         public string ID;
@@ -524,7 +524,7 @@ namespace CSC.Nodestuff
                                 }
                                 case GameEvents.Clothing:
                                 {
-                                    return gevent.Character + "'s  " + ((ClothingType)int.Parse(gevent.Value!)).ToString() + " in set " + (gevent.Option == 0 ? "any" : (gevent.Option - 1).ToString());
+                                    return gevent.Character + "'s  " + (gevent.Option4 == 0 ? (((ClothingType)int.Parse(gevent.Value!)).ToString()) : gevent.Value) + " in set " + (gevent.Option3 == 0 ? "any" : (gevent.Option3 - 1).ToString());
                                 }
                                 case GameEvents.Combat:
                                 {
