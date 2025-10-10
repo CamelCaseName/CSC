@@ -5336,7 +5336,7 @@ public partial class Main : Form
             case SpawnableNodeType.ItemGroupInteraction:
             {
                 string id = "interaction name";
-                newNode = new Node(id, NodeType.ItemInteraction, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.ItemGroupInteraction, string.Empty, nodes[character].Positions)
                 {
                     RawData = new ItemGroupInteraction() { Name = id },
                     FileName = character,

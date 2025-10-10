@@ -14,10 +14,10 @@ namespace CSC.Nodestuff
             {
                 //node to add the description as child to, needs reference to parent, hence can't be anonymous
                 var node = new Node(achievement.Id ?? string.Empty, NodeType.Achievement, achievement.Name ?? string.Empty) { RawData = achievement };
+                nodes.Add(node);
                 nodes.AddChild(node, new Node(achievement.Id + "Description", NodeType.Achievement, achievement.Description ?? string.Empty, node));
                 nodes.AddChild(node, new Node(achievement.Id + "SteamName", NodeType.Achievement, achievement.SteamName ?? string.Empty, node));
-                //add achievement with description child to list
-                nodes.Add(node);
+                //add achievement with description child 
             }
 
             //return list of achievements
@@ -29,6 +29,7 @@ namespace CSC.Nodestuff
             {
                 var bgcNode = new Node($"BGC{backgroundChatter.Id}", NodeType.BGC, backgroundChatter.Text ?? string.Empty) { RawData = backgroundChatter };
 
+                nodes.Add(bgcNode);
                 //criteria
                 bgcNode.AddCriteria(backgroundChatter.Critera ?? [], nodes);
 
@@ -42,7 +43,6 @@ namespace CSC.Nodestuff
 
                     nodes.AddChild(bgcNode, nodeResponse);
                 }
-                nodes.Add(bgcNode);
             }
         }
 
@@ -53,12 +53,12 @@ namespace CSC.Nodestuff
                 //add items to list
                 var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition) { RawData = group };
 
+                nodes.Add(nodeCriteriaGroup);
                 foreach (CriteriaListWrapper criteriaList in group.CriteriaList ?? [])
                 {
                     nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
                 }
 
-                nodes.Add(nodeCriteriaGroup);
             }
         }
 
@@ -70,6 +70,8 @@ namespace CSC.Nodestuff
             {
                 var nodeDialogue = new Node(dialogue.ID.ToString(), NodeType.Dialogue, dialogue.Text ?? string.Empty) { RawData = dialogue, FileName = story.CharacterName! };
                 int alternateTextCounter = 1;
+                //finally add node
+                nodes.Add(nodeDialogue);
 
                 //add all alternate texts to teh dialogue
                 foreach (AlternateText alternateText in dialogue.AlternateTexts ?? [])
@@ -108,9 +110,6 @@ namespace CSC.Nodestuff
 
                 //add the starting events
                 nodeDialogue.AddEvents(dialogue.StartEvents ?? [], nodes);
-
-                //finally add node
-                nodes.Add(nodeDialogue);
             }
 
             var list = nodes.KeyNodes().ToList();
@@ -131,6 +130,7 @@ namespace CSC.Nodestuff
         public static void GetGameStartEvents(MainStory story, NodeStore nodes)
         {
             var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents") { RawData = story.GameStartEvents };
+            nodes.Add(nodeEvents);
             foreach (GameEvent _event in story.GameStartEvents ?? [])
             {
                 var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { RawData = _event, FileName = Main.Player };
@@ -139,7 +139,6 @@ namespace CSC.Nodestuff
 
                 nodes.AddChild(nodeEvents, nodeEvent);
             }
-            nodes.Add(nodeEvents);
         }
 
         public static void GetGlobalGoodByeResponses(CharacterStory story, NodeStore nodes)
@@ -184,6 +183,9 @@ namespace CSC.Nodestuff
                 }
                 //create item group node to add events/criteria to
                 var nodeGroup = new Node(itemGroupBehaviour.Id ?? string.Empty, NodeType.ItemGroupBehaviour, itemGroupBehaviour.Name ?? string.Empty) { RawData = itemGroupBehaviour };
+
+                //add item gruop with everything to collecting list
+                nodes.Add(nodeGroup);
                 //get actions for item
                 foreach (ItemAction itemAction in itemGroupBehaviour.ItemActions ?? [])
                 {
@@ -199,9 +201,6 @@ namespace CSC.Nodestuff
                     //add action to item
                     nodes.AddChild(nodeGroup, nodeAction);
                 }
-
-                //add item gruop with everything to collecting list
-                nodes.Add(nodeGroup);
             }
         }
 
@@ -216,6 +215,9 @@ namespace CSC.Nodestuff
                 }
                 //create item group node to add events/criteria to
                 var nodeGroup = new Node(itemGroup.Id ?? string.Empty, NodeType.ItemGroup, itemGroup.Name ?? string.Empty) { RawData = itemGroup };
+                //add item gruop with everything to collecting list
+                nodes.Add(nodeGroup);
+
                 //get actions for item
                 foreach (string item in itemGroup.ItemsInGroup ?? [])
                 {
@@ -225,9 +227,6 @@ namespace CSC.Nodestuff
                     //add item to item group
                     nodes.AddChild(nodeGroup, nodeItem);
                 }
-
-                //add item gruop with everything to collecting list
-                nodes.Add(nodeGroup);
             }
         }
 
@@ -238,6 +237,9 @@ namespace CSC.Nodestuff
             {
                 //add items to list
                 var nodeItem = new Node(itemOverride.Id ?? string.Empty, NodeType.StoryItem, itemOverride.DisplayName ?? string.Empty) { RawData = itemOverride };
+
+                //add item with all child Main.nodes to collector list
+                nodes.Add(nodeItem);
                 //get actions for item
                 foreach (ItemAction itemAction in itemOverride.ItemActions ?? [])
                 {
@@ -272,9 +274,6 @@ namespace CSC.Nodestuff
                     //add note to list for later
                     nodes.Add(useNode);
                 }
-
-                //add item with all child Main.nodes to collector list
-                nodes.Add(nodeItem);
             }
         }
 
@@ -375,9 +374,11 @@ namespace CSC.Nodestuff
 
         public static void GetValues(CharacterStory story, NodeStore nodes)
         {
-            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values") { 
-                FileName = story.CharacterName!, 
-                RawData = story.StoryValues };
+            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values")
+            {
+                FileName = story.CharacterName!,
+                RawData = story.StoryValues
+            };
             nodes.Add(ValueStore);
             foreach (string value in story.StoryValues ?? [])
             {

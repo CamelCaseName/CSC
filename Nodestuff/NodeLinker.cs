@@ -1117,7 +1117,6 @@ namespace CSC.Nodestuff
             Main.SelectedCharacter = lastSelected;
         }
 
-        //todo the fuck we have a bunch of cloned/borrowed criteria in the main story file??
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn, bool dupeTo = false)
         {
             AlternateText alternateText;
@@ -1137,11 +1136,17 @@ namespace CSC.Nodestuff
             Response response;
             UseWith useWith;
             string StoryItem;
+            string State;
 
             switch (node.Type)
             {
                 case NodeType.Criterion when (criterion = node.Data<Criterion>()!) is not null:
                 {
+                    if (!Node.AllowedFileNames.Contains(criterion.Character) && !string.IsNullOrWhiteSpace(criterion.Character))
+                    {
+                        //todo once charactergroups are implemented correctly
+                        criterion.Character = Main.Player;
+                    }
                     //node is dialogue so data should contain the criteria itself!
                     switch (criterion.CompareType)
                     {
@@ -1525,7 +1530,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.Social:
                         {
-                            result = Socials.Find((n) => n.Type == NodeType.Social && n.ID == criterion.Character + criterion.SocialStatus + criterion.Character2);
+                            result = Socials.Find((n) => n.ID == criterion.Character + criterion.SocialStatus + criterion.Character2);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1547,7 +1552,7 @@ namespace CSC.Nodestuff
                         }
                         case CompareTypes.State:
                         {
-                            result = States.Find((n) => n.Type == NodeType.State && n.FileName == criterion.Character && n.StaticText.AsSpan()[..2].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
+                            result = States.Find((n) => n.FileName == criterion.Character && n.StaticText.AsSpan()[..3].Contains(criterion.Value!.AsSpan(), StringComparison.InvariantCulture));
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1602,6 +1607,11 @@ namespace CSC.Nodestuff
                 }
                 case NodeType.GameEvent when (gameEvent = node.Data<GameEvent>()!) is not null:
                 {
+                    if (!Node.AllowedFileNames.Contains(gameEvent.Character) && !string.IsNullOrWhiteSpace(gameEvent.Character))
+                    {
+                        //todo once charactergroups are implemented correctly
+                        gameEvent.Character = Main.Player;
+                    }
                     switch (gameEvent.EventType)
                     {
                         case GameEvents.Clothing:
@@ -2035,7 +2045,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.State:
                         {
-                            result = States.Find((n) => n.Type == NodeType.State && n.FileName == gameEvent.Character && n.StaticText.AsSpan()[..2].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
+                            result = States.Find((n) => n.FileName == gameEvent.Character && n.StaticText.AsSpan()[..3].Contains(gameEvent.Value!.AsSpan(), StringComparison.InvariantCulture));
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -2467,6 +2477,24 @@ namespace CSC.Nodestuff
                     }
                     break;
                 }
+                case NodeType.State when (State = node.Data<string>()!) is not null:
+                {
+                    result = States.Find(n => n.ID == State);
+                    if (result is not null)
+                    {
+                        if (dupeTo)
+                        {
+                            result.DupeToOtherSorting(node.FileName);
+                        }
+
+                        nodes.Replace(node, result);
+                    }
+                    else
+                    {
+                        States.Add(node);
+                    }
+                    break;
+                }
             }
 
             if (nodes.Childs(node).Count == 0
@@ -2614,6 +2642,7 @@ namespace CSC.Nodestuff
                         if (foundNode is not null)
                         {
                             foundNode.DupeToOtherSorting(store);
+                            stores[store].Add(foundNode);
                             stores[store].Replace(node, foundNode);
                             Main.ClearAllNodePos(node);
                         }
@@ -2647,8 +2676,12 @@ namespace CSC.Nodestuff
                         {
                             if (!GUIDRegex().IsMatch(duplicateNode.ID))
                             {
-                                //todo storyitems from the mainstory object appear duplicated??
-                                Debugger.Break();
+                                //after one start we somehow still get duplicte IDs, but only on the second or third go??
+                                //this time its itemgroups
+                                if (node.Type == duplicateNode.Type)
+                                {
+                                    Debugger.Break();
+                                }
                                 continue;
                             }
 
@@ -2756,6 +2789,7 @@ namespace CSC.Nodestuff
 
                             if (store.Value.Contains(result))
                             {
+                                store.Value.Add(node);
                                 store.Value.Replace(result, node);
                             }
                             Main.SelectedCharacter = last;

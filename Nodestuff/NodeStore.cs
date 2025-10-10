@@ -147,18 +147,10 @@ namespace CSC.Nodestuff
             {
                 list.Remove(parent);
             }
-            else
-            {
-                parents.Add(node, []);
-            }
 
             if (childs.TryGetValue(parent, out list))
             {
                 list.Remove(node);
-            }
-            else
-            {
-                childs.Add(parent, []);
             }
         }
 
@@ -174,10 +166,6 @@ namespace CSC.Nodestuff
                     }
                 }
                 list.Clear();
-            }
-            else
-            {
-                parents.Add(node, []);
             }
         }
 
@@ -273,8 +261,7 @@ namespace CSC.Nodestuff
             }
             else
             {
-                childs.Add(node, []);
-                return childs[node];
+                return [];
             }
         }
 
@@ -286,8 +273,7 @@ namespace CSC.Nodestuff
             }
             else
             {
-                parents.Add(node, []);
-                return parents[node];
+                return [];
             }
         }
 
@@ -306,7 +292,6 @@ namespace CSC.Nodestuff
 
         public void Replace(Node node, Node replacement)
         {
-            Add(replacement);
             List<Node> childs = [.. Childs(node)];
             List<Node> parents = [.. Parents(node)];
 
