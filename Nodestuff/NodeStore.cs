@@ -6,6 +6,12 @@ namespace CSC.Nodestuff
         public readonly NodePositionSorting Positions = new();
         private readonly Dictionary<Node, List<Node>> childs = [];
         private readonly Dictionary<Node, List<Node>> parents = [];
+        private readonly string fileName;
+
+        public NodeStore(string fileName)
+        {
+            this.fileName = fileName;
+        }
 
         public void Add(Node node)
         {
@@ -64,6 +70,8 @@ namespace CSC.Nodestuff
             {
                 parents.Remove(node);
             }
+
+            Main.ClearNodePos(node, fileName);
         }
 
         public void Clear()

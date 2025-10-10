@@ -18,8 +18,6 @@ namespace CSC.Nodestuff
         private static readonly List<Node> StoryItems = [];
         private static readonly List<Node> Properties = [];
 
-        public static string FileName { get; private set; } = Main.NoCharacter;
-
         //todo needs some more linking for criteria or events with other node types so we auto populate. should reuse the code from the node spawning#
         private static void AllLink(Node source, Node destination, bool link)
         {
@@ -1054,7 +1052,6 @@ namespace CSC.Nodestuff
 
         public static void Interlinknodes(NodeStore store, string filename)
         {
-            FileName = filename;
             var lastSelected = Main.SelectedCharacter;
             Main.SelectedCharacter = filename;
             DateTime start = DateTime.UtcNow;
@@ -1072,7 +1069,6 @@ namespace CSC.Nodestuff
                     AnalyzeAndConnectNode(store, nodes[i], nodes, true);
                 }
             }
-
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
@@ -1081,14 +1077,14 @@ namespace CSC.Nodestuff
             //merge doors with items if applicable
             MergeDoors(store, true);
 
-            Debug.WriteLine($"completed for {FileName}/{store.Count} nodes in {(DateTime.UtcNow - start).Milliseconds}ms");
+            Debug.WriteLine($"completed for {Main.SelectedCharacter}/{store.Count} nodes in {(DateTime.UtcNow - start).Milliseconds}ms");
 
             Main.SelectedCharacter = lastSelected;
         }
 
         public static void UpdateLinks(Node node, string fileName, NodeStore store)
         {
-            FileName = fileName;
+            Main.SelectedCharacter = fileName;
             var lastSelected = Main.SelectedCharacter;
             Main.SelectedCharacter = fileName;
             var family = store[node];
@@ -1242,7 +1238,7 @@ namespace CSC.Nodestuff
                                 //add cutscene
                                 var item = new Node(criterion.Key!, NodeType.Cutscene, criterion.Key!)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 searchIn.Add(item);
                                 nodes.AddParent(node, item);
@@ -1290,7 +1286,7 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var door = new Node(criterion.Key!, NodeType.Door, criterion.Key!)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 Doors.Add(door);
                                 nodes.AddParent(node, door);
@@ -1316,7 +1312,7 @@ namespace CSC.Nodestuff
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     RawData = criterion.Key!,
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 StoryItems.Add(item);
                                 nodes.AddParent(node, item);
@@ -1342,7 +1338,7 @@ namespace CSC.Nodestuff
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     RawData = criterion.Key!,
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 StoryItems.Add(item);
                                 nodes.AddParent(node, item);
@@ -1368,7 +1364,7 @@ namespace CSC.Nodestuff
                                 var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
                                 {
                                     RawData = criterion.Key!,
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 StoryItems.Add(item);
                                 nodes.AddParent(node, item);
@@ -1391,10 +1387,10 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(criterion.Key!, NodeType.StoryItem, criterion.Key!)
+                                var item = new Node(criterion.Key!, NodeType.ItemGroup, criterion.Key!)
                                 {
                                     RawData = criterion.Key!,
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 StoryItems.Add(item);
                                 nodes.AddParent(node, item);
@@ -1442,7 +1438,7 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(criterion.Key!, NodeType.Inventory, "Items: " + criterion.Key)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 InventoryItems.Add(item);
                                 nodes.AddParent(node, item);
@@ -1484,7 +1480,7 @@ namespace CSC.Nodestuff
                                 //create and add pose node, hasnt been referenced yet
                                 var pose = new Node(criterion.Value!, NodeType.Pose, "Pose number " + criterion.Value)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 Poses.Add(pose);
                                 nodes.AddParent(node, pose);
@@ -1694,7 +1690,7 @@ namespace CSC.Nodestuff
                                 //add cutscene
                                 var item = new Node(gameEvent.Key!, NodeType.Cutscene, gameEvent.Key!)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 searchIn.Add(item);
                                 nodes.AddChild(node, item);
@@ -1745,7 +1741,7 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var door = new Node(gameEvent.Key!, NodeType.Door, gameEvent.Key!)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 Doors.Add(door);
                                 nodes.AddChild(node, door);
@@ -1774,7 +1770,7 @@ namespace CSC.Nodestuff
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                                 var _event = new Node("NA-" + gameEvent.Value, NodeType.GameEvent, gameEvent.Value!)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 searchIn.Add(_event);
                                 nodes.AddChild(node, _event);
@@ -1800,7 +1796,7 @@ namespace CSC.Nodestuff
                                 var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
                                 {
                                     RawData = gameEvent.Key!,
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 StoryItems.Add(item);
                                 nodes.AddChild(node, item);
@@ -1810,7 +1806,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.ItemFromItemGroup:
                         {
-                            result = StoryItems.Find((n) => n.Type == NodeType.StoryItem && n.ID == gameEvent.Key);
+                            result = StoryItems.Find((n) => n.Type == NodeType.ItemGroup && n.ID == gameEvent.Key);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1823,10 +1819,10 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add item node, hasnt been referenced yet
-                                var item = new Node(gameEvent.Key!, NodeType.StoryItem, gameEvent.Key!)
+                                var item = new Node(gameEvent.Key!, NodeType.ItemGroup, gameEvent.Key!)
                                 {
                                     RawData = gameEvent.Key!,
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 StoryItems.Add(item);
                                 nodes.AddChild(node, item);
@@ -1878,7 +1874,6 @@ namespace CSC.Nodestuff
                             }
                             break;
                         }
-
                         case GameEvents.ModifyValue:
                         {
                             Values.TryGetValue(gameEvent.Character + gameEvent.Key, out result);
@@ -1919,7 +1914,7 @@ namespace CSC.Nodestuff
                                 //create and add item node, hasnt been referenced yet
                                 var item = new Node(gameEvent.Value!, NodeType.Inventory, "Items: " + gameEvent.Value)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 InventoryItems.Add(item);
                                 nodes.AddParent(node, item);
@@ -1955,7 +1950,7 @@ namespace CSC.Nodestuff
                                 //create and add pose node, hasnt been referenced yet
                                 var pose = new Node(gameEvent.Value!, NodeType.Pose, "Pose number " + gameEvent.Value)
                                 {
-                                    FileName = FileName!
+                                    FileName = Main.SelectedCharacter!
                                 };
                                 Poses.Add(pose);
                                 nodes.AddChild(node, pose);
@@ -2146,7 +2141,7 @@ namespace CSC.Nodestuff
                     else if (dupeTo)
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                        var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}") { FileName = NodeLinker.FileName };
+                        var dialogueNode = new Node(response.Next.ToString(), NodeType.Dialogue, $"dialogue number {response.Next} for {node.FileName}") { FileName = Main.SelectedCharacter };
                         searchIn.Add(dialogueNode);
                         nodes.AddChild(node, dialogueNode);
                     }
@@ -2173,7 +2168,7 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}") { FileName = NodeLinker.FileName };
+                                var respNode = new Node(resp.Id!, NodeType.Response, $"response to {dialogue.ID} for {node.FileName}") { FileName = Main.SelectedCharacter };
                                 searchIn.Add(respNode);
                                 nodes.AddChild(node, respNode);
                             }
@@ -2198,7 +2193,7 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}") { FileName = NodeLinker.FileName };
+                                var _node = new Node($"{dialogue.ID}.{alternate.Order!}", NodeType.AlternateText, $"alternate to {dialogue.ID} for {node.FileName}") { FileName = Main.SelectedCharacter };
                                 searchIn.Add(_node);
                                 nodes.AddChild(node, _node);
                             }
@@ -2287,7 +2282,7 @@ namespace CSC.Nodestuff
                         else if (dupeTo)
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}") { FileName = NodeLinker.FileName };
+                            var newNode = new Node($"{_response.CharacterName}{_response.ChatterId}", NodeType.BGCResponse, $"{_response.CharacterName}{_response.ChatterId}") { FileName = Main.SelectedCharacter };
                             searchIn.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
@@ -2356,7 +2351,7 @@ namespace CSC.Nodestuff
                         else if (dupeTo)
                         {
                             //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                            var newNode = new Node(item, NodeType.StoryItem, item, item) { FileName = NodeLinker.FileName };
+                            var newNode = new Node(item, NodeType.StoryItem, item, item) { FileName = Main.SelectedCharacter };
                             StoryItems.Add(newNode);
                             nodes.AddChild(node, newNode);
                         }
@@ -2453,7 +2448,7 @@ namespace CSC.Nodestuff
                     else if (dupeTo)
                     {
                         //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty, useWith.ItemName!) { FileName = NodeLinker.FileName };
+                        var newNode = new Node(useWith.ItemName ?? string.Empty, NodeType.StoryItem, useWith.ItemName ?? string.Empty, useWith.ItemName!) { FileName = Main.SelectedCharacter };
                         StoryItems.Add(newNode);
                         nodes.AddChild(node, newNode);
                     }
@@ -2499,10 +2494,10 @@ namespace CSC.Nodestuff
 
             if (nodes.Childs(node).Count == 0
                 && nodes.Parents(node).Count == 0
-                && node.FileName != FileName)
+                && node.FileName != Main.SelectedCharacter)
             {
                 nodes.Remove(node);
-                node.RemoveFromSorting(FileName);
+                node.RemoveFromSorting(Main.SelectedCharacter);
             }
         }
 
@@ -2521,7 +2516,7 @@ namespace CSC.Nodestuff
             else if (dupeTo)
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                var newNode = new Node(_usewith.ItemName ?? string.Empty, NodeType.UseWith, _usewith.CustomCantDoThatMessage ?? string.Empty) { FileName = NodeLinker.FileName };
+                var newNode = new Node(_usewith.ItemName ?? string.Empty, NodeType.UseWith, _usewith.CustomCantDoThatMessage ?? string.Empty) { FileName = Main.SelectedCharacter };
                 newList.Add(newNode);
                 nodes.AddChild(node, newNode);
             }
@@ -2544,17 +2539,16 @@ namespace CSC.Nodestuff
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
                 if (node.DataType == typeof(ItemGroupBehavior))
                 {
-                    var newNode = new Node(node.Data<ItemGroupBehavior>()!.Name + " " + _action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
+                    var newNode = new Node(node.Data<ItemGroupBehavior>()!.Name + " " + _action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = Main.SelectedCharacter };
                     newList.Add(newNode);
                     nodes.AddChild(node, newNode);
                 }
                 else if (node.DataType == typeof(InteractiveitemBehaviour))
                 {
-                    var newNode = new Node(node.Data<InteractiveitemBehaviour>()!.ItemName + " " + _action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = NodeLinker.FileName };
+                    var newNode = new Node(node.Data<InteractiveitemBehaviour>()!.ItemName + " " + _action.ActionName ?? string.Empty, NodeType.ItemAction, _action.ActionName ?? string.Empty) { FileName = Main.SelectedCharacter };
                     newList.Add(newNode);
                     nodes.AddChild(node, newNode);
                 }
-
             }
         }
 
@@ -2591,7 +2585,7 @@ namespace CSC.Nodestuff
             else if (dupeTo)
             {
                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { FileName = NodeLinker.FileName };
+                var eventNode = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { FileName = Main.SelectedCharacter };
                 newList.Add(eventNode);
                 nodes.AddChild(node, eventNode);
             }
@@ -2672,59 +2666,47 @@ namespace CSC.Nodestuff
                     //todo profile
                     if (node.ID == duplicateNode.ID && node.OrigFileName == duplicateNode.OrigFileName)
                     {
-                        if ((node.RawData!.Equals(duplicateNode.RawData)) || (node.DataType == typeof(MissingReferenceInfo) && duplicateNode.DataType == typeof(MissingReferenceInfo)))
-                        {
-                            if (!GUIDRegex().IsMatch(duplicateNode.ID))
-                            {
-                                //after one start we somehow still get duplicte IDs, but only on the second or third go??
-                                //this time its itemgroups
-                                if (node.Type == duplicateNode.Type)
-                                {
-                                    Debugger.Break();
-                                }
-                                continue;
-                            }
-
-                            duplicateNode.ID = Guid.NewGuid().ToString();
-                            if (duplicateNode.RawData is GameEvent g)
-                            {
-                                g.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is EventTrigger e)
-                            {
-                                e.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is ItemGroup h)
-                            {
-                                h.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is ItemGroupBehavior f)
-                            {
-                                f.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is ItemGroupInteraction d)
-                            {
-                                d.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is Response r)
-                            {
-                                r.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is Achievement a)
-                            {
-                                a.Id = Guid.NewGuid().ToString();
-                            }
-                            else if (duplicateNode.RawData is Quest q)
-                            {
-                                q.ID = Guid.NewGuid().ToString();
-                            }
-                        }
-                        else
+                        if (!GUIDRegex().IsMatch(duplicateNode.ID))
                         {
                             if (node.Type == duplicateNode.Type)
                             {
                                 Debugger.Break();
                             }
+                            continue;
+                        }
+
+                        duplicateNode.ID = Guid.NewGuid().ToString();
+                        if (duplicateNode.RawData is GameEvent g)
+                        {
+                            g.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is EventTrigger e)
+                        {
+                            e.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is ItemGroup h)
+                        {
+                            h.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is ItemGroupBehavior f)
+                        {
+                            f.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is ItemGroupInteraction d)
+                        {
+                            d.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is Response r)
+                        {
+                            r.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is Achievement a)
+                        {
+                            a.Id = Guid.NewGuid().ToString();
+                        }
+                        else if (duplicateNode.RawData is Quest q)
+                        {
+                            q.ID = Guid.NewGuid().ToString();
                         }
                     }
                 }
@@ -2740,6 +2722,7 @@ namespace CSC.Nodestuff
             Clothing.Clear();
             Poses.Clear();
             InventoryItems.Clear();
+            StoryItems.Clear();
             Properties.Clear();
         }
 
@@ -2805,7 +2788,8 @@ namespace CSC.Nodestuff
         {
             if (story is not null && nodes is not null)
             {
-                FileName = story.CharacterName!;
+                var last = Main.SelectedCharacter;
+                Main.SelectedCharacter = story.CharacterName!;
                 //get all relevant items from the json
                 StoryNodeExtractor.GetValues(story, nodes);
                 foreach (var node in nodes.Nodes)
@@ -2834,6 +2818,7 @@ namespace CSC.Nodestuff
                         nodes.Nodes[i].FileName = story.CharacterName ?? string.Empty;
                     }
                 }
+                Main.SelectedCharacter = last;
             }
         }
 
@@ -2841,6 +2826,8 @@ namespace CSC.Nodestuff
         {
             if (story is not null && nodes is not null)
             {
+                var last = Main.SelectedCharacter;
+                Main.SelectedCharacter = Main.Player;
                 StoryNodeExtractor.GetValues(story, nodes);
                 foreach (var node in nodes.Nodes)
                 {
@@ -2864,6 +2851,7 @@ namespace CSC.Nodestuff
                         nodes.Nodes[i].FileName = Main.Player;
                     }
                 }
+                Main.SelectedCharacter = last;
             }
         }
 

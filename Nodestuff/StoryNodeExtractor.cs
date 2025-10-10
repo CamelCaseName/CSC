@@ -58,7 +58,6 @@ namespace CSC.Nodestuff
                 {
                     nodeCriteriaGroup.AddCriteria(criteriaList.CriteriaList ?? [], nodes);
                 }
-
             }
         }
 
@@ -353,7 +352,6 @@ namespace CSC.Nodestuff
                 {
                     nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description{detail.Value}", NodeType.Quest, detail.Details ?? string.Empty) { RawData = detail, FileName = story.CharacterName! });
                 }
-
             }
         }
 

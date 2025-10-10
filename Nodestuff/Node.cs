@@ -207,9 +207,9 @@ namespace CSC.Nodestuff
 
             set
             {
-                Main.ClearNodePos(this);
+                Main.ClearNodePos(this, Main.SelectedCharacter);
                 Positions[Main.SelectedCharacter] = value;
-                Main.SetNodePos(this);
+                Main.SetNodePos(this, Main.SelectedCharacter);
             }
         }
 
@@ -1106,7 +1106,7 @@ namespace CSC.Nodestuff
 
         public void DupeToOtherSorting(string filename)
         {
-            if (!Positions.ContainsKey(filename) && fileName != Main.SelectedCharacter)
+            if (!Positions.ContainsKey(filename))
             {
                 Positions[filename] = new();
                 Main.SetNodePos(this, filename);

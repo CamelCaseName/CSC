@@ -1,6 +1,7 @@
 using CSC.Components;
 using CSC.Nodestuff;
 using CSC.StoryItems;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -229,6 +230,7 @@ public partial class Main : Form
         socialNodeBrush = new SolidBrush(Color.FromArgb(255, 160, 90));
         stateNodeBrush = new SolidBrush(Color.FromArgb(40, 190, 50));
         valueNodeBrush = new SolidBrush(Color.FromArgb(120, 0, 150));
+
         //darker color variants
         float darkening = 0.18f;
         darkdefaultNodeBrush = new SolidBrush(defaultNodeBrush.Color.Times(darkening));
@@ -270,12 +272,12 @@ public partial class Main : Form
 
         PropertyInspector.SizeChanged += (_, _) => UpdatePropertyColoumnWidths();
 
-        nodes.Add(NoCharacter, new());
+        nodes.Add(NoCharacter, new(NoCharacter));
         Scaling.Add(NoCharacter, 0.3f);
         OffsetX.Add(NoCharacter, 0);
         OffsetY.Add(NoCharacter, 0);
 
-        nodes.Add(Player, new());
+        nodes.Add(Player, new(Player));
         Scaling.Add(Player, 0.3f);
         OffsetX.Add(Player, 0);
         OffsetY.Add(Player, 0);
@@ -1214,19 +1216,13 @@ public partial class Main : Form
     {
         Story = null!;
         Stories.Clear();
+        NodeLinker.ClearLinkCache();
         StoryName = NoCharacter;
         SelectedCharacter = NoCharacter;
-        var keys = nodes.Keys;
-        foreach (var item in keys)
-        {
-            if (item == NoCharacter)
-            {
-                continue;
-            }
-            nodes.Remove(item);
-        }
 
-        nodes.Add(Player, new());
+        nodes.Clear();
+        nodes.Add(NoCharacter, new(NoCharacter));
+        nodes.Add(Player, new(Player));
 
         StoryTreeReset();
         Graph.Invalidate();
@@ -1718,7 +1714,9 @@ public partial class Main : Form
     {
         Cursor = Cursors.WaitCursor;
         StoryFolder = Path.GetDirectoryName(FilePath)!;
-        foreach (var file in Directory.GetFiles(StoryFolder))
+        List<string> fileList = Directory.GetFiles(StoryFolder).ToList();
+        fileList.Sort();
+        foreach (var file in fileList)
         {
             if (Path.GetExtension(file) == ".story")
             {
@@ -1792,6 +1790,8 @@ public partial class Main : Form
             }
             List<Node> notSet = [];
             SelectedCharacter = fileStore;
+            //no idea why necessary but easier than looking for the weird ass cause
+            nodes[fileStore].Positions.Clear();
             foreach (var node in nodes[fileStore].Nodes)
             {
                 if (positions[fileStore].TryGetValue(new NodeID(fileStore, node.Type, node.ID, node.OrigFileName, node.DataType), out var point))
@@ -1906,7 +1906,7 @@ public partial class Main : Form
 
     private void ExtractAndAddStories(string FileName, string? storyName = null)
     {
-        NodeStore tempStore = new();
+        NodeStore tempStore = new(FileName);
         if (!nodes.TryAdd(FileName, tempStore))
         {
             nodes[FileName] = tempStore;
@@ -1979,7 +1979,10 @@ public partial class Main : Form
             SelectedCharacter = store;
 
             NodeStore nodeStore = nodes[store];
+            nodeStore.Positions.Clear();
             var nodeList = nodeStore.Nodes;
+
+            //no idea why we have to clear it or where the wrong ones come from....
             SetStartPositionsForNodesInList(100, 1, nodeStore, nodeList);
 
             CenterOnNode(nodes[store].Nodes.First(), 0.8f);
@@ -2028,7 +2031,6 @@ public partial class Main : Form
             restarted = true;
             goto Restart;
         }
-
     }
 
     private int SetStartPosForConnected(int intX, NodeStore nodeStore, Node start, bool inListOnly = false)
@@ -3821,7 +3823,7 @@ public partial class Main : Form
                         {
                             case WalkToTargetOptions.MoveTarget:
                             {
-                                PutEnumValueText<WalkToTargetOptions>(node, gevent);
+                                PutEnumValueText<MoveTargets>(node, gevent);
                                 break;
                             }
                             case WalkToTargetOptions.Character:

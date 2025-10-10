@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace CSC.Nodestuff
+﻿namespace CSC.Nodestuff
 {
     public class NodePositionSorting
     {
