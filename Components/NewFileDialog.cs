@@ -2,9 +2,8 @@
 
 namespace CSC
 {
-    public static partial class Dialogs
+    public static partial class NewFileDialog
     {
-
         public static DialogResult ShowTextBox(ref string input, string prompt, string title = "Title")
         {
             int width = 300, height = 90;

@@ -298,6 +298,7 @@ namespace CSC
             Text = "Custom Custom Story Creator";
             KeyDown += HandleKeyBoard;
             KeyUp += HandleKeyBoard;
+            FormClosing += OnFormClosing;
             Menu.ResumeLayout(false);
             Menu.PerformLayout();
             HierarchyAndRest.Panel1.ResumeLayout(false);

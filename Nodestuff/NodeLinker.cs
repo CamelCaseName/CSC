@@ -1084,7 +1084,6 @@ namespace CSC.Nodestuff
 
         public static void UpdateLinks(Node node, string fileName, NodeStore store)
         {
-            Main.SelectedCharacter = fileName;
             var lastSelected = Main.SelectedCharacter;
             Main.SelectedCharacter = fileName;
             var family = store[node];
@@ -1111,6 +1110,7 @@ namespace CSC.Nodestuff
                 AnalyzeAndConnectNode(store, parent, nodes, false);
             }
             Main.SelectedCharacter = lastSelected;
+            Main.needsSaving = true;
         }
 
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn, bool dupeTo = false)

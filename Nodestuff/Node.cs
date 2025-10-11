@@ -210,6 +210,7 @@ namespace CSC.Nodestuff
                 Main.ClearNodePos(this, Main.SelectedCharacter);
                 Positions[Main.SelectedCharacter] = value;
                 Main.SetNodePos(this, Main.SelectedCharacter);
+                Main.needsSaving = true;
             }
         }
 

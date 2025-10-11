@@ -129,6 +129,7 @@ public partial class Main : Form
     private string StoryFolder = string.Empty;
     public const string HousePartyVersion = "1.4.2";
     private bool isFirstLoad = true;
+    public static bool needsSaving;
 
     public static string StoryName { get; private set; } = NoCharacter;
 
@@ -291,6 +292,35 @@ public partial class Main : Form
         nodeToLinkFrom = Node.NullNode;
 
         Graph.Invalidate();
+    }
+
+    private void OnFormClosing(object? sender, FormClosingEventArgs? e)
+    {
+        if (Story is null || Stories.Count <= 0 || !needsSaving)
+        {
+            return;
+        }
+
+        var res = new SaveOnCloseDialog().ShowDialog();
+        //yes == save all
+        //ok == save files
+        //continue == save positions
+        //cancel == dont save any
+
+        switch (res)
+        {
+            case DialogResult.Yes:
+                ExportAllFiles();
+                SafeSavePositions();
+                break;
+            case DialogResult.OK:
+                ExportAllFiles();
+                break;
+            case DialogResult.Continue:
+                SafeSavePositions();
+                break;
+                //rest do nothing
+        }
     }
 
     public void HandleKeyBoard(object? sender, KeyEventArgs e)
@@ -1108,7 +1138,7 @@ public partial class Main : Form
 
         var newChar = string.Empty;
 
-        res = Dialogs.ShowDropdownBox(ref newChar, [.. list], "Character to add:", "Select Character");
+        res = NewFileDialog.ShowDropdownBox(ref newChar, [.. list], "Character to add:", "Select Character");
 
         if (res != DialogResult.OK)
         {
@@ -1125,7 +1155,7 @@ public partial class Main : Form
         if (Story is null)
         {
             var newStoryName = string.Empty;
-            var res = Dialogs.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
+            var res = NewFileDialog.ShowTextBox(ref newStoryName, "Name for new Story:", "Story Title");
 
             if (res != DialogResult.OK)
             {
@@ -1249,6 +1279,7 @@ public partial class Main : Form
         Graph.Invalidate();
         PropertyInspector.Controls.Clear();
         isFirstLoad = true;
+        needsSaving = false;
     }
 
     private void StoryTreeReset()
@@ -1736,7 +1767,7 @@ public partial class Main : Form
     {
         Cursor = Cursors.WaitCursor;
         StoryFolder = Path.GetDirectoryName(FilePath)!;
-        List<string> fileList = Directory.GetFiles(StoryFolder).ToList();
+        List<string> fileList = [.. Directory.GetFiles(StoryFolder)];
         fileList.Sort();
         foreach (var file in fileList)
         {
@@ -1765,6 +1796,7 @@ public partial class Main : Form
         isFirstLoad = false;
 
         StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[1].Nodes[Stories.Count - 1];
+        needsSaving = false;
     }
 
     private void SafeSavePositions()
@@ -1791,6 +1823,8 @@ public partial class Main : Form
             }
             Cursor = Cursors.Default;
         }
+
+        needsSaving = false;
     }
 
     private bool TryLoadOldPositions()
@@ -2200,6 +2234,7 @@ public partial class Main : Form
             ExportFile(character);
         }
 
+        needsSaving = false;
         return true;
     }
 
@@ -2357,7 +2392,6 @@ public partial class Main : Form
         NodeContext.Show(Graph, ScreenPos);
     }
 
-    //todo dropdown selection doeastn work
     //todo implement drag/drop setting of node data like item name or sth
     private void ShowProperties(Node node)
     {
@@ -4505,6 +4539,7 @@ public partial class Main : Form
         }
         PropertyInspector.ColumnCount += 1;
         PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
+        needsSaving = false;
     }
 
     private void PutEnumValue<E>(Node node, GameEvent gevent) where E : struct, Enum
@@ -5204,7 +5239,6 @@ public partial class Main : Form
         }
     }
 
-    //todo probably needs some more work for some events and criteria to populate defaults
     private void SpawnNodeFromSpaceSpawner(object sender, EventArgs e)
     {
         SpawnableNodeType selectedType = Enum.Parse<SpawnableNodeType>(NodeSpawnBox.SelectedItem?.ToString()!);
