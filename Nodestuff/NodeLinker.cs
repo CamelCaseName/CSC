@@ -18,7 +18,6 @@ namespace CSC.Nodestuff
         private static readonly List<Node> StoryItems = [];
         private static readonly List<Node> Properties = [];
 
-        //todo needs some more linking for criteria or events with other node types so we auto populate. should reuse the code from the node spawning#
         private static void AllLink(Node source, Node destination, bool link)
         {
             string Add = link ? "Add " : "Remove ";
@@ -1110,7 +1109,7 @@ namespace CSC.Nodestuff
                 AnalyzeAndConnectNode(store, parent, nodes, false);
             }
             Main.SelectedCharacter = lastSelected;
-            Main.needsSaving = true;
+            Main.NeedsSaving = true;
         }
 
         private static void AnalyzeAndConnectNode(NodeStore nodes, Node node, List<Node> searchIn, bool dupeTo = false)
@@ -2663,7 +2662,7 @@ namespace CSC.Nodestuff
                 for (int j = i + 1; j < tempList.Count; j++)
                 {
                     Node? duplicateNode = tempList[j];
-                    //todo profile
+
                     if (node.ID == duplicateNode.ID && node.OrigFileName == duplicateNode.OrigFileName)
                     {
                         if (!GUIDRegex().IsMatch(duplicateNode.ID))

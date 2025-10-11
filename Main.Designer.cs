@@ -39,6 +39,7 @@ namespace CSC
             SaveButton = new ToolStripButton();
             NewStory = new ToolStripButton();
             Add = new ToolStripButton();
+            cursorPos = new ToolStripLabel();
             StoryTree = new TreeView();
             HierarchyAndRest = new SplitContainer();
             GraphAndProperties = new SplitContainer();
@@ -52,7 +53,7 @@ namespace CSC
             SortSelectedMenu = new ToolStripMenuItem();
             SortSelectedConnectedMenu = new ToolStripMenuItem();
             Seperator1 = new ToolStripSeparator();
-            cursorPos = new ToolStripLabel();
+            toolStripButton1 = new ToolStripButton();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
             HierarchyAndRest.Panel1.SuspendLayout();
@@ -68,7 +69,7 @@ namespace CSC
             // Menu
             // 
             Menu.BackColor = Color.FromArgb(50, 50, 50);
-            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add, cursorPos });
+            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add, cursorPos, toolStripButton1 });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
             Menu.Size = new Size(1431, 25);
@@ -118,6 +119,14 @@ namespace CSC
             Add.Size = new Size(63, 22);
             Add.Text = "Add Story";
             Add.Click += Add_Click;
+            // 
+            // cursorPos
+            // 
+            cursorPos.Alignment = ToolStripItemAlignment.Right;
+            cursorPos.ForeColor = Color.White;
+            cursorPos.Name = "cursorPos";
+            cursorPos.Size = new Size(59, 22);
+            cursorPos.Text = "cursorPos";
             // 
             // StoryTree
             // 
@@ -274,13 +283,16 @@ namespace CSC
             Seperator1.Name = "Seperator1";
             Seperator1.Size = new Size(152, 6);
             // 
-            // cursorPos
+            // toolStripButton1
             // 
-            cursorPos.Alignment = ToolStripItemAlignment.Right;
-            cursorPos.ForeColor = Color.White;
-            cursorPos.Name = "cursorPos";
-            cursorPos.Size = new Size(59, 22);
-            cursorPos.Text = "cursorPos";
+            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton1.ForeColor = Color.FromArgb(224, 224, 224);
+            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new Size(46, 22);
+            toolStripButton1.Text = "Search";
+            toolStripButton1.Click += toolStripButton1_Click;
             // 
             // Main
             // 
@@ -296,9 +308,9 @@ namespace CSC
             Name = "Main";
             ShowIcon = false;
             Text = "Custom Custom Story Creator";
+            FormClosing += OnFormClosing;
             KeyDown += HandleKeyBoard;
             KeyUp += HandleKeyBoard;
-            FormClosing += OnFormClosing;
             Menu.ResumeLayout(false);
             Menu.PerformLayout();
             HierarchyAndRest.Panel1.ResumeLayout(false);
@@ -335,5 +347,6 @@ namespace CSC
         private ToolStripMenuItem SortSelectedConnectedMenu;
         private ToolStripSeparator Seperator1;
         private ToolStripLabel cursorPos;
+        private ToolStripButton toolStripButton1;
     }
 }

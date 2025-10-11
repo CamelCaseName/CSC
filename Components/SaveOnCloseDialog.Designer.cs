@@ -89,7 +89,7 @@
             // 
             Cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             Cancel.BackColor = Color.FromArgb(64, 64, 64);
-            Cancel.DialogResult = DialogResult.Abort;
+            Cancel.DialogResult = DialogResult.Cancel;
             Cancel.ForeColor = Color.White;
             Cancel.Location = new Point(363, 70);
             Cancel.Name = "Cancel";

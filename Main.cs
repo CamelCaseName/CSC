@@ -129,7 +129,7 @@ public partial class Main : Form
     private string StoryFolder = string.Empty;
     public const string HousePartyVersion = "1.4.2";
     private bool isFirstLoad = true;
-    public static bool needsSaving;
+    private static bool needsSaving;
 
     public static string StoryName { get; private set; } = NoCharacter;
 
@@ -164,6 +164,7 @@ public partial class Main : Form
     public int RightClickFrameCounter { get; private set; } = 0;
 
     public int LeftClickFrameCounter { get; private set; } = 0;
+    public static bool NeedsSaving { get => needsSaving; set => needsSaving = value; }
 
     //todo when adding an event to another somethign and the event is already part of another node we need to clone the event, sadly we cannot use the exact same event object in multiple places :(
     //todo add option to view all referenced values in other files, like reverse strike brush
@@ -173,6 +174,7 @@ public partial class Main : Form
     //todo add info when trying to link incompatible notes
     //todo unify all node creation so its always the same
     //todo add grouping
+    //todo add comments
 
     public Main()
     {
@@ -296,7 +298,7 @@ public partial class Main : Form
 
     private void OnFormClosing(object? sender, FormClosingEventArgs? e)
     {
-        if (Story is null || Stories.Count <= 0 || !needsSaving)
+        if (Story is null || Stories.Count <= 0 || !NeedsSaving)
         {
             if (MessageBox.Show("Are you sure, you want to close the Program?", "Close the Program?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
             {
@@ -323,7 +325,7 @@ public partial class Main : Form
             case DialogResult.Continue:
                 SafeSavePositions();
                 break;
-            case DialogResult.Ignore:
+            case DialogResult.Cancel:
                 e!.Cancel = true;
                 break;
                 //rest do nothing
@@ -386,6 +388,15 @@ public partial class Main : Form
         {
             TryDeleteNode();
         }
+        else if (e.KeyData == Keys.F && IsCtrlPressed)
+        {
+            StartSearch();
+        }
+    }
+
+    public void StartSearch()
+    {
+        var searchWindow = new SearchDialog(nodes);
     }
 
     private void TryDeleteNode()
@@ -1286,7 +1297,7 @@ public partial class Main : Form
         Graph.Invalidate();
         PropertyInspector.Controls.Clear();
         isFirstLoad = true;
-        needsSaving = false;
+        NeedsSaving = false;
     }
 
     private void StoryTreeReset()
@@ -1803,7 +1814,7 @@ public partial class Main : Form
         isFirstLoad = false;
 
         StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[1].Nodes[Stories.Count - 1];
-        needsSaving = false;
+        NeedsSaving = false;
     }
 
     private void SafeSavePositions()
@@ -1831,7 +1842,7 @@ public partial class Main : Form
             Cursor = Cursors.Default;
         }
 
-        needsSaving = false;
+        NeedsSaving = false;
     }
 
     private bool TryLoadOldPositions()
@@ -2241,7 +2252,7 @@ public partial class Main : Form
             ExportFile(character);
         }
 
-        needsSaving = false;
+        NeedsSaving = false;
         return true;
     }
 
@@ -4156,17 +4167,17 @@ public partial class Main : Form
                     }
                     case EventTypes.StartedIntimacyAct:
                     {
-                        //todo
+                        //todo EventTypes.StartedIntimacyAct:
                         break;
                     }
                     case EventTypes.PlayerGrabsItem:
                     {
-                        //todo
+                        //todo EventTypes.PlayerGrabsItem:
                         break;
                     }
                     case EventTypes.PlayerReleasesItem:
                     {
-                        //todo
+                        //todo EventTypes.PlayerReleasesItem:
                         break;
                     }
                     case EventTypes.Periodically:
@@ -4187,12 +4198,12 @@ public partial class Main : Form
                     }
                     case EventTypes.OnItemFunction:
                     {
-                        //todo
+                        //todo EventTypes.OnItemFunction:
                         break;
                     }
                     case EventTypes.PokedByVibrator:
                     {
-                        //todo
+                        //todo EventTypes.PokedByVibrator:
                         break;
                     }
                     case EventTypes.PeesOnItem:
@@ -4212,7 +4223,7 @@ public partial class Main : Form
                     case EventTypes.StartedUsingActionItem:
                     case EventTypes.StoppedUsingActionItem:
                     {
-                        //todo
+                        //todo EventTypes.StoppedUsingActionItem:
                         break;
                     }
                     case EventTypes.OnFriendshipIncreaseWith:
@@ -4227,7 +4238,7 @@ public partial class Main : Form
                     }
                     case EventTypes.PlayerInteractsWithItem:
                     {
-                        //todo
+                        //todo EventTypes.PlayerInteractsWithItem:
                         break;
                     }
                     case EventTypes.OnAfterCutSceneEnds:
@@ -4546,7 +4557,7 @@ public partial class Main : Form
         }
         PropertyInspector.ColumnCount += 1;
         PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
-        needsSaving = false;
+        NeedsSaving = false;
     }
 
     private void PutEnumValue<E>(Node node, GameEvent gevent) where E : struct, Enum
@@ -5791,5 +5802,10 @@ public partial class Main : Form
         SetStartPositionsForNodesInList((int)(selected[0].Position.X / scaleX), (int)(selected[0].Position.Y / scaleY), nodes[SelectedCharacter], selected);
 
         Graph.Invalidate();
+    }
+
+    private void toolStripButton1_Click(object sender, EventArgs e)
+    {
+        StartSearch();
     }
 }
