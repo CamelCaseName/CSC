@@ -128,6 +128,7 @@ public partial class Main : Form
     private Point startSelectingMousePos = Point.Empty;
     private string StoryFolder = string.Empty;
     public const string HousePartyVersion = "1.4.2";
+    private bool isFirstLoad = true;
 
     public static string StoryName { get; private set; } = NoCharacter;
 
@@ -166,6 +167,7 @@ public partial class Main : Form
     //todo when adding an event to another somethign and the event is already part of another node we need to clone the event, sadly we cannot use the exact same event object in multiple places :(
     //todo add option to view all referenced values in other files, like reverse strike brush
     //todo add search
+    //filter/hide node types
 
     //todo add info when trying to link incompatible notes
     //todo unify all node creation so its always the same
@@ -841,11 +843,24 @@ public partial class Main : Form
     private void UpdateLeftClick(PointF screenPos)
     {
         LeftClickFrameCounter++;
+        startSelectingMousePos = new((int)screenPos.X, (int)screenPos.Y);
         if (LeftClickFrameCounter > 2)
         {
             if (!selecting)
             {
-                StartSelecting(screenPos);
+                StartSelecting();
+            }
+        }
+        //only pull focus if we are not in a dropdown
+
+        foreach (var dropdown in PropertyInspector.Controls)
+        {
+            if (dropdown is ComboBox box)
+            {
+                if (box.DroppedDown && box.Focused)
+                {
+                    return;
+                }
             }
         }
         Graph.Focus();
@@ -875,10 +890,9 @@ public partial class Main : Form
         Graph.Focus();
     }
 
-    private void StartSelecting(PointF screenPos)
+    private void StartSelecting()
     {
         selecting = true;
-        startSelectingMousePos = new((int)screenPos.X, (int)screenPos.Y);
         if (!subtracting && !adding)
         {
             selected.Clear();
@@ -1234,6 +1248,7 @@ public partial class Main : Form
         StoryTreeReset();
         Graph.Invalidate();
         PropertyInspector.Controls.Clear();
+        isFirstLoad = true;
     }
 
     private void StoryTreeReset()
@@ -1747,6 +1762,8 @@ public partial class Main : Form
         Graph.Invalidate();
         Cursor = Cursors.Default;
 
+        isFirstLoad = false;
+
         StoryTree.SelectedNode = StoryTree.Nodes[0].Nodes[1].Nodes[Stories.Count - 1];
     }
 
@@ -1766,7 +1783,10 @@ public partial class Main : Form
             ExportAllFiles();
             if (!TryLoadOldPositions())
             {
-                SetupStartPositions();
+                if (isFirstLoad)
+                {
+                    SetupStartPositions();
+                }
                 SavePositions();
             }
             Cursor = Cursors.Default;
@@ -2337,9 +2357,7 @@ public partial class Main : Form
         NodeContext.Show(Graph, ScreenPos);
     }
 
-    //todo do the quest seleciton for criterion like in gameevent. way better
     //todo dropdown selection doeastn work
-    //todo criterai linking??
     //todo implement drag/drop setting of node data like item name or sth
     private void ShowProperties(Node node)
     {
@@ -2784,31 +2802,25 @@ public partial class Main : Form
                         PutCompareType(node, criterion);
 
                         ComboBox quest = GetComboBox();
-                        foreach (string key in Stories.Keys)
+                        List<Tuple<string, Quest>> Quests = [];
+                        foreach (var item in Stories.Values)
                         {
-                            for (int i = 0; i < Stories[key].Quests!.Count; i++)
+                            foreach (var questData in item.Quests)
                             {
-                                quest.Items.Add(Stories[key].Quests![i].Name!);
+                                Quests.Add(new(item.CharacterName, questData));
+                                quest.Items.Add(item.CharacterName + "|" + questData.Name);
                             }
                         }
-                        quest.SelectedItem = criterion.Key!;
+                        quest.SelectedItem = Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item1 ?? node.FileName + "|" + criterion.Key2;
                         quest.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) =>
                         {
-                            //todo implement quest store or sth
-                            criterion.Key2 = quest.SelectedItem!.ToString()!;
-                            foreach (string key in Stories.Keys)
-                            {
-                                for (int i = 0; i < Stories[key].Quests!.Count; i++)
-                                {
-                                    if (Stories[key].Quests![i].Name == criterion.Key2)
-                                    {
-                                        criterion.Key = Stories[key].Quests![i].ID;
-                                    }
-                                }
-                            }
+                            criterion.Key2 = quest.SelectedItem.ToString()!.Split("|")[1];
+                            criterion.Character = Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item1 ?? node.FileName;
+                            criterion.Key = Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item2.ID ?? "#";
                         });
                         quest.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(quest);
+                        PropertyInspector.SetColumnSpan(quest, 2);
 
                         PutEquals(node, criterion);
                         PutEnumValue<QuestStatus>(node, criterion);
@@ -3608,23 +3620,26 @@ public partial class Main : Form
                     case GameEvents.Quest:
                     {
                         var box = GetComboBox();
-                        List<Quest> Quests = [];
+                        List<Tuple<string, Quest>> Quests = [];
                         foreach (var item in Stories.Values)
                         {
-                            foreach (var quest in item.Quests)
+                            foreach (var questData in item.Quests)
                             {
-                                Quests.Add(quest);
-                                box.Items.Add(quest.Name);
+                                Quests.Add(new(item.CharacterName, questData));
+                                box.Items.Add(item.CharacterName + "|" + questData.Name);
                             }
                         }
-                        box.SelectedItem = gevent.Key;
+                        box.SelectedItem = Quests.Find(n => n.Item2.Name == gevent.Value)?.Item1 ?? node.FileName + "|" + gevent.Value;
                         box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) =>
                         {
-                            gevent.Value = box.SelectedItem.ToString()!;
-                            gevent.Key = Quests.Find(n => n.Name == gevent.Value)?.ID ?? "#";
+                            gevent.Value = box.SelectedItem.ToString()!.Split("|")[1];
+                            gevent.Character = Quests.Find(n => n.Item2.Name == gevent.Value)?.Item1 ?? node.FileName;
+                            gevent.Key = Quests.Find(n => n.Item2.Name == gevent.Value)?.Item2.ID ?? "#";
                         });
                         box.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(box, GeventPropertyCounter++, 1);
+                        PropertyInspector.SetColumnSpan(box, 2);
+                        GeventPropertyCounter++;
 
                         PutEnumOption<QuestActions>(node, gevent);
                         gevent.Character = string.Empty;
