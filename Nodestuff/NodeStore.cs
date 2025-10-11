@@ -211,18 +211,10 @@ namespace CSC.Nodestuff
             {
                 list.Remove(child);
             }
-            else
-            {
-                childs.Add(node, []);
-            }
 
             if (parents.TryGetValue(child, out list))
             {
                 list.Remove(node);
-            }
-            else
-            {
-                parents.Add(child, []);
             }
         }
 
@@ -238,10 +230,6 @@ namespace CSC.Nodestuff
                     }
                 }
                 list.Clear();
-            }
-            else
-            {
-                childs.Add(node, []);
             }
         }
 

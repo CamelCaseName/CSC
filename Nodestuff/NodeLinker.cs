@@ -2554,7 +2554,7 @@ namespace CSC.Nodestuff
 
         private static void HandleCriterion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion, bool dupeTo = false)
         {
-            Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Value}");
+            Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Key}{_criterion.Value}");
             if (result is not null)
             {
                 if (dupeTo)
@@ -2566,7 +2566,7 @@ namespace CSC.Nodestuff
             }
             else if (dupeTo)
             {
-                newList.Add(Node.CreateCriteriaNode(_criterion, node, nodes));
+                newList.Add(Node.CreateCriteriaNode(_criterion, node.FileName, nodes));
             }
         }
 

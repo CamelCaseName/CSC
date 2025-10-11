@@ -1047,10 +1047,10 @@ namespace CSC.Nodestuff
             }
         }
 
-        public static Node CreateCriteriaNode(Criterion criterion, Node node, NodeStore nodes)
+        public static Node CreateCriteriaNode(Criterion criterion, string filename, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
-            var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Value}");
+            var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}");
             if (result is not null)
             {
                 return result;
@@ -1058,10 +1058,10 @@ namespace CSC.Nodestuff
             else
             {
                 return new Node(
-                    $"{criterion.Character}{criterion.CompareType}{criterion.Value}",
+                    $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}",
                     NodeType.Criterion,
                     $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}")
-                { FileName = node.FileName };
+                { FileName = filename, RawData = criterion };
             }
         }
 
@@ -1069,7 +1069,7 @@ namespace CSC.Nodestuff
         {
             foreach (Criterion criterion in criteria)
             {
-                Node tempNode = CreateCriteriaNode(criterion, this, nodes);
+                Node tempNode = CreateCriteriaNode(criterion, this.FileName, nodes);
                 tempNode.RawData = criterion;
                 nodes.AddParent(this, tempNode);
             }
