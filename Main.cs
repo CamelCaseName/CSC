@@ -298,6 +298,10 @@ public partial class Main : Form
     {
         if (Story is null || Stories.Count <= 0 || !needsSaving)
         {
+            if (MessageBox.Show("Are you sure, you want to close the Program?", "Close the Program?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+            {
+                e!.Cancel = true;
+            }
             return;
         }
 
@@ -318,6 +322,9 @@ public partial class Main : Form
                 break;
             case DialogResult.Continue:
                 SafeSavePositions();
+                break;
+            case DialogResult.Ignore:
+                e!.Cancel = true;
                 break;
                 //rest do nothing
         }

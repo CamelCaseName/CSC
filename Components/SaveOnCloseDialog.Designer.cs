@@ -33,6 +33,7 @@
             SaveStories = new Button();
             SavePositions = new Button();
             Cancel = new Button();
+            button1 = new Button();
             SuspendLayout();
             // 
             // label1
@@ -47,10 +48,11 @@
             // 
             // SaveAll
             // 
+            SaveAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             SaveAll.BackColor = Color.FromArgb(64, 64, 64);
             SaveAll.DialogResult = DialogResult.Yes;
             SaveAll.ForeColor = Color.White;
-            SaveAll.Location = new Point(12, 92);
+            SaveAll.Location = new Point(12, 70);
             SaveAll.Name = "SaveAll";
             SaveAll.Size = new Size(75, 23);
             SaveAll.TabIndex = 1;
@@ -59,39 +61,55 @@
             // 
             // SaveStories
             // 
+            SaveStories.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             SaveStories.BackColor = Color.FromArgb(64, 64, 64);
             SaveStories.DialogResult = DialogResult.OK;
             SaveStories.ForeColor = Color.White;
-            SaveStories.Location = new Point(104, 92);
+            SaveStories.Location = new Point(93, 70);
             SaveStories.Name = "SaveStories";
-            SaveStories.Size = new Size(111, 23);
+            SaveStories.Size = new Size(90, 23);
             SaveStories.TabIndex = 2;
             SaveStories.Text = "Save &Stories";
             SaveStories.UseVisualStyleBackColor = false;
             // 
             // SavePositions
             // 
+            SavePositions.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             SavePositions.BackColor = Color.FromArgb(64, 64, 64);
             SavePositions.DialogResult = DialogResult.Continue;
             SavePositions.ForeColor = Color.White;
-            SavePositions.Location = new Point(233, 92);
+            SavePositions.Location = new Point(189, 70);
             SavePositions.Name = "SavePositions";
-            SavePositions.Size = new Size(108, 23);
+            SavePositions.Size = new Size(92, 23);
             SavePositions.TabIndex = 3;
             SavePositions.Text = "Save &Positions";
             SavePositions.UseVisualStyleBackColor = false;
             // 
             // Cancel
             // 
+            Cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             Cancel.BackColor = Color.FromArgb(64, 64, 64);
-            Cancel.DialogResult = DialogResult.Cancel;
+            Cancel.DialogResult = DialogResult.Abort;
             Cancel.ForeColor = Color.White;
-            Cancel.Location = new Point(358, 92);
+            Cancel.Location = new Point(363, 70);
             Cancel.Name = "Cancel";
             Cancel.Size = new Size(75, 23);
             Cancel.TabIndex = 4;
             Cancel.Text = "&Cancel";
             Cancel.UseVisualStyleBackColor = false;
+            // 
+            // button1
+            // 
+            button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            button1.BackColor = Color.FromArgb(64, 64, 64);
+            button1.DialogResult = DialogResult.Ignore;
+            button1.ForeColor = Color.White;
+            button1.Location = new Point(287, 70);
+            button1.Name = "button1";
+            button1.Size = new Size(70, 23);
+            button1.TabIndex = 5;
+            button1.Text = "&Dont save";
+            button1.UseVisualStyleBackColor = false;
             // 
             // SaveOnCloseDialog
             // 
@@ -100,7 +118,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(64, 64, 64);
             CancelButton = Cancel;
-            ClientSize = new Size(445, 127);
+            ClientSize = new Size(445, 105);
+            Controls.Add(button1);
             Controls.Add(Cancel);
             Controls.Add(SavePositions);
             Controls.Add(SaveStories);
@@ -111,7 +130,8 @@
             MinimizeBox = false;
             Name = "SaveOnCloseDialog";
             ShowIcon = false;
-            Text = "SaveOnCloseDialog";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Unsaved changes...";
             TopMost = true;
             ResumeLayout(false);
         }
@@ -123,5 +143,6 @@
         private Button SaveStories;
         private Button SavePositions;
         private Button Cancel;
+        private Button button1;
     }
 }
