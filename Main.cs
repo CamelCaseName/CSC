@@ -1825,21 +1825,22 @@ public partial class Main : Form
         }
         catch (Exception e)
         {
-            Debug.WriteLine(e.Message);
-            MessageBox.Show("It seems there are duplicate GUIDs in the story files. " +
-                "The CCSC will now try and resolve that, but it will take a while and then save the new GUIDs back");
-            Cursor = Cursors.WaitCursor;
-            NodeLinker.InterlinkBetweenFiles(nodes, true);
-            ExportAllFiles();
-            if (!TryLoadOldPositions())
-            {
-                if (isFirstLoad)
-                {
-                    SetupStartPositions();
-                }
-                SavePositions();
-            }
-            Cursor = Cursors.Default;
+            //TODO
+            //Debug.WriteLine(e.Message);
+            //MessageBox.Show("It seems there are duplicate GUIDs in the story files. " +
+            //    "The CCSC will now try and resolve that, but it will take a while and then save the new GUIDs back");
+            //Cursor = Cursors.WaitCursor;
+            //NodeLinker.InterlinkBetweenFiles(nodes, true);
+            //ExportAllFiles();
+            //if (!TryLoadOldPositions())
+            //{
+            //    if (isFirstLoad)
+            //    {
+            //        SetupStartPositions();
+            //    }
+            //    SavePositions();
+            //}
+            //Cursor = Cursors.Default;
         }
 
         NeedsSaving = false;
