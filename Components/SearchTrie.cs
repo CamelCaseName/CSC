@@ -1,4 +1,5 @@
 ﻿using CSC.Nodestuff;
+using System;
 using System.Diagnostics;
 using static CSC.StoryItems.StoryEnums;
 
@@ -15,6 +16,9 @@ namespace CSC.Components
         private static readonly SearchTreeLevel ContainsTree = [];
         private static int nodecounter = 0;
         private static bool BuiltTree = false;
+        private static bool doFuzzy = true;
+        private static readonly Range[] ranges = new Range[20];
+
         public static bool Initialized => BuiltTree;
 
         static SearchTrie()
@@ -56,8 +60,14 @@ namespace CSC.Components
                     //todo somehow parallelize?
                     for (int ni = 0; ni < nodes.Count; ni++)
                     {
-                        //todo check whether to lower or not here
+                        //add both case sensitive and not here, can seperate during search later
                         var nodeText = nodes[ni].Text.ToLower().AsSpan();
+                        if (nodeText.Length > 0)
+                        {
+                            AddToTree(store, nodes[ni], nodeText);
+                        }
+
+                        nodeText = nodes[ni].Text.AsSpan();
                         if (nodeText.Length > 0)
                         {
                             AddToTree(store, nodes[ni], nodeText);
@@ -140,17 +150,101 @@ namespace CSC.Components
 
             if (searchValue.Length > 0)
             {
+                //cannot be with case! mustbe case insensetive if fuzzing
+                if (!doFuzzy)
+                {
+                    SearchImpl(searchValue, ref results);
+                    return results;
+                }
+                else
+                {
+                    //split value fuzzing
+                    int count = searchValue.Split(ranges, ' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                    for (int x = 0; x < count; x++)
+                    {
+                        SearchImpl(searchValue[ranges[x]], ref results);
+
+                        var range = searchValue[ranges[x]];
+
+                        //character duplication typo fuzzing
+                        char[] chars = range.ToArray();
+                        int length = range.Length;
+                        for (int i = 1; i < length; i++)
+                        {
+                            range.CopyTo(chars);
+
+                            for (int j = i; j < length - 1; j++)
+                            {
+                                chars[j] = chars[j + 1];
+                            }
+                            chars[^1] = '\0';
+
+                            SearchImpl(chars.AsSpan()[..^1], ref results);
+                        }
+
+                        //typo fuzzing
+                        for (int i = 0; i < length; i++)
+                        {
+                            foreach (char replacement in GetTypoLetters(range[i]))
+                            {
+                                range.CopyTo(chars);
+
+                                chars[i] = replacement;
+
+                                SearchImpl(chars, ref results);
+                            }
+                        }
+                    }
+                    return results;
+                }
+            }
+            return results;
+
+            static void SearchImpl(ReadOnlySpan<char> searchValue, ref HashSet<Node> results)
+            {
                 //startswith search
-                StartsWith(searchValue, results);
+                StartsWith(searchValue, ref results);
 
                 //contains search
-                Contains(searchValue, results);
+                Contains(searchValue, ref results);
             }
-
-            return results;
         }
 
-        private static void Contains(ReadOnlySpan<char> searchValue, HashSet<Node> results)
+        private static IEnumerable<char> GetTypoLetters(char v)
+        {
+            return v switch
+            {
+                'q' => ['a', 'w'],
+                'w' => ['q', 'w', 'e'],
+                'e' => ['s', 'w', 'r', 'd'],
+                'r' => ['e', 'f', 't'],
+                't' => ['r', 'g', 'y'],
+                'y' => ['t', 'h', 'u'],
+                'u' => ['y', 'j', 'i'],
+                'i' => ['u', 'k', 'o'],
+                'o' => ['i', 'l', 'p'],
+                'p' => ['o', 'l'],
+                'a' => ['q', 's', 'y'],
+                's' => ['w', 'a', 'x', 'd'],
+                'd' => ['s', 'e', 'c', 'f', 'x'],
+                'f' => ['d', 'r', 'c', 'g', 'c'],
+                'g' => ['f', 't', 'b', 'h', 'v'],
+                'h' => ['g', 'z', 'n', 'j', 'b'],
+                'j' => ['h', 'u', 'm', 'n', 'k'],
+                'k' => ['j', 'm', 'i', 'l'],
+                'l' => ['o', 'k'],
+                'z' => [' ', 'a', 's', 'x'],
+                'x' => [' ', 'z', 's', 'd', 'c'],
+                'c' => [' ', 'x', 'd', 'f', 'v'],
+                'v' => [' ', 'c', 'f', 'g', 'b'],
+                'b' => [' ', 'v', 'h', 'g', 'n'],
+                'n' => [' ', 'b', 'h', 'j', 'm'],
+                'm' => [' ', 'n', 'j', 'k'],
+                _ => [],
+            };
+        }
+
+        private static void Contains(ReadOnlySpan<char> searchValue, ref HashSet<Node> results)
         {
             if (!Initialized)
             {
@@ -168,7 +262,7 @@ namespace CSC.Components
                 }
                 else
                 {
-                    break;
+                    return;
                 }
             }
 
@@ -195,7 +289,7 @@ namespace CSC.Components
             }
         }
 
-        private static void StartsWith(ReadOnlySpan<char> searchValue, HashSet<Node> results)
+        private static void StartsWith(ReadOnlySpan<char> searchValue, ref HashSet<Node> results)
         {
             if (!Initialized)
             {
@@ -211,7 +305,7 @@ namespace CSC.Components
                 }
                 else
                 {
-                    break;
+                    return;
                 }
             }
 

@@ -24,13 +24,13 @@ public partial class Main : Form
     private float StartPanOffsetX = 0f;
     private float StartPanOffsetY = 0f;
     private Font scaledFont = new(DefaultFont.FontFamily, 8f);
-    private Node clickedNode;
+    private Node selectedNode;
     private Node highlightNode;
     private Node movedNode;
     private Node nodeToLinkFrom;
-    private readonly Dictionary<string, float> OffsetX = [];
-    private readonly Dictionary<string, float> OffsetY = [];
-    private readonly Dictionary<string, float> Scaling = [];
+    private static readonly Dictionary<string, float> OffsetX = [];
+    private static readonly Dictionary<string, float> OffsetY = [];
+    private static readonly Dictionary<string, float> Scaling = [];
     private readonly HatchBrush InterlinkedNodeBrush;
     private readonly int scaleX = (int)(NodeSizeX * 1.5f);
     private readonly int scaleY = (int)(NodeSizeY * 1.5f);
@@ -104,7 +104,7 @@ public partial class Main : Form
     private readonly SolidBrush darkvalueNodeBrush;
     private readonly SolidBrush SelectionFill;
     private readonly Pen SelectionEdge;
-    private SearchDialog searchWindow;
+    private SearchDialog searchWindow = null!;
     private RectangleF adjustedMouseClipBounds;
     private SizeF OffsetFromDragClick = SizeF.Empty;
     private readonly List<SizeF> SelectedNodeOffsets = [];
@@ -131,6 +131,8 @@ public partial class Main : Form
     public const string HousePartyVersion = "1.4.2";
     private bool isFirstLoad = true;
     private static bool needsSaving;
+
+    private static Main Instance { get; set; } = null!;
 
     public static string StoryName { get; private set; } = NoCharacter;
 
@@ -165,6 +167,7 @@ public partial class Main : Form
     public int RightClickFrameCounter { get; private set; } = 0;
 
     public int LeftClickFrameCounter { get; private set; } = 0;
+
     public static bool NeedsSaving { get => needsSaving; set => needsSaving = value; }
 
     //todo when adding an event to another somethign and the event is already part of another node we need to clone the event, sadly we cannot use the exact same event object in multiple places :(
@@ -179,6 +182,7 @@ public partial class Main : Form
 
     public Main()
     {
+        Instance = this;
         InitializeComponent();
         StoryTree.ExpandAll();
         Application.AddMessageFilter(new MouseMessageFilter());
@@ -289,7 +293,7 @@ public partial class Main : Form
         OffsetX.Add(Player, 0);
         OffsetY.Add(Player, 0);
 
-        clickedNode = Node.NullNode;
+        selectedNode = Node.NullNode;
         highlightNode = Node.NullNode;
         movedNode = Node.NullNode;
         nodeToLinkFrom = Node.NullNode;
@@ -380,7 +384,7 @@ public partial class Main : Form
             Graph.Focus();
             Graph.Invalidate();
 
-            if (clickedNode == Node.NullNode && PropertyInspector.Controls.Count > 1)
+            if (selectedNode == Node.NullNode && PropertyInspector.Controls.Count > 1)
             {
                 PropertyInspector.Controls.Clear();
             }
@@ -408,9 +412,9 @@ public partial class Main : Form
         {
             removedNode = highlightNode;
         }
-        else if (clickedNode != Node.NullNode)
+        else if (selectedNode != Node.NullNode)
         {
-            removedNode = clickedNode;
+            removedNode = selectedNode;
         }
 
         if (removedNode == Node.NullNode)
@@ -432,9 +436,9 @@ public partial class Main : Form
             {
                 nodeToLinkFrom = Node.NullNode;
             }
-            if (clickedNode == removedNode)
+            if (selectedNode == removedNode)
             {
-                clickedNode = Node.NullNode;
+                selectedNode = Node.NullNode;
             }
             if (highlightNode == removedNode)
             {
@@ -491,9 +495,9 @@ public partial class Main : Form
     {
         if (SelectedCharacter == Player)
         {
-            if (clickedNode != Node.NullNode)
+            if (selectedNode != Node.NullNode)
             {
-                switch (clickedNode.Type)
+                switch (selectedNode.Type)
                 {
                     //itemaction uswith criterialist event eventtrigger alternatetext
                     //response dialogue bgc item itemgroup
@@ -557,9 +561,9 @@ public partial class Main : Form
         }
         else
         {
-            if (clickedNode != Node.NullNode)
+            if (selectedNode != Node.NullNode)
             {
-                switch (clickedNode.Type)
+                switch (selectedNode.Type)
                 {
                     //itemaction uswith criterialist event eventtrigger alternatetext
                     //response dialogue bgc item itemgroup
@@ -1037,20 +1041,22 @@ public partial class Main : Form
                     }
                 }
                 SelectedCharacter = node.FileName;
-                CenterOnNode(node);
+                CenterAndSelectNode(node);
             }
         }
     }
 
-    private void CenterOnNode(Node node, float newScale = 1.5f)
+    public static void CenterAndSelectNode(Node node, float newScale = 1.5f)
     {
         Scaling[SelectedCharacter] = newScale;
-        var clipWidth = Graph.Size.Width / Scaling[SelectedCharacter];
-        var clipHeight = Graph.Size.Height / Scaling[SelectedCharacter];
+        var clipWidth = Instance.Graph.Size.Width / Scaling[SelectedCharacter];
+        var clipHeight = Instance.Graph.Size.Height / Scaling[SelectedCharacter];
         float x = node.Position.X - (clipWidth / 2) + (node.Size.Width / 2);
         float y = node.Position.Y - (clipHeight / 2) + (node.Size.Height / 2);
         OffsetX[SelectedCharacter] = x;
         OffsetY[SelectedCharacter] = y;
+        Instance.selectedNode = node;
+        Instance.Graph.Invalidate();
     }
 
     public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
@@ -1431,7 +1437,7 @@ public partial class Main : Form
             g.DrawEllipse(circlePen, leftRect);
             g.DrawEllipse(circlePen, rightRect);
         }
-        if (node == clickedNode)
+        if (node == selectedNode)
         {
             lightText = true;
             if (node.FileName != SelectedCharacter)
@@ -1479,7 +1485,7 @@ public partial class Main : Form
         rightRect = new RectangleF(node.Position + new SizeF(node.Size.Width - CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
         if (node.FileName != SelectedCharacter)
         {
-            if (node == clickedNode)
+            if (node == selectedNode)
             {
                 leftRect.Location -= new SizeF(25 / 2, 0);
                 rightRect.Location += new SizeF(25 / 2, 0);
@@ -1490,7 +1496,7 @@ public partial class Main : Form
                 rightRect.Location += new SizeF(15 / 2, 0);
             }
         }
-        else if (node == clickedNode)
+        else if (node == selectedNode)
         {
             leftRect.Location -= new SizeF(15 / 2, 0);
             rightRect.Location += new SizeF(15 / 2, 0);
@@ -1695,28 +1701,28 @@ public partial class Main : Form
             }
         }
 
-        if (clickedNode != Node.NullNode)
+        if (selectedNode != Node.NullNode)
         {
-            var family = nodes[SelectedCharacter][clickedNode];
+            var family = nodes[SelectedCharacter][selectedNode];
             if (family.Childs.Count > 0)
             {
                 foreach (var item in family.Childs)
                 {
-                    DrawEdge(g, clickedNode, item, clickedLinePen);
+                    DrawEdge(g, selectedNode, item, clickedLinePen);
                 }
             }
             if (family.Parents.Count > 0)
             {
                 foreach (var item in family.Parents)
                 {
-                    DrawEdge(g, item, clickedNode, clickedLinePen);
+                    DrawEdge(g, item, selectedNode, clickedLinePen);
                 }
             }
 
             foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
             {
                 //c++;
-                bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || clickedNode == node;
+                bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || selectedNode == node;
                 DrawNode(g, node, GetNodeColor(node.Type, light), light);
             }
         }
@@ -1894,7 +1900,7 @@ public partial class Main : Form
                 SetStartPositionsForNodesInList(10, 0, nodes[fileStore], notSet, false);
                 hadNodesNewlySet = true;
             }
-            CenterOnNode(nodes[fileStore].Nodes.First(), 0.8f);
+            CenterAndSelectNode(nodes[fileStore].Nodes.First(), 0.8f);
         }
 
         SelectedCharacter = lastCharacter;
@@ -2067,7 +2073,7 @@ public partial class Main : Form
             //no idea why we have to clear it or where the wrong ones come from....
             SetStartPositionsForNodesInList(100, 1, nodeStore, nodeList);
 
-            CenterOnNode(nodes[store].Nodes.First(), 0.8f);
+            CenterAndSelectNode(nodes[store].Nodes.First(), 0.8f);
         }
     }
 
@@ -2332,7 +2338,7 @@ public partial class Main : Form
                 ShowProperties(node);
                 ClearOverlayBitmap();
             }
-            else if (clickedNode != node)
+            else if (selectedNode != node)
             {
                 ShowProperties(node);
             }
@@ -2363,7 +2369,7 @@ public partial class Main : Form
             }
         }
 
-        clickedNode = node;
+        selectedNode = node;
         return node;
     }
 
@@ -2376,7 +2382,7 @@ public partial class Main : Form
 
         var list = GetSpawnableNodeTypes();
 
-        if (clickedNode != Node.NullNode)
+        if (selectedNode != Node.NullNode)
         {
             NodeContext.Items.Add(SortConnectedMenu);
             NodeContext.Items.Add(PullChildsMenu);
@@ -5294,9 +5300,9 @@ public partial class Main : Form
     {
         string character = SelectedCharacter;
 
-        if (clickedNode != Node.NullNode)
+        if (selectedNode != Node.NullNode)
         {
-            character = clickedNode.FileName;
+            character = selectedNode.FileName;
         }
 
         return character;
@@ -5310,7 +5316,7 @@ public partial class Main : Form
             return;
         }
 
-        if (clickedNode == Node.NullNode)
+        if (selectedNode == Node.NullNode)
         {
             PointF ScreenPos;
             if (oldPoint is null)
@@ -5333,11 +5339,11 @@ public partial class Main : Form
         }
         else
         {
-            ShoveNodesToRight(newNode, clickedNode.Position + new Size(scaleX, 0));
-            newNode.Position = clickedNode.Position + new Size(scaleX, 0);
+            ShoveNodesToRight(newNode, selectedNode.Position + new Size(scaleX, 0));
+            newNode.Position = selectedNode.Position + new Size(scaleX, 0);
         }
 
-        clickedNode = newNode;
+        selectedNode = newNode;
         ShowProperties(newNode);
 
         Graph.Invalidate();
@@ -5355,9 +5361,9 @@ public partial class Main : Form
                 newNode = Node.CreateCriteriaNode(new() { Character = character }, character, nodes[SelectedCharacter]);
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5371,9 +5377,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5387,9 +5393,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5402,9 +5408,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5417,9 +5423,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5433,9 +5439,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5450,9 +5456,9 @@ public partial class Main : Form
                 nodes[character].Add(newNode);
                 Stories[character].Dialogues!.Add(newNode.Data<Dialogue>()!);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
 
                 break;
@@ -5467,9 +5473,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5483,9 +5489,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5499,9 +5505,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5515,9 +5521,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5531,9 +5537,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5547,9 +5553,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5563,9 +5569,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5573,9 +5579,9 @@ public partial class Main : Form
             {
                 string id = Guid.NewGuid().ToString();
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    if (clickedNode.Type == NodeType.Quest && clickedNode.DataType == typeof(MissingReferenceInfo))
+                    if (selectedNode.Type == NodeType.Quest && selectedNode.DataType == typeof(MissingReferenceInfo))
                     {
                         newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
                         {
@@ -5583,15 +5589,15 @@ public partial class Main : Form
                             FileName = character,
                         };
                     }
-                    else if (clickedNode.Type == NodeType.Quest && clickedNode.DataType == typeof(Quest))
+                    else if (selectedNode.Type == NodeType.Quest && selectedNode.DataType == typeof(Quest))
                     {
                         newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
                         {
-                            RawData = new ExtendedDetail() { Value = clickedNode.Data<Quest>()!.ExtendedDetails!.Count },
+                            RawData = new ExtendedDetail() { Value = selectedNode.Data<Quest>()!.ExtendedDetails!.Count },
                             FileName = character,
                         };
 
-                        clickedNode.Data<Quest>()!.ExtendedDetails.Add(newNode.Data<ExtendedDetail>()!);
+                        selectedNode.Data<Quest>()!.ExtendedDetails.Add(newNode.Data<ExtendedDetail>()!);
                     }
                 }
                 else
@@ -5605,9 +5611,9 @@ public partial class Main : Form
 
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
 
                 if (newNode.Data<Quest>() is not null)
@@ -5633,9 +5639,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5649,9 +5655,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 if (character == Player)
                 {
@@ -5674,9 +5680,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (clickedNode != Node.NullNode)
+                if (selectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], clickedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
                 }
                 break;
             }
@@ -5692,33 +5698,33 @@ public partial class Main : Form
     private void PullChildsClose(object sender, EventArgs e)
     {
         //clickednode is set when this is called
-        var childs = nodes[SelectedCharacter].Childs(clickedNode);
+        var childs = nodes[SelectedCharacter].Childs(selectedNode);
 
         for (int i = 0; i < childs.Count; i++)
         {
-            var newPos = clickedNode.Position + new SizeF(scaleX, (i - (childs.Count / 2)) * scaleY);
+            var newPos = selectedNode.Position + new SizeF(scaleX, (i - (childs.Count / 2)) * scaleY);
             ShoveNodesToRight(childs[i], newPos);
 
             childs[i].Position = newPos;
         }
 
-        CenterOnNode(clickedNode, 0.3f);
+        CenterAndSelectNode(selectedNode, 0.3f);
         Graph.Invalidate();
     }
 
     private void PullParentsClose(object sender, EventArgs e)
     {
         //clickednode is set when this is called
-        var parents = nodes[SelectedCharacter].Parents(clickedNode);
+        var parents = nodes[SelectedCharacter].Parents(selectedNode);
 
         for (int i = 0; i < parents.Count; i++)
         {
-            var newPos = clickedNode.Position - new SizeF(scaleX, (i - (parents.Count / 2)) * scaleY);
+            var newPos = selectedNode.Position - new SizeF(scaleX, (i - (parents.Count / 2)) * scaleY);
             ShoveNodesToLeft(parents[i], newPos);
             parents[i].Position = newPos;
         }
 
-        CenterOnNode(clickedNode, 0.3f);
+        CenterAndSelectNode(selectedNode, 0.3f);
         Graph.Invalidate();
     }
 
@@ -5766,21 +5772,21 @@ public partial class Main : Form
 
     private void SortConnected(object sender, EventArgs e)
     {
-        if (clickedNode == Node.NullNode)
+        if (selectedNode == Node.NullNode)
         {
             return;
         }
         //clickednode is set when this is called
         visited.Clear();
-        var intX = (int)(clickedNode.Position.X / scaleX);
-        var intY = (int)(clickedNode.Position.Y / scaleY);
+        var intX = (int)(selectedNode.Position.X / scaleX);
+        var intY = (int)(selectedNode.Position.Y / scaleY);
         maxYperX.ExtendToIndex(intX, intY);
 
         for (int i = 0; i < maxYperX.Count; i++)
         {
             maxYperX[i] = intY;
         }
-        SetStartPosForConnected(intX, nodes[SelectedCharacter], clickedNode);
+        SetStartPosForConnected(intX, nodes[SelectedCharacter], selectedNode);
 
         Graph.Invalidate();
     }

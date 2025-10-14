@@ -49,7 +49,10 @@ namespace CSC.Components
                 {
                     break;
                 }
-                var treen = new TreeNode($"{result.FileName} | {result.Type} |ID: {result.ID} | Content:({result.Text})");
+                var treen = new TreeNode($"{result.FileName} | {result.Type} |ID: {result.ID} | Content:({result.Text})")
+                {
+                    Tag = result
+                };
                 foreach (var file in result.DupedFileNames)
                 {
                     treen.Nodes.Add("Also used in: " + file);
@@ -77,7 +80,25 @@ namespace CSC.Components
 
         private void Results_AfterSelect(object sender, TreeViewEventArgs e)
         {
-
+            TreeNode sNode = resultsTree.SelectedNode;
+            //is node, not a filename
+            if (sNode.Text.Contains('|'))
+            {
+                if (sNode.Tag is Node n)
+                {
+                    Main.SelectedCharacter = n.FileName;
+                    Main.CenterAndSelectNode(n);
+                }
+            }
+            else
+            {
+                if (sNode.Parent.Text.Contains('|')
+                    && sNode.Parent.Tag is Node n)
+                {
+                    Main.SelectedCharacter = sNode.Text.Split(':')[1].Trim();
+                    Main.CenterAndSelectNode(n);
+                }
+            }
         }
     }
 }

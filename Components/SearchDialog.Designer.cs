@@ -28,13 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            TreeNode treeNode1 = new TreeNode("Node0");
-            TreeNode treeNode2 = new TreeNode("Node1");
-            TreeNode treeNode3 = new TreeNode("Node2");
-            TreeNode treeNode4 = new TreeNode("Node4");
-            TreeNode treeNode5 = new TreeNode("Node5");
-            TreeNode treeNode6 = new TreeNode("Node6");
-            TreeNode treeNode7 = new TreeNode("Node3", new TreeNode[] { treeNode4, treeNode5, treeNode6 });
             tableLayoutPanel1 = new TableLayoutPanel();
             panel2 = new Panel();
             label2 = new Label();
@@ -171,21 +164,6 @@
             resultsTree.HideSelection = false;
             resultsTree.Location = new Point(3, 157);
             resultsTree.Name = "resultsTree";
-            treeNode1.Name = "Node0";
-            treeNode1.Text = "Node0";
-            treeNode2.Name = "Node1";
-            treeNode2.Text = "Node1";
-            treeNode3.Name = "Node2";
-            treeNode3.Text = "Node2";
-            treeNode4.Name = "Node4";
-            treeNode4.Text = "Node4";
-            treeNode5.Name = "Node5";
-            treeNode5.Text = "Node5";
-            treeNode6.Name = "Node6";
-            treeNode6.Text = "Node6";
-            treeNode7.Name = "Node3";
-            treeNode7.Text = "Node3";
-            resultsTree.Nodes.AddRange(new TreeNode[] { treeNode1, treeNode2, treeNode3, treeNode7 });
             resultsTree.Size = new Size(716, 210);
             resultsTree.TabIndex = 5;
             resultsTree.AfterSelect += Results_AfterSelect;
