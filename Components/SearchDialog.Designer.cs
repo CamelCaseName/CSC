@@ -28,26 +28,33 @@
         /// </summary>
         private void InitializeComponent()
         {
+            TreeNode treeNode1 = new TreeNode("Node0");
+            TreeNode treeNode2 = new TreeNode("Node1");
+            TreeNode treeNode3 = new TreeNode("Node2");
+            TreeNode treeNode4 = new TreeNode("Node4");
+            TreeNode treeNode5 = new TreeNode("Node5");
+            TreeNode treeNode6 = new TreeNode("Node6");
+            TreeNode treeNode7 = new TreeNode("Node3", new TreeNode[] { treeNode4, treeNode5, treeNode6 });
             tableLayoutPanel1 = new TableLayoutPanel();
-            panel4 = new Panel();
-            label5 = new Label();
-            modifiers = new ComboBox();
             panel2 = new Panel();
             label2 = new Label();
             datatype = new ComboBox();
             panel1 = new Panel();
             label1 = new Label();
             nodetype = new ComboBox();
-            casesensitivity = new CheckBox();
-            results = new TreeView();
+            resultsTree = new TreeView();
             label4 = new Label();
+            panel4 = new Panel();
+            label5 = new Label();
+            modifiers = new ComboBox();
+            casesensitivity = new CheckBox();
             panel3 = new Panel();
             searchterm = new TextBox();
             label3 = new Label();
             tableLayoutPanel1.SuspendLayout();
-            panel4.SuspendLayout();
             panel2.SuspendLayout();
             panel1.SuspendLayout();
+            panel4.SuspendLayout();
             panel3.SuspendLayout();
             SuspendLayout();
             // 
@@ -61,7 +68,7 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Controls.Add(panel2, 1, 0);
             tableLayoutPanel1.Controls.Add(panel1, 0, 0);
-            tableLayoutPanel1.Controls.Add(results, 0, 3);
+            tableLayoutPanel1.Controls.Add(resultsTree, 0, 3);
             tableLayoutPanel1.Controls.Add(label4, 0, 2);
             tableLayoutPanel1.Controls.Add(panel4, 3, 0);
             tableLayoutPanel1.Controls.Add(casesensitivity, 2, 0);
@@ -77,6 +84,124 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Size = new Size(722, 370);
             tableLayoutPanel1.TabIndex = 0;
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.FromArgb(40, 40, 40);
+            panel2.Controls.Add(label2);
+            panel2.Controls.Add(datatype);
+            panel2.Dock = DockStyle.Fill;
+            panel2.ForeColor = Color.White;
+            panel2.Location = new Point(145, 3);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(189, 52);
+            panel2.TabIndex = 2;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.BackColor = Color.FromArgb(40, 40, 40);
+            label2.ForeColor = Color.White;
+            label2.Location = new Point(3, 6);
+            label2.Name = "label2";
+            label2.Size = new Size(58, 15);
+            label2.TabIndex = 2;
+            label2.Text = "Data Type";
+            // 
+            // datatype
+            // 
+            datatype.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            datatype.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            datatype.AutoCompleteSource = AutoCompleteSource.ListItems;
+            datatype.BackColor = Color.FromArgb(64, 64, 64);
+            datatype.DropDownStyle = ComboBoxStyle.DropDownList;
+            datatype.ForeColor = Color.Black;
+            datatype.FormattingEnabled = true;
+            datatype.Location = new Point(3, 24);
+            datatype.Name = "datatype";
+            datatype.Size = new Size(183, 23);
+            datatype.TabIndex = 0;
+            datatype.SelectedIndexChanged += Datatype_SelectedIndexChanged;
+            // 
+            // panel1
+            // 
+            panel1.BackColor = Color.FromArgb(40, 40, 40);
+            panel1.Controls.Add(label1);
+            panel1.Controls.Add(nodetype);
+            panel1.Dock = DockStyle.Fill;
+            panel1.ForeColor = Color.White;
+            panel1.Location = new Point(3, 3);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(136, 52);
+            panel1.TabIndex = 1;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.BackColor = Color.FromArgb(40, 40, 40);
+            label1.ForeColor = Color.White;
+            label1.Location = new Point(9, 6);
+            label1.Name = "label1";
+            label1.Size = new Size(63, 15);
+            label1.TabIndex = 1;
+            label1.Text = "Node Type";
+            // 
+            // nodetype
+            // 
+            nodetype.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            nodetype.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            nodetype.AutoCompleteSource = AutoCompleteSource.ListItems;
+            nodetype.BackColor = Color.FromArgb(64, 64, 64);
+            nodetype.DropDownStyle = ComboBoxStyle.DropDownList;
+            nodetype.ForeColor = Color.Black;
+            nodetype.FormattingEnabled = true;
+            nodetype.Location = new Point(3, 24);
+            nodetype.Name = "nodetype";
+            nodetype.Size = new Size(130, 23);
+            nodetype.TabIndex = 0;
+            nodetype.SelectedIndexChanged += Nodetype_SelectedIndexChanged;
+            // 
+            // resultsTree
+            // 
+            resultsTree.BackColor = Color.FromArgb(40, 40, 40);
+            tableLayoutPanel1.SetColumnSpan(resultsTree, 4);
+            resultsTree.Dock = DockStyle.Fill;
+            resultsTree.ForeColor = Color.White;
+            resultsTree.FullRowSelect = true;
+            resultsTree.HideSelection = false;
+            resultsTree.Location = new Point(3, 157);
+            resultsTree.Name = "resultsTree";
+            treeNode1.Name = "Node0";
+            treeNode1.Text = "Node0";
+            treeNode2.Name = "Node1";
+            treeNode2.Text = "Node1";
+            treeNode3.Name = "Node2";
+            treeNode3.Text = "Node2";
+            treeNode4.Name = "Node4";
+            treeNode4.Text = "Node4";
+            treeNode5.Name = "Node5";
+            treeNode5.Text = "Node5";
+            treeNode6.Name = "Node6";
+            treeNode6.Text = "Node6";
+            treeNode7.Name = "Node3";
+            treeNode7.Text = "Node3";
+            resultsTree.Nodes.AddRange(new TreeNode[] { treeNode1, treeNode2, treeNode3, treeNode7 });
+            resultsTree.Size = new Size(716, 210);
+            resultsTree.TabIndex = 5;
+            resultsTree.AfterSelect += Results_AfterSelect;
+            // 
+            // label4
+            // 
+            label4.BackColor = Color.FromArgb(40, 40, 40);
+            tableLayoutPanel1.SetColumnSpan(label4, 4);
+            label4.Dock = DockStyle.Fill;
+            label4.ForeColor = Color.White;
+            label4.Location = new Point(3, 138);
+            label4.Name = "label4";
+            label4.Size = new Size(716, 16);
+            label4.TabIndex = 6;
+            label4.Text = "Results:";
+            label4.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // panel4
             // 
@@ -115,83 +240,7 @@
             modifiers.Name = "modifiers";
             modifiers.Size = new Size(293, 23);
             modifiers.TabIndex = 0;
-            modifiers.SelectedIndexChanged += modifiers_SelectedIndexChanged;
-            // 
-            // panel2
-            // 
-            panel2.BackColor = Color.FromArgb(40, 40, 40);
-            panel2.Controls.Add(label2);
-            panel2.Controls.Add(datatype);
-            panel2.Dock = DockStyle.Fill;
-            panel2.ForeColor = Color.White;
-            panel2.Location = new Point(145, 3);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(189, 52);
-            panel2.TabIndex = 2;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.BackColor = Color.FromArgb(40, 40, 40);
-            label2.ForeColor = Color.White;
-            label2.Location = new Point(3, 6);
-            label2.Name = "label2";
-            label2.Size = new Size(58, 15);
-            label2.TabIndex = 2;
-            label2.Text = "Data Type";
-            // 
-            // datatype
-            // 
-            datatype.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            datatype.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            datatype.AutoCompleteSource = AutoCompleteSource.ListItems;
-            datatype.BackColor = Color.FromArgb(64, 64, 64);
-            datatype.DropDownStyle = ComboBoxStyle.DropDownList;
-            datatype.ForeColor = Color.Black;
-            datatype.FormattingEnabled = true;
-            datatype.Location = new Point(3, 24);
-            datatype.Name = "datatype";
-            datatype.Size = new Size(183, 23);
-            datatype.TabIndex = 0;
-            datatype.SelectedIndexChanged += datatype_SelectedIndexChanged;
-            // 
-            // panel1
-            // 
-            panel1.BackColor = Color.FromArgb(40, 40, 40);
-            panel1.Controls.Add(label1);
-            panel1.Controls.Add(nodetype);
-            panel1.Dock = DockStyle.Fill;
-            panel1.ForeColor = Color.White;
-            panel1.Location = new Point(3, 3);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(136, 52);
-            panel1.TabIndex = 1;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.BackColor = Color.FromArgb(40, 40, 40);
-            label1.ForeColor = Color.White;
-            label1.Location = new Point(9, 6);
-            label1.Name = "label1";
-            label1.Size = new Size(63, 15);
-            label1.TabIndex = 1;
-            label1.Text = "Node Type";
-            // 
-            // nodetype
-            // 
-            nodetype.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            nodetype.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            nodetype.AutoCompleteSource = AutoCompleteSource.ListItems;
-            nodetype.BackColor = Color.FromArgb(64, 64, 64);
-            nodetype.DropDownStyle = ComboBoxStyle.DropDownList;
-            nodetype.ForeColor = Color.Black;
-            nodetype.FormattingEnabled = true;
-            nodetype.Location = new Point(3, 24);
-            nodetype.Name = "nodetype";
-            nodetype.Size = new Size(130, 23);
-            nodetype.TabIndex = 0;
-            nodetype.SelectedIndexChanged += nodetype_SelectedIndexChanged;
+            modifiers.SelectedIndexChanged += Modifiers_SelectedIndexChanged;
             // 
             // casesensitivity
             // 
@@ -207,32 +256,7 @@
             casesensitivity.Text = "Case sensitive";
             casesensitivity.TextAlign = ContentAlignment.MiddleRight;
             casesensitivity.UseVisualStyleBackColor = false;
-            casesensitivity.CheckedChanged += casesensitivity_CheckedChanged;
-            // 
-            // results
-            // 
-            results.BackColor = Color.FromArgb(40, 40, 40);
-            tableLayoutPanel1.SetColumnSpan(results, 4);
-            results.Dock = DockStyle.Fill;
-            results.ForeColor = Color.White;
-            results.Location = new Point(3, 157);
-            results.Name = "results";
-            results.Size = new Size(716, 210);
-            results.TabIndex = 5;
-            results.AfterSelect += results_AfterSelect;
-            // 
-            // label4
-            // 
-            label4.BackColor = Color.FromArgb(40, 40, 40);
-            tableLayoutPanel1.SetColumnSpan(label4, 4);
-            label4.Dock = DockStyle.Fill;
-            label4.ForeColor = Color.White;
-            label4.Location = new Point(3, 138);
-            label4.Name = "label4";
-            label4.Size = new Size(716, 16);
-            label4.TabIndex = 6;
-            label4.Text = "Results:";
-            label4.TextAlign = ContentAlignment.MiddleLeft;
+            casesensitivity.CheckedChanged += Casesensitivity_CheckedChanged;
             // 
             // panel3
             // 
@@ -258,6 +282,7 @@
             searchterm.ScrollBars = ScrollBars.Both;
             searchterm.Size = new Size(710, 47);
             searchterm.TabIndex = 3;
+            searchterm.TextChanged += Searchterm_TextChanged;
             // 
             // label3
             // 
@@ -283,12 +308,12 @@
             Text = "Search:";
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();
-            panel4.ResumeLayout(false);
-            panel4.PerformLayout();
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            panel4.ResumeLayout(false);
+            panel4.PerformLayout();
             panel3.ResumeLayout(false);
             panel3.PerformLayout();
             ResumeLayout(false);
@@ -304,7 +329,7 @@
         private Label label1;
         private Label label2;
         private CheckBox casesensitivity;
-        private TreeView results;
+        private TreeView resultsTree;
         private Label label4;
         private Panel panel4;
         private Label label5;

@@ -14,6 +14,10 @@ namespace CSC.Components
                 {
                     return false;
                 }
+                if(Form.ActiveForm.GetType() != typeof(Main))
+                {
+                    return false;
+                }
 
                 var mousePosition = new Point(0,0);
                 MouseMove(null, new MouseEventArgs(MouseButtons.None, 0, mousePosition.X, mousePosition.Y, 0));

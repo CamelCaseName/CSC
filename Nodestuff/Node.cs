@@ -130,6 +130,7 @@ namespace CSC.Nodestuff
         public string StaticText;
         public NodeType Type;
         private readonly Dictionary<string, PointF> Positions = [];
+        private readonly List<string> dupedFileNames = [];
         private object? data = null;
         private Type dataType = typeof(MissingReferenceInfo);
 
@@ -693,9 +694,7 @@ namespace CSC.Nodestuff
                                     break;
                                 }
                             }
-                            {
-                                return StaticText;
-                            }
+                            goto case default;
                         }
                         catch (Exception ex)
                         {
@@ -972,9 +971,7 @@ namespace CSC.Nodestuff
                                 break;
                             }
                         }
-                        {
-                            return StaticText;
-                        }
+                        goto case default;
                     }
                     case NodeType.ItemGroup:
                     {
@@ -1049,6 +1046,8 @@ namespace CSC.Nodestuff
             }
         }
 
+        public IEnumerable<string> DupedFileNames { get => dupedFileNames; }
+
         public static Node CreateCriteriaNode(Criterion criterion, string filename, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
@@ -1111,6 +1110,12 @@ namespace CSC.Nodestuff
             if (!Positions.ContainsKey(filename))
             {
                 Positions[filename] = new();
+
+                if (origfilename != filename)
+                {
+                    dupedFileNames.Add(filename);
+                }
+
                 Main.SetNodePos(this, filename);
             }
         }

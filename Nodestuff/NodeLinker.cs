@@ -1076,7 +1076,7 @@ namespace CSC.Nodestuff
             //merge doors with items if applicable
             MergeDoors(store, true);
 
-            Debug.WriteLine($"completed for {Main.SelectedCharacter}/{store.Count} nodes in {(DateTime.UtcNow - start).Milliseconds}ms");
+            Debug.WriteLine($"completed for {Main.SelectedCharacter}/{store.Count} nodes in {(DateTime.UtcNow - start).TotalMilliseconds}ms");
 
             Main.SelectedCharacter = lastSelected;
         }
