@@ -21,6 +21,8 @@ namespace CSC.Components
 
         public static bool Initialized => BuiltTree;
 
+        public static int NodeCount => nodecounter;
+
         static SearchTrie()
         {
             List<string> files = [.. Enum.GetNames<Characters>().Cast<string>()];
@@ -41,11 +43,21 @@ namespace CSC.Components
 
         public static async void Initialize(Dictionary<string, NodeStore> stores)
         {
+            Reset();
+
+            foreach (var store in stores)
+            {
+                if (store.Key == Main.NoCharacter)
+                {
+                    continue;
+                }
+
+                nodecounter += store.Value.Nodes.Count;
+            }
+
             await Task.Factory.StartNew(() =>
             {
                 var start = DateTime.UtcNow;
-
-                Reset();
 
                 foreach (var store in stores)
                 {
@@ -55,7 +67,6 @@ namespace CSC.Components
                     }
 
                     List<Node> nodes = store.Value.Nodes;
-                    nodecounter += nodes.Count;
 
                     //todo somehow parallelize?
                     for (int ni = 0; ni < nodes.Count; ni++)
@@ -136,6 +147,8 @@ namespace CSC.Components
                     //reenable garbage collection to keep the GC happy and not get booted out of the small noGC region
                     GC.EndNoGCRegion();
                 }
+
+                Main.SetSearchWindowTitle("Search:");
             });
         }
 
@@ -215,14 +228,14 @@ namespace CSC.Components
             return v switch
             {
                 'q' => ['a', 'w'],
-                'w' => ['q', 'w', 'e'],
+                'w' => ['q', 'w', 'e', 'a'],
                 'e' => ['s', 'w', 'r', 'd'],
-                'r' => ['e', 'f', 't'],
-                't' => ['r', 'g', 'y'],
-                'y' => ['t', 'h', 'u'],
-                'u' => ['y', 'j', 'i'],
-                'i' => ['u', 'k', 'o'],
-                'o' => ['i', 'l', 'p'],
+                'r' => ['e', 'f', 't', 'd'],
+                't' => ['r', 'g', 'y', 'f'],
+                'y' => ['t', 'h', 'u', 'g'],
+                'u' => ['y', 'j', 'i', 'h'],
+                'i' => ['u', 'k', 'o', 'j'],
+                'o' => ['i', 'l', 'p', 'k'],
                 'p' => ['o', 'l'],
                 'a' => ['q', 's', 'y'],
                 's' => ['w', 'a', 'x', 'd'],
@@ -347,9 +360,6 @@ namespace CSC.Components
         }
     }
 
-    internal sealed class SearchTreeLevel : Dictionary<char, SearchTreeNode>
-    {
-        //internal SearchTreeLevel() : base(7) { }
-    }
+    internal sealed class SearchTreeLevel : Dictionary<char, SearchTreeNode> { }
 
 }

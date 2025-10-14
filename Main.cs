@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Text.Json;
+using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
@@ -1025,25 +1026,49 @@ public partial class Main : Form
         {
             if (node.FileName != SelectedCharacter)
             {
-                if (node.FileName == StoryName || node.FileName == Player || node.FileName == Anybody)
-                {
-                    StoryTree.SelectedNode = StoryTree.Nodes[0].FirstNode;
-                }
-                else
-                {
-                    foreach (TreeNode treeNode in StoryTree.Nodes[0].LastNode.Nodes)
-                    {
-                        if (treeNode.Text == node.FileName)
-                        {
-                            StoryTree.SelectedNode = treeNode;
-                            break;
-                        }
-                    }
-                }
+                SelectFile(node.FileName);
                 SelectedCharacter = node.FileName;
                 CenterAndSelectNode(node);
             }
         }
+    }
+
+    public static void SetSearchWindowTitle(string text)
+    {
+        if (Instance is not null && Instance.searchWindow is not null)
+        {
+            Instance.Invoke(() =>
+            {
+                Instance.searchWindow.Text = text;
+                Instance.searchWindow.Cursor = Cursors.Default;
+            });
+        }
+    }
+
+    public static void SelectFile(string file)
+    {
+        if (Instance is null)
+        {
+            return;
+        }
+        Instance.Invoke(() =>
+        {
+            if (file == StoryName || file == Player || file == Anybody)
+            {
+                Instance.StoryTree.SelectedNode = Instance.StoryTree.Nodes[0].FirstNode;
+            }
+            else
+            {
+                foreach (TreeNode treeNode in Instance.StoryTree.Nodes[0].LastNode.Nodes)
+                {
+                    if (treeNode.Text == file)
+                    {
+                        Instance.StoryTree.SelectedNode = treeNode;
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     public static void CenterAndSelectNode(Node node, float newScale = 1.5f)
@@ -1057,6 +1082,7 @@ public partial class Main : Form
         OffsetY[SelectedCharacter] = y;
         Instance.selectedNode = node;
         Instance.Graph.Invalidate();
+        Instance.ShowProperties(node);
     }
 
     public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)

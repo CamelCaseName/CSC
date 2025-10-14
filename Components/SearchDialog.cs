@@ -14,7 +14,9 @@ namespace CSC.Components
 
             if (!SearchTrie.Initialized)
             {
+                Cursor = Cursors.WaitCursor;
                 SearchTrie.Initialize(stores);
+                Text = $"Building Search index, estimated wait time is {SearchTrie.NodeCount / 7000}s";
             }
         }
 
@@ -45,6 +47,7 @@ namespace CSC.Components
             foreach (var result in results)
             {
                 SearchMax++;
+                //todo setting and toggle for limit
                 if (SearchMax > 500)
                 {
                     break;
@@ -86,7 +89,7 @@ namespace CSC.Components
             {
                 if (sNode.Tag is Node n)
                 {
-                    Main.SelectedCharacter = n.FileName;
+                    Main.SelectFile(n.FileName);
                     Main.CenterAndSelectNode(n);
                 }
             }
@@ -95,7 +98,7 @@ namespace CSC.Components
                 if (sNode.Parent.Text.Contains('|')
                     && sNode.Parent.Tag is Node n)
                 {
-                    Main.SelectedCharacter = sNode.Text.Split(':')[1].Trim();
+                    Main.SelectFile(sNode.Text.Split(':')[1].Trim());
                     Main.CenterAndSelectNode(n);
                 }
             }
