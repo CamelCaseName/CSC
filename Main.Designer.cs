@@ -53,6 +53,8 @@ namespace CSC
             SortSelectedMenu = new ToolStripMenuItem();
             SortSelectedConnectedMenu = new ToolStripMenuItem();
             Seperator1 = new ToolStripSeparator();
+            Seperator2 = new ToolStripSeparator();
+            Seperator3 = new ToolStripSeparator();
             toolStripButton1 = new ToolStripButton();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
@@ -283,6 +285,16 @@ namespace CSC
             Seperator1.Name = "Seperator1";
             Seperator1.Size = new Size(152, 6);
             // 
+            // Seperator2
+            // 
+            Seperator2.Name = "Seperator2";
+            Seperator2.Size = new Size(152, 6);
+            // 
+            // Seperator3
+            // 
+            Seperator3.Name = "Seperator3";
+            Seperator3.Size = new Size(152, 6);
+            // 
             // toolStripButton1
             // 
             toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
@@ -292,7 +304,7 @@ namespace CSC
             toolStripButton1.Name = "toolStripButton1";
             toolStripButton1.Size = new Size(46, 22);
             toolStripButton1.Text = "Search";
-            toolStripButton1.Click += toolStripButton1_Click;
+            toolStripButton1.Click += SearchButton_Click;
             // 
             // Main
             // 
@@ -346,6 +358,8 @@ namespace CSC
         private ToolStripMenuItem SortSelectedMenu;
         private ToolStripMenuItem SortSelectedConnectedMenu;
         private ToolStripSeparator Seperator1;
+        private ToolStripSeparator Seperator2;
+        private ToolStripSeparator Seperator3;
         private ToolStripLabel cursorPos;
         private ToolStripButton toolStripButton1;
     }

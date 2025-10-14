@@ -172,8 +172,6 @@ public partial class Main : Form
     public static bool NeedsSaving { get => needsSaving; set => needsSaving = value; }
 
     //todo when adding an event to another somethign and the event is already part of another node we need to clone the event, sadly we cannot use the exact same event object in multiple places :(
-    //todo add option to view all referenced values in other files, like reverse strike brush
-    //todo add search
     //filter/hide node types
 
     //todo add info when trying to link incompatible notes
@@ -2414,6 +2412,51 @@ public partial class Main : Form
             NodeContext.Items.Add(PullChildsMenu);
             NodeContext.Items.Add(PullParentsMenu);
             NodeContext.Items.Add(Seperator1);
+
+            if (selectedNode.DupedFileNames.Any())
+            {
+                foreach (var file in selectedNode.DupedFileNames)
+                {
+                    if(file == SelectedCharacter)
+                    {
+                        continue;
+                    }
+                    var button = new ToolStripMenuItem("See reference in " + file, null, onClick: (_, _) =>
+                    {
+                        SelectFile(file);
+                        CenterAndSelectNode(selectedNode);
+                    })
+                    {
+                        DisplayStyle = ToolStripItemDisplayStyle.Text,
+                        AutoSize = true,
+                        BackColor = Color.FromArgb(64, 64, 64),
+                        ForeColor = Color.LightGray,
+                    };
+                    button.MouseEnter += (_, _) => button.ForeColor = Color.Black;
+                    button.MouseLeave += (_, _) => button.ForeColor = Color.LightGray;
+                    NodeContext.Items.Add(button);
+                }
+
+                if(selectedNode.FileName != SelectedCharacter)
+                {
+                    var button = new ToolStripMenuItem("See reference in " + selectedNode.FileName, null, onClick: (_, _) =>
+                    {
+                        SelectFile(selectedNode.FileName);
+                        CenterAndSelectNode(selectedNode);
+                    })
+                    {
+                        DisplayStyle = ToolStripItemDisplayStyle.Text,
+                        AutoSize = true,
+                        BackColor = Color.FromArgb(64, 64, 64),
+                        ForeColor = Color.LightGray,
+                    };
+                    button.MouseEnter += (_, _) => button.ForeColor = Color.Black;
+                    button.MouseLeave += (_, _) => button.ForeColor = Color.LightGray;
+                    NodeContext.Items.Add(button);
+                }
+
+                NodeContext.Items.Add(Seperator2);
+            }
         }
 
         else if (selected.Count > 0)
@@ -5839,7 +5882,7 @@ public partial class Main : Form
         Graph.Invalidate();
     }
 
-    private void toolStripButton1_Click(object sender, EventArgs e)
+    private void SearchButton_Click(object sender, EventArgs e)
     {
         StartSearch();
     }
