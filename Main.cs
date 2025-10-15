@@ -6,9 +6,7 @@ using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Text.Json;
-using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace CSC;
 
@@ -170,8 +168,12 @@ public partial class Main : Form
     public int LeftClickFrameCounter { get; private set; } = 0;
 
     public static bool NeedsSaving { get => needsSaving; set => needsSaving = value; }
+    public Node SelectedNode
+    {
+        get => selectedNode;
+        set => selectedNode = value;
+    }
 
-    //todo update search when node text changes
     //todo original story linking is still wrong
     //filter/hide node types
 
@@ -293,7 +295,7 @@ public partial class Main : Form
         OffsetX.Add(Player, 0);
         OffsetY.Add(Player, 0);
 
-        selectedNode = Node.NullNode;
+        SelectedNode = Node.NullNode;
         highlightNode = Node.NullNode;
         movedNode = Node.NullNode;
         nodeToLinkFrom = Node.NullNode;
@@ -384,12 +386,12 @@ public partial class Main : Form
             Graph.Focus();
             Graph.Invalidate();
 
-            if (selectedNode == Node.NullNode && PropertyInspector.Controls.Count > 1)
+            if (SelectedNode == Node.NullNode && PropertyInspector.Controls.Count > 1)
             {
                 PropertyInspector.Controls.Clear();
             }
         }
-        else if (e.KeyData == Keys.Delete)
+        else if (e.KeyData == Keys.Delete && Graph.Focused)
         {
             TryDeleteNode();
         }
@@ -412,9 +414,9 @@ public partial class Main : Form
         {
             removedNode = highlightNode;
         }
-        else if (selectedNode != Node.NullNode)
+        else if (SelectedNode != Node.NullNode)
         {
-            removedNode = selectedNode;
+            removedNode = SelectedNode;
         }
 
         if (removedNode == Node.NullNode)
@@ -436,9 +438,9 @@ public partial class Main : Form
             {
                 nodeToLinkFrom = Node.NullNode;
             }
-            if (selectedNode == removedNode)
+            if (SelectedNode == removedNode)
             {
-                selectedNode = Node.NullNode;
+                SelectedNode = Node.NullNode;
             }
             if (highlightNode == removedNode)
             {
@@ -495,9 +497,9 @@ public partial class Main : Form
     {
         if (SelectedCharacter == Player)
         {
-            if (selectedNode != Node.NullNode)
+            if (SelectedNode != Node.NullNode)
             {
-                switch (selectedNode.Type)
+                switch (SelectedNode.Type)
                 {
                     //itemaction uswith criterialist event eventtrigger alternatetext
                     //response dialogue bgc item itemgroup
@@ -561,9 +563,9 @@ public partial class Main : Form
         }
         else
         {
-            if (selectedNode != Node.NullNode)
+            if (SelectedNode != Node.NullNode)
             {
-                switch (selectedNode.Type)
+                switch (SelectedNode.Type)
                 {
                     //itemaction uswith criterialist event eventtrigger alternatetext
                     //response dialogue bgc item itemgroup
@@ -803,16 +805,13 @@ public partial class Main : Form
             //right click only no move, spawn context
             SpawnContextMenu(graphPos);
         }
-        else if (!selecting && LeftClickFrameCounter > 0)
+        else if (!selecting && LeftClickFrameCounter == 1)
         {
-            if (LeftClickFrameCounter == 1)
-            {
-                _ = UpdateClickedNode(graphPos);
-                selected.Clear();
-                SelectedNodeOffsets.Clear();
-                LeftClickFrameCounter = 0;
-                Graph.Invalidate();
-            }
+            _ = UpdateClickedNode(graphPos);
+            selected.Clear();
+            SelectedNodeOffsets.Clear();
+            LeftClickFrameCounter = 0;
+            Graph.Invalidate();
         }
         if (MouseButtons != MouseButtons.Right)
         {
@@ -1031,6 +1030,35 @@ public partial class Main : Form
         }
     }
 
+    public static void UpdateNode(Node node)
+    {
+        if (node == Instance.SelectedNode)
+        {
+            var focusedC = Instance.PropertyInspector.FindFocusedControl();
+
+            if (focusedC is ComboBox)
+            {
+                Instance.ShowProperties(node);
+            }
+            else if (focusedC is NumericUpDown)
+            {
+                Instance.ShowProperties(node);
+            }
+        }
+        if (SearchTrie.Initialized)
+        {
+            SearchTrie.AddNode(node);
+        }
+    }
+
+    public static void PreUpdateNode(Node node)
+    {
+        if (SearchTrie.Initialized)
+        {
+            SearchTrie.RemoveNode(node);
+        }
+    }
+
     public static void SetSearchWindowTitle(string text)
     {
         if (Instance is not null && Instance.searchWindow is not null)
@@ -1078,7 +1106,7 @@ public partial class Main : Form
         float y = node.Position.Y - (clipHeight / 2) + (node.Size.Height / 2);
         OffsetX[SelectedCharacter] = x;
         OffsetY[SelectedCharacter] = y;
-        Instance.selectedNode = node;
+        Instance.SelectedNode = node;
         Instance.Graph.Invalidate();
         Instance.ShowProperties(node);
     }
@@ -1461,7 +1489,7 @@ public partial class Main : Form
             g.DrawEllipse(circlePen, leftRect);
             g.DrawEllipse(circlePen, rightRect);
         }
-        if (node == selectedNode)
+        if (node == SelectedNode)
         {
             lightText = true;
             if (node.FileName != SelectedCharacter)
@@ -1509,7 +1537,7 @@ public partial class Main : Form
         rightRect = new RectangleF(node.Position + new SizeF(node.Size.Width - CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
         if (node.FileName != SelectedCharacter)
         {
-            if (node == selectedNode)
+            if (node == SelectedNode)
             {
                 leftRect.Location -= new SizeF(25 / 2, 0);
                 rightRect.Location += new SizeF(25 / 2, 0);
@@ -1520,7 +1548,7 @@ public partial class Main : Form
                 rightRect.Location += new SizeF(15 / 2, 0);
             }
         }
-        else if (node == selectedNode)
+        else if (node == SelectedNode)
         {
             leftRect.Location -= new SizeF(15 / 2, 0);
             rightRect.Location += new SizeF(15 / 2, 0);
@@ -1725,28 +1753,28 @@ public partial class Main : Form
             }
         }
 
-        if (selectedNode != Node.NullNode)
+        if (SelectedNode != Node.NullNode)
         {
-            var family = nodes[SelectedCharacter][selectedNode];
+            var family = nodes[SelectedCharacter][SelectedNode];
             if (family.Childs.Count > 0)
             {
                 foreach (var item in family.Childs)
                 {
-                    DrawEdge(g, selectedNode, item, clickedLinePen);
+                    DrawEdge(g, SelectedNode, item, clickedLinePen);
                 }
             }
             if (family.Parents.Count > 0)
             {
                 foreach (var item in family.Parents)
                 {
-                    DrawEdge(g, item, selectedNode, clickedLinePen);
+                    DrawEdge(g, item, SelectedNode, clickedLinePen);
                 }
             }
 
             foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
             {
                 //c++;
-                bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || selectedNode == node;
+                bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || SelectedNode == node;
                 DrawNode(g, node, GetNodeColor(node.Type, light), light);
             }
         }
@@ -2363,7 +2391,7 @@ public partial class Main : Form
                 ShowProperties(node);
                 ClearOverlayBitmap();
             }
-            else if (selectedNode != node)
+            else if (SelectedNode != node)
             {
                 ShowProperties(node);
             }
@@ -2394,7 +2422,12 @@ public partial class Main : Form
             }
         }
 
-        selectedNode = node;
+        if (SelectedNode != Node.NullNode && node == Node.NullNode && PropertyInspector.Focused)
+        {
+            return SelectedNode;
+        }
+
+        SelectedNode = node;
         return node;
     }
 
@@ -2407,25 +2440,25 @@ public partial class Main : Form
 
         var list = GetSpawnableNodeTypes();
 
-        if (selectedNode != Node.NullNode)
+        if (SelectedNode != Node.NullNode)
         {
             NodeContext.Items.Add(SortConnectedMenu);
             NodeContext.Items.Add(PullChildsMenu);
             NodeContext.Items.Add(PullParentsMenu);
             NodeContext.Items.Add(Seperator1);
 
-            if (selectedNode.DupedFileNames.Any())
+            if (SelectedNode.DupedFileNames.Any())
             {
-                foreach (var file in selectedNode.DupedFileNames)
+                foreach (var file in SelectedNode.DupedFileNames)
                 {
-                    if(file == SelectedCharacter)
+                    if (file == SelectedCharacter)
                     {
                         continue;
                     }
                     var button = new ToolStripMenuItem("See reference in " + file, null, onClick: (_, _) =>
                     {
                         SelectFile(file);
-                        CenterAndSelectNode(selectedNode);
+                        CenterAndSelectNode(SelectedNode);
                     })
                     {
                         DisplayStyle = ToolStripItemDisplayStyle.Text,
@@ -2438,12 +2471,12 @@ public partial class Main : Form
                     NodeContext.Items.Add(button);
                 }
 
-                if(selectedNode.FileName != SelectedCharacter)
+                if (SelectedNode.FileName != SelectedCharacter)
                 {
-                    var button = new ToolStripMenuItem("See reference in " + selectedNode.FileName, null, onClick: (_, _) =>
+                    var button = new ToolStripMenuItem("See reference in " + SelectedNode.FileName, null, onClick: (_, _) =>
                     {
-                        SelectFile(selectedNode.FileName);
-                        CenterAndSelectNode(selectedNode);
+                        SelectFile(SelectedNode.FileName);
+                        CenterAndSelectNode(SelectedNode);
                     })
                     {
                         DisplayStyle = ToolStripItemDisplayStyle.Text,
@@ -2905,7 +2938,6 @@ public partial class Main : Form
                         option.Items.AddRange(Enum.GetNames(typeof(PoseOptions)));
                         option.SelectedItem = criterion.PoseOption.ToString();
                         option.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.PoseOption = Enum.Parse<PoseOptions>(option.SelectedItem!.ToString()!));
-                        option.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(option);
 
                         if (criterion.PoseOption == PoseOptions.CurrentPose)
@@ -2996,7 +3028,6 @@ public partial class Main : Form
                     case CompareTypes.Value:
                     {
                         PutCompareType(node, criterion);
-                        PutCharacter1(node, criterion).SelectedIndexChanged += (_, _) => ShowProperties(node);
 
                         ComboBox value = GetComboBox();
                         if (criterion.Character == Player)
@@ -3259,7 +3290,6 @@ public partial class Main : Form
                 type.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) =>
                     {
                         gevent.EventType = Enum.Parse<GameEvents>(type.SelectedItem.ToString()!);
-                        ShowProperties(node);
                     });
                 PropertyInspector.Controls.Add(type, 2, 0);
 
@@ -3484,7 +3514,6 @@ public partial class Main : Form
                         }
                         options.SelectedIndex = gevent.Option / 10;
                         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = options.SelectedIndex);
-                        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
 
                         PutTextValue(gevent);
@@ -3766,7 +3795,6 @@ public partial class Main : Form
                             gevent.Character = Quests.Find(n => n.Item2.Name == gevent.Value)?.Item1 ?? node.FileName;
                             gevent.Key = Quests.Find(n => n.Item2.Name == gevent.Value)?.Item2.ID ?? "#";
                         });
-                        box.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(box, GeventPropertyCounter++, 1);
                         PropertyInspector.SetColumnSpan(box, 2);
                         GeventPropertyCounter++;
@@ -3899,7 +3927,6 @@ public partial class Main : Form
                             default:
                             {
                                 gevent.Option = 0;
-                                ShowProperties(node);
                                 break;
                             }
                         }
@@ -3918,6 +3945,11 @@ public partial class Main : Form
                         PutCharacter1(node, gevent);
                         PutEnumOption<ImportanceSpecified>(node, gevent);
 
+                        if (gevent.Character == Player)
+                        {
+                            gevent.Character = "Amy";
+                        }
+
                         if (Stories[gevent.Character].BackgroundChatter.Count > 0)
                         {
                             if (!int.TryParse(gevent.Value, out int _))
@@ -3933,7 +3965,6 @@ public partial class Main : Form
 
                             box.SelectedItem = gevent.Value;
                             box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = box.SelectedItem.ToString()!);
-                            box.SelectedIndexChanged += (_, _) => ShowProperties(node);
 
                             var chatter = GetLabel(Stories[gevent.Character].BackgroundChatter[int.Parse(box.SelectedItem?.ToString() ?? "0")].Text);
                             PropertyInspector.Controls.Add(chatter, GeventPropertyCounter++, 1);
@@ -4168,7 +4199,6 @@ public partial class Main : Form
                         targetType.Items.AddRange(Enum.GetNames(typeof(LocationTargetOption)));
                         targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
                         targetType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>(targetType.SelectedItem!.ToString()!));
-                        targetType.SelectedIndexChanged += (_, _) => ShowProperties(node);
                         PropertyInspector.Controls.Add(targetType);
 
                         switch (eventTrigger.LocationTargetOption)
@@ -4383,7 +4413,6 @@ public partial class Main : Form
                     {
                         response.Next = 0;
                     }
-                    ShowProperties(node);
                 });
                 PropertyInspector.Controls.Add(dialogue);
 
@@ -4583,7 +4612,7 @@ public partial class Main : Form
                 }
                 break;
             }
-                //todo do the following propetyinspectors
+            //todo do the following propetyinspectors
             case NodeType.State:
             case NodeType.Property:
             case NodeType.Social:
@@ -4618,8 +4647,6 @@ public partial class Main : Form
 
         UpdatePropertyColoumnWidths();
 
-        PropertyInspector.ResumeLayout();
-
         for (int i = 0; i < PropertyInspector.Controls.Count; i++)
         {
             PropertyInspector.Controls[i].ForeColor = Color.LightGray;
@@ -4637,6 +4664,8 @@ public partial class Main : Form
         PropertyInspector.ColumnCount += 1;
         PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
         NeedsSaving = false;
+
+        PropertyInspector.ResumeLayout();
     }
 
     private void PutEnumValue<E>(Node node, GameEvent gevent) where E : struct, Enum
@@ -4649,7 +4678,6 @@ public partial class Main : Form
         }
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(gevent.Value)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4663,7 +4691,6 @@ public partial class Main : Form
         }
         options.SelectedItem = gevent.Value;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = options.SelectedItem!.ToString()!);
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4677,7 +4704,6 @@ public partial class Main : Form
         }
         options.SelectedItem = gevent.Value2;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value2 = options.SelectedItem!.ToString()!);
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4691,7 +4717,6 @@ public partial class Main : Form
         }
         options.SelectedItem = gevent.Key;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Key = options.SelectedItem!.ToString()!);
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4706,7 +4731,6 @@ public partial class Main : Form
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Value)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4721,7 +4745,6 @@ public partial class Main : Form
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Key)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4736,7 +4759,6 @@ public partial class Main : Form
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Key2)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key2 = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4751,7 +4773,6 @@ public partial class Main : Form
         options.SelectedItem = criterion.Value;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = options.SelectedItem!.ToString()!);
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4765,7 +4786,6 @@ public partial class Main : Form
         }
         options.SelectedItem = Enum.GetName(typeof(E), gevent.Option)!;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4780,7 +4800,6 @@ public partial class Main : Form
         options.SelectedItem = Enum.GetName(typeof(E), criterion.Option)!;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Option = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4794,7 +4813,6 @@ public partial class Main : Form
         }
         options.SelectedItem = Enum.GetName(typeof(E), gevent.Option2)!;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option2 = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4808,7 +4826,6 @@ public partial class Main : Form
         }
         options.SelectedItem = Enum.GetName(typeof(E), gevent.Option3)!;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option3 = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4822,7 +4839,6 @@ public partial class Main : Form
         }
         options.SelectedItem = Enum.GetName(typeof(E), gevent.Option4)!;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Option4 = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
-        options.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4863,7 +4879,6 @@ public partial class Main : Form
         character2.Items.AddRange(Enum.GetNames(typeof(NoneCharacters)));
         character2.SelectedItem = gevent.Character2!;
         character2.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Character2 = character2.SelectedItem.ToString()!);
-        character2.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(character2, GeventPropertyCounter++, 1);
     }
 
@@ -4923,7 +4938,6 @@ public partial class Main : Form
         character.Items.AddRange(Enum.GetNames(typeof(Characters)));
         character.SelectedItem = gevent.Character!;
         character.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Character = character.SelectedItem.ToString()!);
-        character.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(character, GeventPropertyCounter++, 1);
     }
 
@@ -4941,6 +4955,8 @@ public partial class Main : Form
         NumericUpDown sortOrder = new()
         {
             //Dock = DockStyle.Fill,
+            Minimum = -100,
+            Maximum = 100,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
             Value = (decimal)start,
             Dock = DockStyle.Fill,
@@ -5144,7 +5160,6 @@ public partial class Main : Form
         compareType.PerformLayout();
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.CompareType = Enum.Parse<CompareTypes>((string)compareType.SelectedItem!));
         compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-        compareType.SelectedIndexChanged += (_, _) => ShowProperties(node);
         PropertyInspector.Controls.Add(compareType);
     }
 
@@ -5370,9 +5385,9 @@ public partial class Main : Form
     {
         string character = SelectedCharacter;
 
-        if (selectedNode != Node.NullNode)
+        if (SelectedNode != Node.NullNode)
         {
-            character = selectedNode.FileName;
+            character = SelectedNode.FileName;
         }
 
         return character;
@@ -5386,7 +5401,7 @@ public partial class Main : Form
             return;
         }
 
-        if (selectedNode == Node.NullNode)
+        if (SelectedNode == Node.NullNode)
         {
             PointF ScreenPos;
             if (oldPoint is null)
@@ -5409,11 +5424,11 @@ public partial class Main : Form
         }
         else
         {
-            ShoveNodesToRight(newNode, selectedNode.Position + new Size(scaleX, 0));
-            newNode.Position = selectedNode.Position + new Size(scaleX, 0);
+            ShoveNodesToRight(newNode, SelectedNode.Position + new Size(scaleX, 0));
+            newNode.Position = SelectedNode.Position + new Size(scaleX, 0);
         }
 
-        selectedNode = newNode;
+        SelectedNode = newNode;
         ShowProperties(newNode);
 
         Graph.Invalidate();
@@ -5431,9 +5446,9 @@ public partial class Main : Form
                 newNode = Node.CreateCriteriaNode(new() { Character = character }, character, nodes[SelectedCharacter]);
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5447,9 +5462,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5463,9 +5478,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5478,9 +5493,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5493,9 +5508,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5509,9 +5524,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5526,9 +5541,9 @@ public partial class Main : Form
                 nodes[character].Add(newNode);
                 Stories[character].Dialogues!.Add(newNode.Data<Dialogue>()!);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
 
                 break;
@@ -5543,9 +5558,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5559,9 +5574,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5575,9 +5590,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5591,9 +5606,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5607,9 +5622,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5623,9 +5638,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5639,9 +5654,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5649,9 +5664,9 @@ public partial class Main : Form
             {
                 string id = Guid.NewGuid().ToString();
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    if (selectedNode.Type == NodeType.Quest && selectedNode.DataType == typeof(MissingReferenceInfo))
+                    if (SelectedNode.Type == NodeType.Quest && SelectedNode.DataType == typeof(MissingReferenceInfo))
                     {
                         newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
                         {
@@ -5659,15 +5674,15 @@ public partial class Main : Form
                             FileName = character,
                         };
                     }
-                    else if (selectedNode.Type == NodeType.Quest && selectedNode.DataType == typeof(Quest))
+                    else if (SelectedNode.Type == NodeType.Quest && SelectedNode.DataType == typeof(Quest))
                     {
                         newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
                         {
-                            RawData = new ExtendedDetail() { Value = selectedNode.Data<Quest>()!.ExtendedDetails!.Count },
+                            RawData = new ExtendedDetail() { Value = SelectedNode.Data<Quest>()!.ExtendedDetails!.Count },
                             FileName = character,
                         };
 
-                        selectedNode.Data<Quest>()!.ExtendedDetails.Add(newNode.Data<ExtendedDetail>()!);
+                        SelectedNode.Data<Quest>()!.ExtendedDetails.Add(newNode.Data<ExtendedDetail>()!);
                     }
                 }
                 else
@@ -5681,9 +5696,9 @@ public partial class Main : Form
 
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
 
                 if (newNode.Data<Quest>() is not null)
@@ -5709,9 +5724,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5725,9 +5740,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 if (character == Player)
                 {
@@ -5750,9 +5765,9 @@ public partial class Main : Form
                 };
                 nodes[character].Add(newNode);
 
-                if (selectedNode != Node.NullNode)
+                if (SelectedNode != Node.NullNode)
                 {
-                    NodeLinker.Link(nodes[SelectedCharacter], selectedNode, newNode);
+                    NodeLinker.Link(nodes[SelectedCharacter], SelectedNode, newNode);
                 }
                 break;
             }
@@ -5768,33 +5783,33 @@ public partial class Main : Form
     private void PullChildsClose(object sender, EventArgs e)
     {
         //clickednode is set when this is called
-        var childs = nodes[SelectedCharacter].Childs(selectedNode);
+        var childs = nodes[SelectedCharacter].Childs(SelectedNode);
 
         for (int i = 0; i < childs.Count; i++)
         {
-            var newPos = selectedNode.Position + new SizeF(scaleX, (i - (childs.Count / 2)) * scaleY);
+            var newPos = SelectedNode.Position + new SizeF(scaleX, (i - (childs.Count / 2)) * scaleY);
             ShoveNodesToRight(childs[i], newPos);
 
             childs[i].Position = newPos;
         }
 
-        CenterAndSelectNode(selectedNode, 0.3f);
+        CenterAndSelectNode(SelectedNode, 0.3f);
         Graph.Invalidate();
     }
 
     private void PullParentsClose(object sender, EventArgs e)
     {
         //clickednode is set when this is called
-        var parents = nodes[SelectedCharacter].Parents(selectedNode);
+        var parents = nodes[SelectedCharacter].Parents(SelectedNode);
 
         for (int i = 0; i < parents.Count; i++)
         {
-            var newPos = selectedNode.Position - new SizeF(scaleX, (i - (parents.Count / 2)) * scaleY);
+            var newPos = SelectedNode.Position - new SizeF(scaleX, (i - (parents.Count / 2)) * scaleY);
             ShoveNodesToLeft(parents[i], newPos);
             parents[i].Position = newPos;
         }
 
-        CenterAndSelectNode(selectedNode, 0.3f);
+        CenterAndSelectNode(SelectedNode, 0.3f);
         Graph.Invalidate();
     }
 
@@ -5842,21 +5857,21 @@ public partial class Main : Form
 
     private void SortConnected(object sender, EventArgs e)
     {
-        if (selectedNode == Node.NullNode)
+        if (SelectedNode == Node.NullNode)
         {
             return;
         }
         //clickednode is set when this is called
         visited.Clear();
-        var intX = (int)(selectedNode.Position.X / scaleX);
-        var intY = (int)(selectedNode.Position.Y / scaleY);
+        var intX = (int)(SelectedNode.Position.X / scaleX);
+        var intY = (int)(SelectedNode.Position.Y / scaleY);
         maxYperX.ExtendToIndex(intX, intY);
 
         for (int i = 0; i < maxYperX.Count; i++)
         {
             maxYperX[i] = intY;
         }
-        SetStartPosForConnected(intX, nodes[SelectedCharacter], selectedNode);
+        SetStartPosForConnected(intX, nodes[SelectedCharacter], SelectedNode);
 
         Graph.Invalidate();
     }

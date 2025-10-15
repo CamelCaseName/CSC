@@ -18,6 +18,9 @@ namespace CSC.Components
         private static bool BuiltTree = false;
         private static bool doFuzzy = true;
         private static readonly Range[] ranges = new Range[20];
+        private static readonly List<Node> contains = [];
+
+        public static Action? OnSearchDataChange;
 
         public static bool Initialized => BuiltTree;
 
@@ -84,15 +87,21 @@ namespace CSC.Components
             });
         }
 
-        public static void RemoveNode(Node node, string text)
+        public static void RemoveNode(Node node)
         {
-            var nodeText = text.ToLower().AsSpan();
+            if (!contains.Contains(node))
+            {
+                return;
+            }
+            contains.Remove(node);
+
+            var nodeText = node.Text.ToLower().AsSpan();
             if (nodeText.Length > 0)
             {
                 RemoveFromTree(node, nodeText);
             }
 
-            nodeText = text.AsSpan();
+            nodeText = node.Text.AsSpan();
             if (nodeText.Length > 0)
             {
                 RemoveFromTree(node, nodeText);
@@ -150,6 +159,15 @@ namespace CSC.Components
 
         public static void AddNode(Node node)
         {
+            if (!contains.Contains(node))
+            {
+                contains.Add(node);
+            }
+            else
+            {
+                return;
+            }
+
             //add both case sensitive and not here, can seperate during search later
             var nodeText = node.Text.ToLower().AsSpan();
             if (nodeText.Length > 0)
@@ -165,6 +183,11 @@ namespace CSC.Components
 
             nodeText = node.Type.ToString().ToLower().AsSpan();
             AddToTree(node, nodeText);
+
+            if (Initialized)
+            {
+                OnSearchDataChange?.Invoke();
+            }
             //todo add else clause with adding to 0 length, or fix node.Text return to always return at least node type...
         }
 

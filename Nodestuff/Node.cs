@@ -1,5 +1,6 @@
 ﻿using CSC.Components;
 using CSC.StoryItems;
+using System.Data;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using static CSC.StoryItems.StoryEnums;
@@ -223,6 +224,12 @@ namespace CSC.Nodestuff
             }
             set
             {
+                if (data is IItem item)
+                {
+                    item.OnBeforeChange -= PreUpdate;
+                    item.OnAfterChange -= PostUpdate;
+                }
+
                 data = value;
                 DataType = value?.GetType() ?? typeof(object);
 
@@ -230,7 +237,23 @@ namespace CSC.Nodestuff
                 {
                     Size.Height *= 2;
                 }
+
+                if (data is IItem item2)
+                {
+                    item2.OnBeforeChange += PreUpdate;
+                    item2.OnAfterChange += PostUpdate;
+                }
             }
+        }
+
+        public void PreUpdate(object d)
+        {
+            Main.PreUpdateNode(this);
+        }
+
+        public void PostUpdate(object d)
+        {
+            Main.UpdateNode(this);
         }
 
         public RectangleF Rectangle { get => new(Position, Size); }

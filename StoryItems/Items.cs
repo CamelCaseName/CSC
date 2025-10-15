@@ -3,27 +3,14 @@ using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.StoryItems
 {
-    public sealed class ItemChangeArgs(object? data)
-    {
-        public Type ItemType { get; private set; } = data?.GetType() ?? typeof(object);
-        private readonly object? _data = data;
-        public T? Data<T>() where T : class, new()
-        {
-            if (typeof(T) == ItemType && _data is not null)
-            {
-                return (T)_data;
-            }
-            else
-            {
-                return null;
-            }
-        }
-    }
-
-    public sealed class Criterion
+    public interface IItem
     {
         public event Action<object>? OnBeforeChange;
         public event Action<object>? OnAfterChange;
+    }
+
+    public sealed class Criterion : IItem
+    {
         private BoolCritera boolValue = BoolCritera.True;
         private string character = "#";
         private string character2 = "#";
@@ -46,6 +33,9 @@ namespace CSC.StoryItems
         private int option = 0;
         private CompareTypes groupSubCompareType = CompareTypes.Never;
         private string version = "1.0";
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
 
         public BoolCritera BoolValue { get => boolValue; set { OnBeforeChange?.Invoke(this); boolValue = value; OnAfterChange?.Invoke(this); } }
         public string Character { get => character; set { OnBeforeChange?.Invoke(this); character = value; OnAfterChange?.Invoke(this); } }
@@ -123,7 +113,7 @@ namespace CSC.StoryItems
         public override int GetHashCode() => base.GetHashCode();
     }
 
-    public sealed class ItemAction
+    public sealed class ItemAction : IItem
     {
         private string actionName = string.Empty;
         private List<Criterion> criteria = [];
@@ -138,7 +128,7 @@ namespace CSC.StoryItems
         public List<GameEvent> OnTakeActionEvents { get => onTakeActionEvents; set { OnBeforeChange?.Invoke(this);  onTakeActionEvents = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class UseWith
+    public sealed class UseWith : IItem
     {
         private List<Criterion> criteria = [];
         private string customCantDoThatMessage = string.Empty;
@@ -155,7 +145,7 @@ namespace CSC.StoryItems
         public List<GameEvent> OnSuccessEvents { get => onSuccessEvents; set { OnBeforeChange?.Invoke(this);  onSuccessEvents = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class InteractiveitemBehaviour
+    public sealed class InteractiveitemBehaviour : IItem
     {
         private string id = Guid.NewGuid().ToString();
         private bool displayInEditor = true;
@@ -176,7 +166,7 @@ namespace CSC.StoryItems
         public bool UseDefaultRadialOptions { get => useDefaultRadialOptions; set { OnBeforeChange?.Invoke(this);  useDefaultRadialOptions = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class ItemGroupBehavior
+    public sealed class ItemGroupBehavior : IItem
     {
         private string id = Guid.NewGuid().ToString();
         private string name = string.Empty;
@@ -195,7 +185,7 @@ namespace CSC.StoryItems
         public List<UseWith> UseWiths { get => useWiths; set { OnBeforeChange?.Invoke(this);  useWiths = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class Achievement
+    public sealed class Achievement : IItem
     {
         private string description = string.Empty;
         private string id = Guid.NewGuid().ToString();
@@ -214,7 +204,7 @@ namespace CSC.StoryItems
         public string SteamName { get => steamName; set { OnBeforeChange?.Invoke(this);  steamName = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class CriteriaListWrapper
+    public sealed class CriteriaListWrapper : IItem
     {
         private List<Criterion> criteriaList = [];
 
@@ -223,7 +213,7 @@ namespace CSC.StoryItems
         public List<Criterion> CriteriaList { get => criteriaList; set { OnBeforeChange?.Invoke(this);  criteriaList = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class CriteriaGroup
+    public sealed class CriteriaGroup : IItem
     {
         private string id = Guid.NewGuid().ToString();
         private string name = string.Empty;
@@ -242,7 +232,7 @@ namespace CSC.StoryItems
         public List<CriteriaListWrapper> CriteriaList { get => criteriaList; set { OnBeforeChange?.Invoke(this);  criteriaList = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class ItemGroup
+    public sealed class ItemGroup : IItem
     {
         private string id = Guid.NewGuid().ToString();
         private string name = string.Empty;
@@ -258,7 +248,7 @@ namespace CSC.StoryItems
         public List<string> ItemsInGroup { get => itemsInGroup; set { OnBeforeChange?.Invoke(this);  itemsInGroup = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class GameEvent
+    public sealed class GameEvent : IItem
     {
         private EventSpecialHandling handling = EventSpecialHandling.None;
         private string version = "2.0";
@@ -368,7 +358,7 @@ namespace CSC.StoryItems
         public override int GetHashCode() => base.GetHashCode();
     }
 
-    public sealed class EventTrigger
+    public sealed class EventTrigger : IItem
     {
         private string id = Guid.NewGuid().ToString();
         private string characterToReactTo = "#";
@@ -401,7 +391,7 @@ namespace CSC.StoryItems
         public LocationTargetOption LocationTargetOption { get => locationTargetOption; set { OnBeforeChange?.Invoke(this);  locationTargetOption = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class CharacterGroup
+    public sealed class CharacterGroup : IItem
     {
         private string id = Guid.NewGuid().ToString();
         private string name = string.Empty;
@@ -416,7 +406,7 @@ namespace CSC.StoryItems
         public List<string> CharactersInGroup { get => charactersInGroup; set { OnBeforeChange?.Invoke(this);  charactersInGroup = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class MainStory
+    public sealed class MainStory : IItem
     {
         private bool allowPlayerFemale = true;
         private bool allowPlayerMale = true;
@@ -531,7 +521,7 @@ namespace CSC.StoryItems
         public string HousePartyVersion { get => housePartyVersion; set { OnBeforeChange?.Invoke(this);  housePartyVersion = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class AlternateText
+    public sealed class AlternateText : IItem
     {
         private int order = 0;
         private List<Criterion> critera = [];
@@ -546,7 +536,7 @@ namespace CSC.StoryItems
         public string Text { get => text; set { OnBeforeChange?.Invoke(this);  text = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class Response
+    public sealed class Response : IItem
     {
         private bool selected = false;
         private string id = Guid.NewGuid().ToString();
@@ -601,7 +591,7 @@ namespace CSC.StoryItems
         public List<Criterion> DynamicNegativeCritera { get => dynamicNegativeCritera; set { OnBeforeChange?.Invoke(this);  dynamicNegativeCritera = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class Dialogue
+    public sealed class Dialogue : IItem
     {
         private bool shown = false;
         private List<AlternateText> alternateTexts = [];
@@ -638,7 +628,7 @@ namespace CSC.StoryItems
         public string Text { get => text; set { OnBeforeChange?.Invoke(this);  text = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class BackgroundChatter
+    public sealed class BackgroundChatter : IItem
     {
         private int id = 0;
         private string text = string.Empty;
@@ -673,7 +663,7 @@ namespace CSC.StoryItems
         public Importance CurrentImportance { get => currentImportance; set { OnBeforeChange?.Invoke(this);  currentImportance = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class BackgroundChatterResponse
+    public sealed class BackgroundChatterResponse : IItem
     {
         private string characterName = "#";
         private int chatterId = 0;
@@ -689,7 +679,7 @@ namespace CSC.StoryItems
         public bool ShowInInspector { get => showInInspector; set { OnBeforeChange?.Invoke(this);  showInInspector = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class Trait
+    public sealed class Trait : IItem
     {
         private PersonalityTraits type = PersonalityTraits.Nice;
         private int _value = 0;
@@ -700,7 +690,7 @@ namespace CSC.StoryItems
         public int Value { get => _value; set { OnBeforeChange?.Invoke(this);  _value = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class Personality
+    public sealed class Personality : IItem
     {
         private List<Trait> values = [];
 
@@ -709,7 +699,7 @@ namespace CSC.StoryItems
         public List<Trait> Values { get => values; set { OnBeforeChange?.Invoke(this);  values = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class ExtendedDetail
+    public sealed class ExtendedDetail : IItem
     {
         private int _value = 0;
         private string details = string.Empty;
@@ -720,7 +710,7 @@ namespace CSC.StoryItems
         public string Details { get => details; set { OnBeforeChange?.Invoke(this);  details = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class Quest
+    public sealed class Quest : IItem
     {
         private string characterName = "#";
         private int completeAt = 0;
@@ -759,7 +749,7 @@ namespace CSC.StoryItems
         public bool ShowInInspector { get => showInInspector; set { OnBeforeChange?.Invoke(this);  showInInspector = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class ItemInteraction
+    public sealed class ItemInteraction : IItem
     {
         private List<Criterion> critera = [];
         private string itemName = string.Empty;
@@ -776,7 +766,7 @@ namespace CSC.StoryItems
         public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class ItemGroupInteraction
+    public sealed class ItemGroupInteraction : IItem
     {
         private List<Criterion> criteria = [];
         private string name = string.Empty;
@@ -797,7 +787,7 @@ namespace CSC.StoryItems
         public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
     }
 
-    public sealed class CharacterStory
+    public sealed class CharacterStory : IItem
     {
         private int dialogueID = 0;
         private List<BackgroundChatter> backgroundChatter = [];

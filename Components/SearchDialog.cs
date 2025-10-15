@@ -18,6 +18,13 @@ namespace CSC.Components
                 SearchTrie.Initialize(stores);
                 Text = $"Building Search index, estimated wait time is {SearchTrie.NodeCount / 7000}s";
             }
+
+            SearchTrie.OnSearchDataChange += SearchImpl;
+        }
+
+        private void OnFormClosing(object? sender, FormClosingEventArgs? e)
+        {
+            SearchTrie.OnSearchDataChange -= SearchImpl;
         }
 
         private void Nodetype_SelectedIndexChanged(object sender, EventArgs e)
@@ -31,6 +38,11 @@ namespace CSC.Components
         }
 
         private void Searchterm_TextChanged(object sender, EventArgs e)
+        {
+            SearchImpl();
+        }
+
+        private void SearchImpl()
         {
             if (!SearchTrie.Initialized)
             {
@@ -69,6 +81,7 @@ namespace CSC.Components
             resultsTree.Nodes.AddRange([.. treeNodes]);
             resultsTree.PerformLayout();
             resultsTree.Enabled = true;
+            return;
         }
 
         private void Modifiers_SelectedIndexChanged(object sender, EventArgs e)

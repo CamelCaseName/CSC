@@ -8,6 +8,24 @@ namespace CSC.Components
 {
     public static class Extensions
     {
+        public static Control? FindFocusedControl(this Control control)
+        {
+
+            if (control.Focused)
+            {
+                return control;
+            }
+
+            foreach (Control item in control.Controls)
+            {
+                var focus = item.FindFocusedControl();
+                if (focus != null)
+                {
+                    return focus;
+                }
+            }
+            return null;
+        }
         public static void ToLowQuality(this Graphics graphics)
         {
             graphics.InterpolationMode = InterpolationMode.Low;
@@ -47,8 +65,10 @@ namespace CSC.Components
         public static void AddComboBoxHandler(this ComboBox box, Node node, NodeStore nodes, EventHandler handler)
         {
             box.SelectedIndexChanged += handler;
-            box.SelectedIndexChanged += (_, _) => {
-                NodeLinker.UpdateLinks(node, node.FileName, nodes); Main.RedrawGraph();
+            box.SelectedIndexChanged += (_, _) =>
+            {
+                NodeLinker.UpdateLinks(node, node.FileName, nodes);
+                Main.RedrawGraph();
             };
         }
     }
