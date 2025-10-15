@@ -1055,6 +1055,35 @@ namespace CSC.Nodestuff
             Main.SelectedCharacter = filename;
             DateTime start = DateTime.UtcNow;
             //lists to save new stuff
+            try
+            {
+                int count = store.Count;
+                var nodes = store.KeyNodes().ToList();
+                List<string> links = [];
+                //link up different stories and dialogues
+                //doesnt matter that we add some in here, we only care about the ones added so far
+                for (int i = 0; i < count; i++)
+                {
+                    if (nodes[i].Type == NodeType.GameEvent && !links.Contains(nodes[i].ID) && (nodes[i].Data<GameEvent>() is not null))
+                    {
+                        var dupeEvents = nodes.FindAll((n) => n.ID == nodes[i].ID && (n.Data<GameEvent>()?.Equals(nodes[i].Data<GameEvent>()) ?? false));
+
+                        if (dupeEvents.Count > 1)
+                        {
+                            links.Add(nodes[i].ID);
+                            for (int j = 1; j < dupeEvents.Count; j++)
+                            {
+                                nodes[i].DupeToOtherSorting(dupeEvents[j].FileName);
+                                store.Replace(dupeEvents[j], nodes[i]);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
 
             try
             {
@@ -1607,6 +1636,7 @@ namespace CSC.Nodestuff
                         //todo once charactergroups are implemented correctly
                         gameEvent.Character = Main.Player;
                     }
+
                     switch (gameEvent.EventType)
                     {
                         case GameEvents.Clothing:

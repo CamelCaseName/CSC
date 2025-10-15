@@ -171,7 +171,8 @@ public partial class Main : Form
 
     public static bool NeedsSaving { get => needsSaving; set => needsSaving = value; }
 
-    //todo when adding an event to another somethign and the event is already part of another node we need to clone the event, sadly we cannot use the exact same event object in multiple places :(
+    //todo update search when node text changes
+    //todo original story linking is still wrong
     //filter/hide node types
 
     //todo add info when trying to link incompatible notes
@@ -964,7 +965,6 @@ public partial class Main : Form
                 var map = new Bitmap(Graph.Width, Graph.Height);
                 Graph.DrawToBitmap(map, Graph.ClientRectangle);
                 oldGraph = new CachedBitmap(map, Graphics.FromHwnd(Handle));
-                map.Save("tmp.bmp");
             }
             Graph.Invalidate();
         }
@@ -1083,13 +1083,13 @@ public partial class Main : Form
         Instance.ShowProperties(node);
     }
 
-    public void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
+    public static void ScreenToGraph(float screenX, float screenY, out float graphX, out float graphY)
     {
         graphX = screenX / Scaling[SelectedCharacter] + OffsetX[SelectedCharacter];
         graphY = screenY / Scaling[SelectedCharacter] + OffsetY[SelectedCharacter];
     }
 
-    public void GraphToScreen(float graphX, float graphY, out float screenX, out float screenY)
+    public static void GraphToScreen(float graphX, float graphY, out float screenX, out float screenY)
     {
         screenX = (graphX - OffsetX[SelectedCharacter]) * Scaling[SelectedCharacter];
         screenY = (graphY - OffsetY[SelectedCharacter]) * Scaling[SelectedCharacter];
@@ -1983,7 +1983,8 @@ public partial class Main : Form
             var settings = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Skip
+                UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Skip,
+                IncludeFields = false
             };
             if (Path.GetExtension(FilePath) == ".story")
             {
@@ -2488,7 +2489,6 @@ public partial class Main : Form
         NodeContext.Show(Graph, ScreenPos);
     }
 
-    //todo implement drag/drop setting of node data like item name or sth
     private void ShowProperties(Node node)
     {
         PropertyInspector.Controls.Clear();
@@ -4583,6 +4583,7 @@ public partial class Main : Form
                 }
                 break;
             }
+                //todo do the following propetyinspectors
             case NodeType.State:
             case NodeType.Property:
             case NodeType.Social:

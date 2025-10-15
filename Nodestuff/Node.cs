@@ -1093,6 +1093,9 @@ namespace CSC.Nodestuff
             }
         }
 
+        //todo we somehow have to keep track of the data here to update the search...
+        //SearchTrie.AddNode()
+        //SearchTrie.RemoveNode()
         public T? Data<T>() where T : class
         {
             if (typeof(T) == DataType && RawData is not null)

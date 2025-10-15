@@ -71,22 +71,7 @@ namespace CSC.Components
                     //todo somehow parallelize?
                     for (int ni = 0; ni < nodes.Count; ni++)
                     {
-                        //add both case sensitive and not here, can seperate during search later
-                        var nodeText = nodes[ni].Text.ToLower().AsSpan();
-                        if (nodeText.Length > 0)
-                        {
-                            AddToTree(store, nodes[ni], nodeText);
-                        }
-
-                        nodeText = nodes[ni].Text.AsSpan();
-                        if (nodeText.Length > 0)
-                        {
-                            AddToTree(store, nodes[ni], nodeText);
-                        }
-
-                        nodeText = nodes[ni].Type.ToString().ToLower().AsSpan();
-                        AddToTree(store, nodes[ni], nodeText);
-                        //todo add else clause with adding to 0 length, or fix node.Text return to always return at least node type...
+                        AddNode(nodes[ni]);
                     }
                 }
 
@@ -95,61 +80,145 @@ namespace CSC.Components
                 var end = DateTime.UtcNow;
                 Debug.WriteLine($"populated the search trees for {nodecounter} nodes with {SearchTrie.StartsWithTreeDepth} steps for StartsWith() and {SearchTrie.ContainsTreeDepth} steps for Contains() in {(end - start).TotalMilliseconds}ms");
 
-                static void AddToTree(KeyValuePair<string, NodeStore> store, Node node, ReadOnlySpan<char> nodeText)
-                {
-                    //disable garbage collection for now
-                    GC.TryStartNoGCRegion(251658240); //240MB
-
-                    //startswith() lookup up to a length
-                    var level = StartsWithTree;
-                    int limit = Math.Min(nodeText.Length, SearchTrie.StartsWithTreeDepth);
-
-                    for (int j = 0; j < nodeText.Length; j++)
-                    {
-                        //contains() lookup up to a certain string starting lenght
-                        var container = ContainsTree;
-                        int containerlimit = Math.Min(nodeText.Length - j, SearchTrie.ContainsTreeDepth);
-                        int loopLimit = Math.Max(limit, containerlimit);
-                        for (int i = 0; i < loopLimit; i++)
-                        {
-                            if (i < containerlimit)
-                            {
-                                if (!container.TryGetValue(nodeText[i + j], out var tup))
-                                {
-                                    tup = new();
-                                    container.Add(nodeText[i + j], tup);
-                                }
-
-                                container = tup.tree;
-
-                                //add node at each step
-                                tup.list.Add(node);
-                            }
-
-                            if (j == 0 && i < limit)
-                            {
-                                if (!level.TryGetValue(nodeText[i], out var tup))
-                                {
-                                    tup = new();
-                                    level.Add(nodeText[i], tup);
-                                }
-
-                                if (i < limit - 1)
-                                {
-                                    level = tup.tree;
-                                }
-                            }
-                        }
-                    }
-                    //add node at last step
-                    level[nodeText[limit - 1]].list.Add(node);
-
-                    //reenable garbage collection to keep the GC happy and not get booted out of the small noGC region
-                    GC.EndNoGCRegion();
-                }
-
                 Main.SetSearchWindowTitle("Search:");
             });
+        }
+
+        public static void RemoveNode(Node node, string text)
+        {
+            var nodeText = text.ToLower().AsSpan();
+            if (nodeText.Length > 0)
+            {
+                RemoveFromTree(node, nodeText);
+            }
+
+            nodeText = text.AsSpan();
+            if (nodeText.Length > 0)
+            {
+                RemoveFromTree(node, nodeText);
+            }
+
+            nodeText = node.Type.ToString().ToLower().AsSpan();
+            RemoveFromTree(node, nodeText);
+        }
+
+        private static void RemoveFromTree(Node node, ReadOnlySpan<char> nodeText)
+        {//startswith() lookup up to a length
+            var level = StartsWithTree;
+            int limit = Math.Min(nodeText.Length, SearchTrie.StartsWithTreeDepth);
+
+            for (int j = 0; j < nodeText.Length; j++)
+            {
+                //contains() lookup up to a certain string starting lenght
+                var container = ContainsTree;
+                int containerlimit = Math.Min(nodeText.Length - j, SearchTrie.ContainsTreeDepth);
+                int loopLimit = Math.Max(limit, containerlimit);
+                for (int i = 0; i < loopLimit; i++)
+                {
+                    if (i < containerlimit)
+                    {
+                        if (!container.TryGetValue(nodeText[i + j], out var tup))
+                        {
+                            tup = new();
+                            container.Add(nodeText[i + j], tup);
+                        }
+
+                        container = tup.tree;
+
+                        //add node at each step
+                        tup.list.Remove(node);
+                    }
+
+                    if (j == 0 && i < limit)
+                    {
+                        if (!level.TryGetValue(nodeText[i], out var tup))
+                        {
+                            tup = new();
+                            level.Add(nodeText[i], tup);
+                        }
+
+                        if (i < limit - 1)
+                        {
+                            level = tup.tree;
+                        }
+                    }
+                }
+            }
+            //add node at last step
+            level[nodeText[limit - 1]].list.Remove(node);
+        }
+
+        public static void AddNode(Node node)
+        {
+            //add both case sensitive and not here, can seperate during search later
+            var nodeText = node.Text.ToLower().AsSpan();
+            if (nodeText.Length > 0)
+            {
+                AddToTree(node, nodeText);
+            }
+
+            nodeText = node.Text.AsSpan();
+            if (nodeText.Length > 0)
+            {
+                AddToTree(node, nodeText);
+            }
+
+            nodeText = node.Type.ToString().ToLower().AsSpan();
+            AddToTree(node, nodeText);
+            //todo add else clause with adding to 0 length, or fix node.Text return to always return at least node type...
+        }
+
+        private static void AddToTree(Node node, ReadOnlySpan<char> nodeText)
+        {
+            //disable garbage collection for now
+            GC.TryStartNoGCRegion(251658240); //240MB
+
+            //startswith() lookup up to a length
+            var level = StartsWithTree;
+            int limit = Math.Min(nodeText.Length, SearchTrie.StartsWithTreeDepth);
+
+            for (int j = 0; j < nodeText.Length; j++)
+            {
+                //contains() lookup up to a certain string starting lenght
+                var container = ContainsTree;
+                int containerlimit = Math.Min(nodeText.Length - j, SearchTrie.ContainsTreeDepth);
+                int loopLimit = Math.Max(limit, containerlimit);
+                for (int i = 0; i < loopLimit; i++)
+                {
+                    if (i < containerlimit)
+                    {
+                        if (!container.TryGetValue(nodeText[i + j], out var tup))
+                        {
+                            tup = new();
+                            container.Add(nodeText[i + j], tup);
+                        }
+
+                        container = tup.tree;
+
+                        //add node at each step
+                        tup.list.Add(node);
+                    }
+
+                    if (j == 0 && i < limit)
+                    {
+                        if (!level.TryGetValue(nodeText[i], out var tup))
+                        {
+                            tup = new();
+                            level.Add(nodeText[i], tup);
+                        }
+
+                        if (i < limit - 1)
+                        {
+                            level = tup.tree;
+                        }
+                    }
+                }
+            }
+            //add node at last step
+            level[nodeText[limit - 1]].list.Add(node);
+
+            //reenable garbage collection to keep the GC happy and not get booted out of the small noGC region
+            GC.EndNoGCRegion();
         }
 
         public static HashSet<Node> Search(ReadOnlySpan<char> searchValue)

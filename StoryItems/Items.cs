@@ -3,39 +3,74 @@ using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.StoryItems
 {
+    public sealed class ItemChangeArgs(object? data)
+    {
+        public Type ItemType { get; private set; } = data?.GetType() ?? typeof(object);
+        private readonly object? _data = data;
+        public T? Data<T>() where T : class, new()
+        {
+            if (typeof(T) == ItemType && _data is not null)
+            {
+                return (T)_data;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
     public sealed class Criterion
     {
-        public BoolCritera BoolValue { get; set; } = BoolCritera.True;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        private BoolCritera boolValue = BoolCritera.True;
+        private string character = "#";
+        private string character2 = "#";
+        private CompareTypes compareType = CompareTypes.Never;
+        private DialogueStatuses dialogueStatus = DialogueStatuses.WasShown;
+        private bool displayInEditor = true;
+        private DoorOptionValues doorOptions = DoorOptionValues.IsClosed;
+        private EqualsValues equalsValue = EqualsValues.Equals;
+        private ComparisonEquations equationValue = ComparisonEquations.Equals;
+        private ValueSpecificFormulas valueFormula = ValueSpecificFormulas.EqualsValue;
+        private ItemComparisonTypes itemComparison = ItemComparisonTypes.IsActive;
+        private ItemFromItemGroupComparisonTypes itemFromItemGroupComparison = ItemFromItemGroupComparisonTypes.IsActive;
+        private string key = "#";
+        private string key2 = "#";
+        private int order = 0;
+        private PlayerInventoryOptions playerInventoryOption = PlayerInventoryOptions.HasItem;
+        private PoseOptions poseOption = PoseOptions.IsCurrentlyPosing;
+        private SocialStatuses socialStatus = SocialStatuses.Drunk;
+        private string _value = "#";
+        private int option = 0;
+        private CompareTypes groupSubCompareType = CompareTypes.Never;
+        private string version = "1.0";
 
-        public string Character { get; set; } = "#";
-
-        public string Character2 { get; set; } = "#";
+        public BoolCritera BoolValue { get => boolValue; set { OnBeforeChange?.Invoke(this); boolValue = value; OnAfterChange?.Invoke(this); } }
+        public string Character { get => character; set { OnBeforeChange?.Invoke(this); character = value; OnAfterChange?.Invoke(this); } }
+        public string Character2 { get => character2; set { OnBeforeChange?.Invoke(this); character2 = value; OnAfterChange?.Invoke(this); } }
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public CompareTypes CompareType { get; set; } = CompareTypes.Never;
-        public DialogueStatuses DialogueStatus { get; set; } = DialogueStatuses.WasShown;
-        public bool DisplayInEditor { get; set; } = true;
-        public DoorOptionValues DoorOptions { get; set; } = DoorOptionValues.IsClosed;
-        public EqualsValues EqualsValue { get; set; } = EqualsValues.Equals;
-        public ComparisonEquations EquationValue { get; set; } = ComparisonEquations.Equals;
-        public ValueSpecificFormulas ValueFormula { get; set; } = ValueSpecificFormulas.EqualsValue;
-        public ItemComparisonTypes ItemComparison { get; set; } = ItemComparisonTypes.IsActive;
-        public ItemFromItemGroupComparisonTypes ItemFromItemGroupComparison { get; set; } = ItemFromItemGroupComparisonTypes.IsActive;
-
-        public string Key { get; set; } = "#";
-
-        public string Key2 { get; set; } = "#";
-        public int Order { get; set; } = 0;
-        public PlayerInventoryOptions PlayerInventoryOption { get; set; } = PlayerInventoryOptions.HasItem;
-        public PoseOptions PoseOption { get; set; } = PoseOptions.IsCurrentlyPosing;
-        public SocialStatuses SocialStatus { get; set; } = SocialStatuses.Drunk;
-
-        public string Value { get; set; } = "#";
-        public int Option { get; set; } = 0;
-
+        public CompareTypes CompareType { get => compareType; set { OnBeforeChange?.Invoke(this); compareType = value; OnAfterChange?.Invoke(this); } }
+        public DialogueStatuses DialogueStatus { get => dialogueStatus; set { OnBeforeChange?.Invoke(this); dialogueStatus = value; OnAfterChange?.Invoke(this); } }
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this); displayInEditor = value; OnAfterChange?.Invoke(this); } }
+        public DoorOptionValues DoorOptions { get => doorOptions; set { OnBeforeChange?.Invoke(this); doorOptions = value; OnAfterChange?.Invoke(this); } }
+        public EqualsValues EqualsValue { get => equalsValue; set { OnBeforeChange?.Invoke(this); equalsValue = value; OnAfterChange?.Invoke(this); } }
+        public ComparisonEquations EquationValue { get => equationValue; set { OnBeforeChange?.Invoke(this); equationValue = value; OnAfterChange?.Invoke(this); } }
+        public ValueSpecificFormulas ValueFormula { get => valueFormula; set { OnBeforeChange?.Invoke(this); valueFormula = value; OnAfterChange?.Invoke(this); } }
+        public ItemComparisonTypes ItemComparison { get => itemComparison; set { OnBeforeChange?.Invoke(this); itemComparison = value; OnAfterChange?.Invoke(this); } }
+        public ItemFromItemGroupComparisonTypes ItemFromItemGroupComparison { get => itemFromItemGroupComparison; set { OnBeforeChange?.Invoke(this); itemFromItemGroupComparison = value; OnAfterChange?.Invoke(this); } }
+        public string Key { get => key; set { OnBeforeChange?.Invoke(this); key = value; OnAfterChange?.Invoke(this); } }
+        public string Key2 { get => key2; set { OnBeforeChange?.Invoke(this); key2 = value; OnAfterChange?.Invoke(this); } }
+        public int Order { get => order; set { OnBeforeChange?.Invoke(this); order = value; OnAfterChange?.Invoke(this); } }
+        public PlayerInventoryOptions PlayerInventoryOption { get => playerInventoryOption; set { OnBeforeChange?.Invoke(this); playerInventoryOption = value; OnAfterChange?.Invoke(this); } }
+        public PoseOptions PoseOption { get => poseOption; set { OnBeforeChange?.Invoke(this); poseOption = value; OnAfterChange?.Invoke(this); } }
+        public SocialStatuses SocialStatus { get => socialStatus; set { OnBeforeChange?.Invoke(this); socialStatus = value; OnAfterChange?.Invoke(this); } }
+        public string Value { get => _value; set { OnBeforeChange?.Invoke(this); _value = value; OnAfterChange?.Invoke(this); } }
+        public int Option { get => option; set { OnBeforeChange?.Invoke(this); option = value; OnAfterChange?.Invoke(this); } }
         [JsonConverter(typeof(JsonNumberEnumConverter<CompareTypes>))]
-        public CompareTypes GroupSubCompareType { get; set; } = CompareTypes.Never;
-        public string Version { get; set; } = "1.0";
-
+        public CompareTypes GroupSubCompareType { get => groupSubCompareType; set { OnBeforeChange?.Invoke(this); groupSubCompareType = value; OnAfterChange?.Invoke(this); } }
+        public string Version { get => version; set { OnBeforeChange?.Invoke(this); version = value; OnAfterChange?.Invoke(this); } }
         public override bool Equals(object? obj)
         {
             if (obj is null || obj.GetType() != typeof(Criterion))
@@ -90,119 +125,188 @@ namespace CSC.StoryItems
 
     public sealed class ItemAction
     {
-        public string ActionName { get; set; } = string.Empty;
-        public List<Criterion> Criteria { get; set; } = [];
-        public bool DisplayInEditor { get; set; } = true;
-        public List<GameEvent> OnTakeActionEvents { get; set; } = [];
+        private string actionName = string.Empty;
+        private List<Criterion> criteria = [];
+        private bool displayInEditor = true;
+        private List<GameEvent> onTakeActionEvents = [];
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string ActionName { get => actionName; set { OnBeforeChange?.Invoke(this);  actionName = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> Criteria { get => criteria; set { OnBeforeChange?.Invoke(this);  criteria = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> OnTakeActionEvents { get => onTakeActionEvents; set { OnBeforeChange?.Invoke(this);  onTakeActionEvents = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class UseWith
     {
-        public List<Criterion> Criteria { get; set; } = [];
+        private List<Criterion> criteria = [];
+        private string customCantDoThatMessage = string.Empty;
+        private bool displayInEditor = true;
+        private string itemName = string.Empty;
+        private List<GameEvent> onSuccessEvents = [];
 
-        public string CustomCantDoThatMessage { get; set; } = string.Empty;
-        public bool DisplayInEditor { get; set; } = true;
-
-        public string ItemName { get; set; } = string.Empty;
-        public List<GameEvent> OnSuccessEvents { get; set; } = [];
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public List<Criterion> Criteria { get => criteria; set { OnBeforeChange?.Invoke(this);  criteria = value; OnAfterChange?.Invoke(this);}}
+        public string CustomCantDoThatMessage { get => customCantDoThatMessage; set { OnBeforeChange?.Invoke(this);  customCantDoThatMessage = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public string ItemName { get => itemName; set { OnBeforeChange?.Invoke(this);  itemName = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> OnSuccessEvents { get => onSuccessEvents; set { OnBeforeChange?.Invoke(this);  onSuccessEvents = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class InteractiveitemBehaviour
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public bool DisplayInEditor { get; set; } = true;
+        private string id = Guid.NewGuid().ToString();
+        private bool displayInEditor = true;
+        private string displayName = string.Empty;
+        private List<ItemAction> itemActions = [];
+        private string itemName = string.Empty;
+        private List<UseWith> useWiths = [];
+        private bool useDefaultRadialOptions = true;
 
-        public string DisplayName { get; set; } = string.Empty;
-        public List<ItemAction> ItemActions { get; set; } = [];
-
-        public string ItemName { get; set; } = string.Empty;
-        public List<UseWith> UseWiths { get; set; } = [];
-        public bool UseDefaultRadialOptions { get; set; } = true;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public string DisplayName { get => displayName; set { OnBeforeChange?.Invoke(this);  displayName = value; OnAfterChange?.Invoke(this);}}
+        public List<ItemAction> ItemActions { get => itemActions; set { OnBeforeChange?.Invoke(this);  itemActions = value; OnAfterChange?.Invoke(this);}}
+        public string ItemName { get => itemName; set { OnBeforeChange?.Invoke(this);  itemName = value; OnAfterChange?.Invoke(this);}}
+        public List<UseWith> UseWiths { get => useWiths; set { OnBeforeChange?.Invoke(this);  useWiths = value; OnAfterChange?.Invoke(this);}}
+        public bool UseDefaultRadialOptions { get => useDefaultRadialOptions; set { OnBeforeChange?.Invoke(this);  useDefaultRadialOptions = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class ItemGroupBehavior
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        private string id = Guid.NewGuid().ToString();
+        private string name = string.Empty;
+        private string groupName = string.Empty;
+        private bool displayInEditor = true;
+        private List<ItemAction> itemActions = [];
+        private List<UseWith> useWiths = [];
 
-        public string Name { get; set; } = string.Empty;
-
-        public string GroupName { get; set; } = string.Empty;
-        public bool DisplayInEditor { get; set; } = true;
-        public List<ItemAction> ItemActions { get; set; } = [];
-        public List<UseWith> UseWiths { get; set; } = [];
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public string GroupName { get => groupName; set { OnBeforeChange?.Invoke(this);  groupName = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public List<ItemAction> ItemActions { get => itemActions; set { OnBeforeChange?.Invoke(this);  itemActions = value; OnAfterChange?.Invoke(this);}}
+        public List<UseWith> UseWiths { get => useWiths; set { OnBeforeChange?.Invoke(this);  useWiths = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class Achievement
     {
-        public string Description { get; set; } = string.Empty;
+        private string description = string.Empty;
+        private string id = Guid.NewGuid().ToString();
+        private string image = string.Empty;
+        private string name = string.Empty;
+        private bool showInEditor = true;
+        private string steamName = string.Empty;
 
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
-        public string Image { get; set; } = string.Empty;
-
-        public string Name { get; set; } = string.Empty;
-        public bool ShowInEditor { get; set; } = true;
-
-        public string SteamName { get; set; } = string.Empty;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string Description { get => description; set { OnBeforeChange?.Invoke(this);  description = value; OnAfterChange?.Invoke(this);}}
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string Image { get => image; set { OnBeforeChange?.Invoke(this);  image = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowInEditor { get => showInEditor; set { OnBeforeChange?.Invoke(this);  showInEditor = value; OnAfterChange?.Invoke(this);}}
+        public string SteamName { get => steamName; set { OnBeforeChange?.Invoke(this);  steamName = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class CriteriaListWrapper
     {
-        public List<Criterion> CriteriaList { get; set; } = [];
+        private List<Criterion> criteriaList = [];
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public List<Criterion> CriteriaList { get => criteriaList; set { OnBeforeChange?.Invoke(this);  criteriaList = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class CriteriaGroup
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        private string id = Guid.NewGuid().ToString();
+        private string name = string.Empty;
+        private string linkedGroupName = string.Empty;
+        private bool displayInEditor = true;
+        private PassCondition passCondition = PassCondition.AnySetIsTrue;
+        private List<CriteriaListWrapper> criteriaList = [new CriteriaListWrapper()];
 
-        public string Name { get; set; } = string.Empty;
-
-        public string LinkedGroupName { get; set; } = string.Empty;
-        public bool DisplayInEditor { get; set; } = true;
-        public PassCondition PassCondition { get; set; } = PassCondition.AnySetIsTrue;
-        public List<CriteriaListWrapper> CriteriaList { get; set; } = [new CriteriaListWrapper()];
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public string LinkedGroupName { get => linkedGroupName; set { OnBeforeChange?.Invoke(this);  linkedGroupName = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public PassCondition PassCondition { get => passCondition; set { OnBeforeChange?.Invoke(this);  passCondition = value; OnAfterChange?.Invoke(this);}}
+        public List<CriteriaListWrapper> CriteriaList { get => criteriaList; set { OnBeforeChange?.Invoke(this);  criteriaList = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class ItemGroup
     {
+        private string id = Guid.NewGuid().ToString();
+        private string name = string.Empty;
+        private bool displayInEditor = true;
+        private List<string> itemsInGroup = [];
 
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
 
-        public string Name { get; set; } = string.Empty;
-        public bool DisplayInEditor { get; set; } = true;
-        public List<string> ItemsInGroup { get; set; } = [];
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public List<string> ItemsInGroup { get => itemsInGroup; set { OnBeforeChange?.Invoke(this);  itemsInGroup = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class GameEvent
     {
-        public EventSpecialHandling Handling { get; set; } = EventSpecialHandling.None;
+        private EventSpecialHandling handling = EventSpecialHandling.None;
+        private string version = "2.0";
+        private string id = Guid.NewGuid().ToString();
+        private bool enabled = true;
+        private GameEvents eventType = GameEvents.None;
+        private GameEvents groupSubEventType = GameEvents.None;
+        private string character = "#";
+        private string character2 = "#";
+        private string key = "#";
+        private int option = 0;
+        private int option2 = 0;
+        private int option3 = 0;
+        private int option4 = 0;
+        private string _value = string.Empty;
+        private string value2 = string.Empty;
+        private int sortOrder = 0;
+        private double delay = 0;
+        private double originalDelay = 0;
+        private double startDelayTime = 0;
+        private bool useConditions = false;
+        private bool displayInEditor = true;
+        private List<Criterion> criteria = [];
 
-        public string Version { get; set; } = "2.0";
-
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public bool Enabled { get; set; } = true;
-        public GameEvents EventType { get; set; } = GameEvents.None;
-        public GameEvents GroupSubEventType { get; set; } = GameEvents.None;
-
-        public string Character { get; set; } = "#";
-
-        public string Character2 { get; set; } = "#";
-
-        public string Key { get; set; } = "#";
-        public int Option { get; set; } = 0;
-        public int Option2 { get; set; } = 0;
-        public int Option3 { get; set; } = 0;
-        public int Option4 { get; set; } = 0;
-        public string Value { get; set; } = string.Empty;
-        public string Value2 { get; set; } = string.Empty;
-        public int SortOrder { get; set; } = 0;
-        public double Delay { get; set; } = 0;
-        public double OriginalDelay { get; set; } = 0;
-        public double StartDelayTime { get; set; } = 0;
-        public bool UseConditions { get; set; } = false;
-        public bool DisplayInEditor { get; set; } = true;
-        public List<Criterion> Criteria { get; set; } = [];
-
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public EventSpecialHandling Handling { get => handling; set { OnBeforeChange?.Invoke(this);  handling = value; OnAfterChange?.Invoke(this);}}
+        public string Version { get => version; set { OnBeforeChange?.Invoke(this);  version = value; OnAfterChange?.Invoke(this);}}
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public bool Enabled { get => enabled; set { OnBeforeChange?.Invoke(this);  enabled = value; OnAfterChange?.Invoke(this);}}
+        public GameEvents EventType { get => eventType; set { OnBeforeChange?.Invoke(this);  eventType = value; OnAfterChange?.Invoke(this);}}
+        public GameEvents GroupSubEventType { get => groupSubEventType; set { OnBeforeChange?.Invoke(this);  groupSubEventType = value; OnAfterChange?.Invoke(this);}}
+        public string Character { get => character; set { OnBeforeChange?.Invoke(this);  character = value; OnAfterChange?.Invoke(this);}}
+        public string Character2 { get => character2; set { OnBeforeChange?.Invoke(this);  character2 = value; OnAfterChange?.Invoke(this);}}
+        public string Key { get => key; set { OnBeforeChange?.Invoke(this);  key = value; OnAfterChange?.Invoke(this);}}
+        public int Option { get => option; set { OnBeforeChange?.Invoke(this);  option = value; OnAfterChange?.Invoke(this);}}
+        public int Option2 { get => option2; set { OnBeforeChange?.Invoke(this);  option2 = value; OnAfterChange?.Invoke(this);}}
+        public int Option3 { get => option3; set { OnBeforeChange?.Invoke(this);  option3 = value; OnAfterChange?.Invoke(this);}}
+        public int Option4 { get => option4; set { OnBeforeChange?.Invoke(this);  option4 = value; OnAfterChange?.Invoke(this);}}
+        public string Value { get => _value; set { OnBeforeChange?.Invoke(this);  _value = value; OnAfterChange?.Invoke(this);}}
+        public string Value2 { get => value2; set { OnBeforeChange?.Invoke(this);  value2 = value; OnAfterChange?.Invoke(this);}}
+        public int SortOrder { get => sortOrder; set { OnBeforeChange?.Invoke(this);  sortOrder = value; OnAfterChange?.Invoke(this);}}
+        public double Delay { get => delay; set { OnBeforeChange?.Invoke(this);  delay = value; OnAfterChange?.Invoke(this);}}
+        public double OriginalDelay { get => originalDelay; set { OnBeforeChange?.Invoke(this);  originalDelay = value; OnAfterChange?.Invoke(this);}}
+        public double StartDelayTime { get => startDelayTime; set { OnBeforeChange?.Invoke(this);  startDelayTime = value; OnAfterChange?.Invoke(this);}}
+        public bool UseConditions { get => useConditions; set { OnBeforeChange?.Invoke(this);  useConditions = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> Criteria { get => criteria; set { OnBeforeChange?.Invoke(this);  criteria = value; OnAfterChange?.Invoke(this);}}
         public override bool Equals(object? obj)
         {
             if (obj is null || obj.GetType() != typeof(GameEvent))
@@ -266,37 +370,75 @@ namespace CSC.StoryItems
 
     public sealed class EventTrigger
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        private string id = Guid.NewGuid().ToString();
+        private string characterToReactTo = "#";
+        private List<Criterion> critera = [];
+        private double currentIteration = 0;
+        private bool enabled = true;
+        private List<GameEvent> events = [];
+        private string key = "#";
+        private string name = string.Empty;
+        private bool showInInspector = true;
+        private EventTypes type = EventTypes.Never;
+        private double updateIteration = 0;
+        private string _value = "#";
+        private LocationTargetOption locationTargetOption = LocationTargetOption.MoveTarget;
 
-        public string CharacterToReactTo { get; set; } = "#";
-        public List<Criterion> Critera { get; set; } = [];
-        public double CurrentIteration { get; set; } = 0;
-        public bool Enabled { get; set; } = true;
-        public List<GameEvent> Events { get; set; } = [];
-
-        public string Key { get; set; } = "#";
-
-        public string Name { get; set; } = string.Empty;
-        public bool ShowInInspector { get; set; } = true;
-        public EventTypes Type { get; set; } = EventTypes.Never;
-        public double UpdateIteration { get; set; } = 0;
-
-        public string Value { get; set; } = "#";
-
-        public LocationTargetOption LocationTargetOption { get; set; } = LocationTargetOption.MoveTarget;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string CharacterToReactTo { get => characterToReactTo; set { OnBeforeChange?.Invoke(this);  characterToReactTo = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> Critera { get => critera; set { OnBeforeChange?.Invoke(this);  critera = value; OnAfterChange?.Invoke(this);}}
+        public double CurrentIteration { get => currentIteration; set { OnBeforeChange?.Invoke(this);  currentIteration = value; OnAfterChange?.Invoke(this);}}
+        public bool Enabled { get => enabled; set { OnBeforeChange?.Invoke(this);  enabled = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> Events { get => events; set { OnBeforeChange?.Invoke(this);  events = value; OnAfterChange?.Invoke(this);}}
+        public string Key { get => key; set { OnBeforeChange?.Invoke(this);  key = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowInInspector { get => showInInspector; set { OnBeforeChange?.Invoke(this);  showInInspector = value; OnAfterChange?.Invoke(this);}}
+        public EventTypes Type { get => type; set { OnBeforeChange?.Invoke(this);  type = value; OnAfterChange?.Invoke(this);}}
+        public double UpdateIteration { get => updateIteration; set { OnBeforeChange?.Invoke(this);  updateIteration = value; OnAfterChange?.Invoke(this);}}
+        public string Value { get => _value; set { OnBeforeChange?.Invoke(this);  _value = value; OnAfterChange?.Invoke(this);}}
+        public LocationTargetOption LocationTargetOption { get => locationTargetOption; set { OnBeforeChange?.Invoke(this);  locationTargetOption = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class CharacterGroup
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        private string id = Guid.NewGuid().ToString();
+        private string name = string.Empty;
+        private bool displayInEditor = true;
+        private List<string> charactersInGroup = [];
 
-        public string Name { get; set; } = string.Empty;
-        public bool DisplayInEditor { get; set; } = true;
-        public List<string> CharactersInGroup { get; set; } = [];
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
+        public List<string> CharactersInGroup { get => charactersInGroup; set { OnBeforeChange?.Invoke(this);  charactersInGroup = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class MainStory
     {
+        private bool allowPlayerFemale = true;
+        private bool allowPlayerMale = true;
+        private bool useEekDefaultItemEnableBehavior = false;
+        private List<Achievement> achievements = [];
+        private List<CharacterGroup> characterGroups = [];
+        private List<CriteriaGroup> criteriaGroups = [];
+        private List<EventTrigger> playerReactions = [];
+        private List<GameEvent> gameStartEvents = [];
+        private List<ItemGroup> itemGroups = [];
+        private List<ItemGroupBehavior> itemGroupBehaviors = [];
+        private List<InteractiveitemBehaviour> itemOverrides = [];
+        private List<object> playerPeriodcBehaviors = [];
+        private List<object> interactions = [];
+        private List<object> opportunities = [];
+        private List<object> playerReactionBehaviors = [];
+        private List<object> onGameStartScripts = [];
+        private List<string> playerValues = [];
+        private string housePartyVersion = Main.HousePartyVersion;
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
         public MainStory(string name)
         {
             PlayerReactions.Add(new()
@@ -369,188 +511,314 @@ namespace CSC.StoryItems
 
         }
         public MainStory() { }
-        public bool AllowPlayerFemale { get; set; } = true;
-        public bool AllowPlayerMale { get; set; } = true;
-        public bool UseEekDefaultItemEnableBehavior { get; set; } = false;
-        public List<Achievement> Achievements { get; set; } = [];
-        public List<CharacterGroup> CharacterGroups { get; set; } = [];
-        public List<CriteriaGroup> CriteriaGroups { get; set; } = [];
-        public List<EventTrigger> PlayerReactions { get; set; } = [];
-        public List<GameEvent> GameStartEvents { get; set; } = [];
-        public List<ItemGroup> ItemGroups { get; set; } = [];
-        public List<ItemGroupBehavior> ItemGroupBehaviors { get; set; } = [];
-        public List<InteractiveitemBehaviour> ItemOverrides { get; set; } = [];
-        public List<object> PlayerPeriodcBehaviors { get; set; } = [];
-        public List<object> Interactions { get; set; } = [];
-        public List<object> Opportunities { get; set; } = [];
-        public List<object> PlayerReactionBehaviors { get; set; } = [];
-
-        public List<object> OnGameStartScripts { get; set; } = [];
-        public List<string> PlayerValues { get; set; } = [];
-
-        public string HousePartyVersion { get; set; } = Main.HousePartyVersion;
+        public bool AllowPlayerFemale { get => allowPlayerFemale; set { OnBeforeChange?.Invoke(this);  allowPlayerFemale = value; OnAfterChange?.Invoke(this);}}
+        public bool AllowPlayerMale { get => allowPlayerMale; set { OnBeforeChange?.Invoke(this);  allowPlayerMale = value; OnAfterChange?.Invoke(this);}}
+        public bool UseEekDefaultItemEnableBehavior { get => useEekDefaultItemEnableBehavior; set { OnBeforeChange?.Invoke(this);  useEekDefaultItemEnableBehavior = value; OnAfterChange?.Invoke(this);}}
+        public List<Achievement> Achievements { get => achievements; set { OnBeforeChange?.Invoke(this);  achievements = value; OnAfterChange?.Invoke(this);}}
+        public List<CharacterGroup> CharacterGroups { get => characterGroups; set { OnBeforeChange?.Invoke(this);  characterGroups = value; OnAfterChange?.Invoke(this);}}
+        public List<CriteriaGroup> CriteriaGroups { get => criteriaGroups; set { OnBeforeChange?.Invoke(this);  criteriaGroups = value; OnAfterChange?.Invoke(this);}}
+        public List<EventTrigger> PlayerReactions { get => playerReactions; set { OnBeforeChange?.Invoke(this);  playerReactions = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> GameStartEvents { get => gameStartEvents; set { OnBeforeChange?.Invoke(this);  gameStartEvents = value; OnAfterChange?.Invoke(this);}}
+        public List<ItemGroup> ItemGroups { get => itemGroups; set { OnBeforeChange?.Invoke(this);  itemGroups = value; OnAfterChange?.Invoke(this);}}
+        public List<ItemGroupBehavior> ItemGroupBehaviors { get => itemGroupBehaviors; set { OnBeforeChange?.Invoke(this);  itemGroupBehaviors = value; OnAfterChange?.Invoke(this);}}
+        public List<InteractiveitemBehaviour> ItemOverrides { get => itemOverrides; set { OnBeforeChange?.Invoke(this);  itemOverrides = value; OnAfterChange?.Invoke(this);}}
+        public List<object> PlayerPeriodcBehaviors { get => playerPeriodcBehaviors; set { OnBeforeChange?.Invoke(this);  playerPeriodcBehaviors = value; OnAfterChange?.Invoke(this);}}
+        public List<object> Interactions { get => interactions; set { OnBeforeChange?.Invoke(this);  interactions = value; OnAfterChange?.Invoke(this);}}
+        public List<object> Opportunities { get => opportunities; set { OnBeforeChange?.Invoke(this);  opportunities = value; OnAfterChange?.Invoke(this);}}
+        public List<object> PlayerReactionBehaviors { get => playerReactionBehaviors; set { OnBeforeChange?.Invoke(this);  playerReactionBehaviors = value; OnAfterChange?.Invoke(this);}}
+        public List<object> OnGameStartScripts { get => onGameStartScripts; set { OnBeforeChange?.Invoke(this);  onGameStartScripts = value; OnAfterChange?.Invoke(this);}}
+        public List<string> PlayerValues { get => playerValues; set { OnBeforeChange?.Invoke(this);  playerValues = value; OnAfterChange?.Invoke(this);}}
+        public string HousePartyVersion { get => housePartyVersion; set { OnBeforeChange?.Invoke(this);  housePartyVersion = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class AlternateText
     {
-        public List<Criterion> Critera { get; set; } = [];
-        public int Order { get; set; } = 0;
-        public bool Show { get; set; } = true;
+        private int order = 0;
+        private List<Criterion> critera = [];
+        private bool show = true;
+        private string text = "#";
 
-        public string Text { get; set; } = "#";
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public List<Criterion> Critera { get => critera; set { OnBeforeChange?.Invoke(this);  critera = value; OnAfterChange?.Invoke(this);}}
+        public int Order { get => order; set { OnBeforeChange?.Invoke(this);  order = value; OnAfterChange?.Invoke(this);}}
+        public bool Show { get => show; set { OnBeforeChange?.Invoke(this);  show = value; OnAfterChange?.Invoke(this);}}
+        public string Text { get => text; set { OnBeforeChange?.Invoke(this);  text = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class Response
     {
-        public bool Selected { get; set; } = false;
+        private bool selected = false;
+        private string id = Guid.NewGuid().ToString();
+        private bool alwaysDisplay = false;
+        private int next = 0;
+        private int order = 0;
+        private List<Criterion> responseCriteria = [];
+        private List<GameEvent> responseEvents = [];
+        private bool testingCriteraOverride = false;
+        private string text = string.Empty;
+        private ResponseReactionTypes currentNPCReaction = ResponseReactionTypes.Neutral;
+        private bool show = true;
+        private bool showResponseCriteria = false;
+        private bool showResponseEvents = false;
+        private bool isDynamic = false;
+        private bool showDynamicNegativeCritera = false;
+        private bool showDynamicPositiveCritera = false;
+        private bool showTopics = false;
+        private bool showTones = false;
+        private bool showTypes = false;
+        private ResponseTypes type = ResponseTypes.Generic;
+        private List<ConversationalTopics> topics = [];
+        private List<ResponseTones> tones = [];
+        private List<Criterion> dynamicPositiveCritera = [];
+        private List<Criterion> dynamicNegativeCritera = [];
 
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public bool AlwaysDisplay { get; set; } = false;
-        public int Next { get; set; } = 0;
-        public int Order { get; set; } = 0;
-        public List<Criterion> ResponseCriteria { get; set; } = [];
-        public List<GameEvent> ResponseEvents { get; set; } = [];
-        public bool TestingCriteraOverride { get; set; } = false;
-
-        public string Text { get; set; } = string.Empty;
-        public ResponseReactionTypes CurrentNPCReaction { get; set; } = ResponseReactionTypes.Neutral;
-        public bool Show { get; set; } = true;
-        public bool ShowResponseCriteria { get; set; } = false;
-        public bool ShowResponseEvents { get; set; } = false;
-        public bool IsDynamic { get; set; } = false;
-        public bool ShowDynamicNegativeCritera { get; set; } = false;
-        public bool ShowDynamicPositiveCritera { get; set; } = false;
-        public bool ShowTopics { get; set; } = false;
-        public bool ShowTones { get; set; } = false;
-        public bool ShowTypes { get; set; } = false;
-        public ResponseTypes Type { get; set; } = ResponseTypes.Generic;
-        public List<ConversationalTopics> Topics { get; set; } = [];
-        public List<ResponseTones> Tones { get; set; } = [];
-        public List<Criterion> DynamicPositiveCritera { get; set; } = [];
-        public List<Criterion> DynamicNegativeCritera { get; set; } = [];
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public bool Selected { get => selected; set { OnBeforeChange?.Invoke(this);  selected = value; OnAfterChange?.Invoke(this);}}
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public bool AlwaysDisplay { get => alwaysDisplay; set { OnBeforeChange?.Invoke(this);  alwaysDisplay = value; OnAfterChange?.Invoke(this);}}
+        public int Next { get => next; set { OnBeforeChange?.Invoke(this);  next = value; OnAfterChange?.Invoke(this);}}
+        public int Order { get => order; set { OnBeforeChange?.Invoke(this);  order = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> ResponseCriteria { get => responseCriteria; set { OnBeforeChange?.Invoke(this);  responseCriteria = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> ResponseEvents { get => responseEvents; set { OnBeforeChange?.Invoke(this);  responseEvents = value; OnAfterChange?.Invoke(this);}}
+        public bool TestingCriteraOverride { get => testingCriteraOverride; set { OnBeforeChange?.Invoke(this);  testingCriteraOverride = value; OnAfterChange?.Invoke(this);}}
+        public string Text { get => text; set { OnBeforeChange?.Invoke(this);  text = value; OnAfterChange?.Invoke(this);}}
+        public ResponseReactionTypes CurrentNPCReaction { get => currentNPCReaction; set { OnBeforeChange?.Invoke(this);  currentNPCReaction = value; OnAfterChange?.Invoke(this);}}
+        public bool Show { get => show; set { OnBeforeChange?.Invoke(this);  show = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowResponseCriteria { get => showResponseCriteria; set { OnBeforeChange?.Invoke(this);  showResponseCriteria = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowResponseEvents { get => showResponseEvents; set { OnBeforeChange?.Invoke(this);  showResponseEvents = value; OnAfterChange?.Invoke(this);}}
+        public bool IsDynamic { get => isDynamic; set { OnBeforeChange?.Invoke(this);  isDynamic = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowDynamicNegativeCritera { get => showDynamicNegativeCritera; set { OnBeforeChange?.Invoke(this);  showDynamicNegativeCritera = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowDynamicPositiveCritera { get => showDynamicPositiveCritera; set { OnBeforeChange?.Invoke(this);  showDynamicPositiveCritera = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowTopics { get => showTopics; set { OnBeforeChange?.Invoke(this);  showTopics = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowTones { get => showTones; set { OnBeforeChange?.Invoke(this);  showTones = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowTypes { get => showTypes; set { OnBeforeChange?.Invoke(this);  showTypes = value; OnAfterChange?.Invoke(this);}}
+        public ResponseTypes Type { get => type; set { OnBeforeChange?.Invoke(this);  type = value; OnAfterChange?.Invoke(this);}}
+        public List<ConversationalTopics> Topics { get => topics; set { OnBeforeChange?.Invoke(this);  topics = value; OnAfterChange?.Invoke(this);}}
+        public List<ResponseTones> Tones { get => tones; set { OnBeforeChange?.Invoke(this);  tones = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> DynamicPositiveCritera { get => dynamicPositiveCritera; set { OnBeforeChange?.Invoke(this);  dynamicPositiveCritera = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> DynamicNegativeCritera { get => dynamicNegativeCritera; set { OnBeforeChange?.Invoke(this);  dynamicNegativeCritera = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class Dialogue
     {
-        public bool Shown { get; set; } = false;
-        public List<AlternateText> AlternateTexts { get; set; } = [];
-        public List<GameEvent> CloseEvents { get; set; } = [];
-        public int ID { get; set; } = 0;
-        public bool Important { get; set; } = false;
-        public List<Response> Responses { get; set; } = [];
-        public bool ShowGlobalGoodByeResponses { get; set; } = true;
-        public bool AutoImmersive { get; set; } = false;
-        public bool ShowGlobalResponses { get; set; } = true;
-        public bool DoesNotCountAsMet { get; set; } = false;
-        public bool ShowResponses { get; set; } = true;
-        public string SpeakingToCharacterName { get; set; } = Main.Player;
-        public string CurrentSpeaker { get; set; } = string.Empty;
-        public List<GameEvent> StartEvents { get; set; } = [];
+        private bool shown = false;
+        private List<AlternateText> alternateTexts = [];
+        private List<GameEvent> closeEvents = [];
+        private int iD = 0;
+        private bool important = false;
+        private List<Response> responses = [];
+        private bool showGlobalGoodByeResponses = true;
+        private bool autoImmersive = false;
+        private bool showGlobalResponses = true;
+        private bool doesNotCountAsMet = false;
+        private bool showResponses = true;
+        private string speakingToCharacterName = Main.Player;
+        private string currentSpeaker = string.Empty;
+        private List<GameEvent> startEvents = [];
+        private string text = string.Empty;
 
-        public string Text { get; set; } = string.Empty;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public bool Shown { get => shown; set { OnBeforeChange?.Invoke(this);  shown = value; OnAfterChange?.Invoke(this);}}
+        public List<AlternateText> AlternateTexts { get => alternateTexts; set { OnBeforeChange?.Invoke(this);  alternateTexts = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> CloseEvents { get => closeEvents; set { OnBeforeChange?.Invoke(this);  closeEvents = value; OnAfterChange?.Invoke(this);}}
+        public int ID { get => iD; set { OnBeforeChange?.Invoke(this);  iD = value; OnAfterChange?.Invoke(this);}}
+        public bool Important { get => important; set { OnBeforeChange?.Invoke(this);  important = value; OnAfterChange?.Invoke(this);}}
+        public List<Response> Responses { get => responses; set { OnBeforeChange?.Invoke(this);  responses = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowGlobalGoodByeResponses { get => showGlobalGoodByeResponses; set { OnBeforeChange?.Invoke(this);  showGlobalGoodByeResponses = value; OnAfterChange?.Invoke(this);}}
+        public bool AutoImmersive { get => autoImmersive; set { OnBeforeChange?.Invoke(this);  autoImmersive = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowGlobalResponses { get => showGlobalResponses; set { OnBeforeChange?.Invoke(this);  showGlobalResponses = value; OnAfterChange?.Invoke(this);}}
+        public bool DoesNotCountAsMet { get => doesNotCountAsMet; set { OnBeforeChange?.Invoke(this);  doesNotCountAsMet = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowResponses { get => showResponses; set { OnBeforeChange?.Invoke(this);  showResponses = value; OnAfterChange?.Invoke(this);}}
+        public string SpeakingToCharacterName { get => speakingToCharacterName; set { OnBeforeChange?.Invoke(this);  speakingToCharacterName = value; OnAfterChange?.Invoke(this);}}
+        public string CurrentSpeaker { get => currentSpeaker; set { OnBeforeChange?.Invoke(this);  currentSpeaker = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> StartEvents { get => startEvents; set { OnBeforeChange?.Invoke(this);  startEvents = value; OnAfterChange?.Invoke(this);}}
+        public string Text { get => text; set { OnBeforeChange?.Invoke(this);  text = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class BackgroundChatter
     {
-        public int Id { get; set; } = 0;
+        private int id = 0;
+        private string text = string.Empty;
+        private List<Criterion> critera = [];
+        private bool isConversationStarter = false;
+        private bool showInInspector = true;
+        private bool playSilently = false;
+        private string label = "#";
+        private string speakingTo = AnybodyCharacters.Anybody.ToString();
+        private bool overrideCombatRestriction = false;
+        private List<GameEvent> startEvents = [];
+        private List<BackgroundChatterResponse> responses = [];
+        private BGCEmotes pairedEmote = BGCEmotes.None;
+        private Importance defaultImportance = Importance.None;
+        private Importance currentImportance = Importance.None;
 
-        public string Text { get; set; } = string.Empty;
-        public List<Criterion> Critera { get; set; } = [];
-        public bool IsConversationStarter { get; set; } = false;
-        public bool ShowInInspector { get; set; } = true;
-        public bool PlaySilently { get; set; } = false;
-
-        public string Label { get; set; } = "#";
-
-        public string SpeakingTo { get; set; } = AnybodyCharacters.Anybody.ToString();
-        public bool OverrideCombatRestriction { get; set; } = false;
-        public List<GameEvent> StartEvents { get; set; } = [];
-        public List<BackgroundChatterResponse> Responses { get; set; } = [];
-
-        public BGCEmotes PairedEmote { get; set; } = BGCEmotes.None;
-        public Importance DefaultImportance { get; set; } = Importance.None;
-        public Importance CurrentImportance { get; set; } = Importance.None;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public int Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public string Text { get => text; set { OnBeforeChange?.Invoke(this);  text = value; OnAfterChange?.Invoke(this);}}
+        public List<Criterion> Critera { get => critera; set { OnBeforeChange?.Invoke(this);  critera = value; OnAfterChange?.Invoke(this);}}
+        public bool IsConversationStarter { get => isConversationStarter; set { OnBeforeChange?.Invoke(this);  isConversationStarter = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowInInspector { get => showInInspector; set { OnBeforeChange?.Invoke(this);  showInInspector = value; OnAfterChange?.Invoke(this);}}
+        public bool PlaySilently { get => playSilently; set { OnBeforeChange?.Invoke(this);  playSilently = value; OnAfterChange?.Invoke(this);}}
+        public string Label { get => label; set { OnBeforeChange?.Invoke(this);  label = value; OnAfterChange?.Invoke(this);}}
+        public string SpeakingTo { get => speakingTo; set { OnBeforeChange?.Invoke(this);  speakingTo = value; OnAfterChange?.Invoke(this);}}
+        public bool OverrideCombatRestriction { get => overrideCombatRestriction; set { OnBeforeChange?.Invoke(this);  overrideCombatRestriction = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> StartEvents { get => startEvents; set { OnBeforeChange?.Invoke(this);  startEvents = value; OnAfterChange?.Invoke(this);}}
+        public List<BackgroundChatterResponse> Responses { get => responses; set { OnBeforeChange?.Invoke(this);  responses = value; OnAfterChange?.Invoke(this);}}
+        public BGCEmotes PairedEmote { get => pairedEmote; set { OnBeforeChange?.Invoke(this);  pairedEmote = value; OnAfterChange?.Invoke(this);}}
+        public Importance DefaultImportance { get => defaultImportance; set { OnBeforeChange?.Invoke(this);  defaultImportance = value; OnAfterChange?.Invoke(this);}}
+        public Importance CurrentImportance { get => currentImportance; set { OnBeforeChange?.Invoke(this);  currentImportance = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class BackgroundChatterResponse
     {
+        private string characterName = "#";
+        private int chatterId = 0;
+        private string label = Guid.NewGuid().ToString();
+        private bool showInInspector = true;
 
-        public string CharacterName { get; set; } = "#";
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
 
-        public string Label { get; set; } = Guid.NewGuid().ToString();
-        public int ChatterId { get; set; } = 0;
-        public bool ShowInInspector { get; set; } = true;
+        public string CharacterName { get => characterName; set { OnBeforeChange?.Invoke(this);  characterName = value; OnAfterChange?.Invoke(this);}}
+        public string Label { get => label; set { OnBeforeChange?.Invoke(this);  label = value; OnAfterChange?.Invoke(this);}}
+        public int ChatterId { get => chatterId; set { OnBeforeChange?.Invoke(this);  chatterId = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowInInspector { get => showInInspector; set { OnBeforeChange?.Invoke(this);  showInInspector = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class Trait
     {
-        public PersonalityTraits Type { get; set; } = PersonalityTraits.Nice;
-        public int Value { get; set; } = 0;
+        private PersonalityTraits type = PersonalityTraits.Nice;
+        private int _value = 0;
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public PersonalityTraits Type { get => type; set { OnBeforeChange?.Invoke(this);  type = value; OnAfterChange?.Invoke(this);}}
+        public int Value { get => _value; set { OnBeforeChange?.Invoke(this);  _value = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class Personality
     {
-        public List<Trait> Values { get; set; } = [];
+        private List<Trait> values = [];
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public List<Trait> Values { get => values; set { OnBeforeChange?.Invoke(this);  values = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class ExtendedDetail
     {
-        public int Value { get; set; } = 0;
+        private int _value = 0;
+        private string details = string.Empty;
 
-        public string Details { get; set; } = string.Empty;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public int Value { get => _value; set { OnBeforeChange?.Invoke(this);  _value = value; OnAfterChange?.Invoke(this);}}
+        public string Details { get => details; set { OnBeforeChange?.Invoke(this);  details = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class Quest
     {
-        public string CharacterName { get; set; } = "#";
-        public int CompleteAt { get; set; } = 0;
-        public int CurrentValue { get; set; } = 0;
+        private string characterName = "#";
+        private int completeAt = 0;
+        private int currentValue = 0;
+        private string details = string.Empty;
+        private string completedDetails = string.Empty;
+        private string failedDetails = string.Empty;
+        private List<ExtendedDetail> extendedDetails = [];
+        private string iD = Guid.NewGuid().ToString();
+        private string name = string.Empty;
+        private bool obtainOnStart = false;
+        private bool seenByPlayer = false;
+        private bool showProgress = false;
+        private QuestStatus status = QuestStatus.NotObtained;
+        private int obtainedDateTime = 0;
+        private int lastUpdatedDateTime = 0;
+        private bool showInInspector = true;
 
-        public string Details { get; set; } = string.Empty;
-
-        public string CompletedDetails { get; set; } = string.Empty;
-
-        public string FailedDetails { get; set; } = string.Empty;
-        public List<ExtendedDetail> ExtendedDetails { get; set; } = [];
-
-        public string ID { get; set; } = Guid.NewGuid().ToString();
-
-        public string Name { get; set; } = string.Empty;
-        public bool ObtainOnStart { get; set; } = false;
-        public bool SeenByPlayer { get; set; } = false;
-        public bool ShowProgress { get; set; } = false;
-        public QuestStatus Status { get; set; } = QuestStatus.NotObtained;
-        public int ObtainedDateTime { get; set; } = 0;
-        public int LastUpdatedDateTime { get; set; } = 0;
-        public bool ShowInInspector { get; set; } = true;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public string CharacterName { get => characterName; set { OnBeforeChange?.Invoke(this);  characterName = value; OnAfterChange?.Invoke(this);}}
+        public int CompleteAt { get => completeAt; set { OnBeforeChange?.Invoke(this);  completeAt = value; OnAfterChange?.Invoke(this);}}
+        public int CurrentValue { get => currentValue; set { OnBeforeChange?.Invoke(this);  currentValue = value; OnAfterChange?.Invoke(this);}}
+        public string Details { get => details; set { OnBeforeChange?.Invoke(this);  details = value; OnAfterChange?.Invoke(this);}}
+        public string CompletedDetails { get => completedDetails; set { OnBeforeChange?.Invoke(this);  completedDetails = value; OnAfterChange?.Invoke(this);}}
+        public string FailedDetails { get => failedDetails; set { OnBeforeChange?.Invoke(this);  failedDetails = value; OnAfterChange?.Invoke(this);}}
+        public List<ExtendedDetail> ExtendedDetails { get => extendedDetails; set { OnBeforeChange?.Invoke(this);  extendedDetails = value; OnAfterChange?.Invoke(this);}}
+        public string ID { get => iD; set { OnBeforeChange?.Invoke(this);  iD = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public bool ObtainOnStart { get => obtainOnStart; set { OnBeforeChange?.Invoke(this);  obtainOnStart = value; OnAfterChange?.Invoke(this);}}
+        public bool SeenByPlayer { get => seenByPlayer; set { OnBeforeChange?.Invoke(this);  seenByPlayer = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowProgress { get => showProgress; set { OnBeforeChange?.Invoke(this);  showProgress = value; OnAfterChange?.Invoke(this);}}
+        public QuestStatus Status { get => status; set { OnBeforeChange?.Invoke(this);  status = value; OnAfterChange?.Invoke(this);}}
+        public int ObtainedDateTime { get => obtainedDateTime; set { OnBeforeChange?.Invoke(this);  obtainedDateTime = value; OnAfterChange?.Invoke(this);}}
+        public int LastUpdatedDateTime { get => lastUpdatedDateTime; set { OnBeforeChange?.Invoke(this);  lastUpdatedDateTime = value; OnAfterChange?.Invoke(this);}}
+        public bool ShowInInspector { get => showInInspector; set { OnBeforeChange?.Invoke(this);  showInInspector = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class ItemInteraction
     {
-        public List<Criterion> Critera { get; set; } = [];
+        private List<Criterion> critera = [];
+        private string itemName = string.Empty;
+        private List<GameEvent> onAcceptEvents = [];
+        private List<GameEvent> onRefuseEvents = [];
+        private bool displayInEditor = true;
 
-        public string ItemName { get; set; } = string.Empty;
-        public List<GameEvent> OnAcceptEvents { get; set; } = [];
-        public List<GameEvent> OnRefuseEvents { get; set; } = [];
-        public bool DisplayInEditor { get; set; } = true;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public List<Criterion> Critera { get => critera; set { OnBeforeChange?.Invoke(this);  critera = value; OnAfterChange?.Invoke(this);}}
+        public string ItemName { get => itemName; set { OnBeforeChange?.Invoke(this);  itemName = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> OnAcceptEvents { get => onAcceptEvents; set { OnBeforeChange?.Invoke(this);  onAcceptEvents = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> OnRefuseEvents { get => onRefuseEvents; set { OnBeforeChange?.Invoke(this);  onRefuseEvents = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class ItemGroupInteraction
     {
-        public List<Criterion> Criteria { get; set; } = [];
+        private List<Criterion> criteria = [];
+        private string name = string.Empty;
+        private string groupName = string.Empty;
+        private string id = Guid.NewGuid().ToString();
+        private List<GameEvent> onAcceptEvents = [];
+        private List<GameEvent> onRefuseEvents = [];
+        private bool displayInEditor = true;
 
-        public string Name { get; set; } = string.Empty;
-
-        public string GroupName { get; set; } = string.Empty;
-
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public List<GameEvent> OnAcceptEvents { get; set; } = [];
-        public List<GameEvent> OnRefuseEvents { get; set; } = [];
-        public bool DisplayInEditor { get; set; } = true;
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
+        public List<Criterion> Criteria { get => criteria; set { OnBeforeChange?.Invoke(this);  criteria = value; OnAfterChange?.Invoke(this);}}
+        public string Name { get => name; set { OnBeforeChange?.Invoke(this);  name = value; OnAfterChange?.Invoke(this);}}
+        public string GroupName { get => groupName; set { OnBeforeChange?.Invoke(this);  groupName = value; OnAfterChange?.Invoke(this);}}
+        public string Id { get => id; set { OnBeforeChange?.Invoke(this);  id = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> OnAcceptEvents { get => onAcceptEvents; set { OnBeforeChange?.Invoke(this);  onAcceptEvents = value; OnAfterChange?.Invoke(this);}}
+        public List<GameEvent> OnRefuseEvents { get => onRefuseEvents; set { OnBeforeChange?.Invoke(this);  onRefuseEvents = value; OnAfterChange?.Invoke(this);}}
+        public bool DisplayInEditor { get => displayInEditor; set { OnBeforeChange?.Invoke(this);  displayInEditor = value; OnAfterChange?.Invoke(this);}}
     }
 
     public sealed class CharacterStory
     {
+        private int dialogueID = 0;
+        private List<BackgroundChatter> backgroundChatter = [];
+        private List<Dialogue> dialogues = [];
+        private List<EventTrigger> reactions = [];
+        private List<ItemGroupInteraction> characterItemGroupInteractions = [];
+        private List<Quest> quests = [];
+        private List<Response> globalGoodbyeResponses = [];
+        private List<Response> globalResponses = [];
+        private List<ItemInteraction> storyItems = [];
+        private List<string> storyValues = [];
+        private Personality personality = new();
+        private string characterName = "#";
+        private List<object> personalityPrompts = [];
+        private List<object> dialogue = [];
+        private List<object> periodicBehaviors = [];
+        private List<object> reactionBehaviors = [];
+        private string housePartyVersion = Main.HousePartyVersion;
+
+        public event Action<object>? OnBeforeChange;
+        public event Action<object>? OnAfterChange;
         public CharacterStory(string name)
         {
             CharacterName = name;
@@ -592,24 +860,22 @@ namespace CSC.StoryItems
         {
         }
 
-        public int DialogueID { get; set; } = 0;
-        public List<BackgroundChatter> BackgroundChatter { get; set; } = [];
-        public List<Dialogue> Dialogues { get; set; } = [];
-        public List<EventTrigger> Reactions { get; set; } = [];
-        public List<ItemGroupInteraction> CharacterItemGroupInteractions { get; set; } = [];
-        public List<Quest> Quests { get; set; } = [];
-        public List<Response> GlobalGoodbyeResponses { get; set; } = [];
-        public List<Response> GlobalResponses { get; set; } = [];
-        public List<ItemInteraction> StoryItems { get; set; } = [];
-        public List<string> StoryValues { get; set; } = [];
-        public Personality Personality { get; set; } = new();
-        public string CharacterName { get; set; } = "#";
-
-        public List<object> PersonalityPrompts { get; set; } = [];
-        public List<object> Dialogue { get; set; } = [];
-        public List<object> PeriodicBehaviors { get; set; } = [];
-        public List<object> ReactionBehaviors { get; set; } = [];
-
-        public string HousePartyVersion { get; set; } = Main.HousePartyVersion;
+        public int DialogueID { get => dialogueID; set { OnBeforeChange?.Invoke(this);  dialogueID = value; OnAfterChange?.Invoke(this);}}
+        public List<BackgroundChatter> BackgroundChatter { get => backgroundChatter; set { OnBeforeChange?.Invoke(this);  backgroundChatter = value; OnAfterChange?.Invoke(this);}}
+        public List<Dialogue> Dialogues { get => dialogues; set { OnBeforeChange?.Invoke(this);  dialogues = value; OnAfterChange?.Invoke(this);}}
+        public List<EventTrigger> Reactions { get => reactions; set { OnBeforeChange?.Invoke(this);  reactions = value; OnAfterChange?.Invoke(this);}}
+        public List<ItemGroupInteraction> CharacterItemGroupInteractions { get => characterItemGroupInteractions; set { OnBeforeChange?.Invoke(this);  characterItemGroupInteractions = value; OnAfterChange?.Invoke(this);}}
+        public List<Quest> Quests { get => quests; set { OnBeforeChange?.Invoke(this);  quests = value; OnAfterChange?.Invoke(this);}}
+        public List<Response> GlobalGoodbyeResponses { get => globalGoodbyeResponses; set { OnBeforeChange?.Invoke(this);  globalGoodbyeResponses = value; OnAfterChange?.Invoke(this);}}
+        public List<Response> GlobalResponses { get => globalResponses; set { OnBeforeChange?.Invoke(this);  globalResponses = value; OnAfterChange?.Invoke(this);}}
+        public List<ItemInteraction> StoryItems { get => storyItems; set { OnBeforeChange?.Invoke(this);  storyItems = value; OnAfterChange?.Invoke(this);}}
+        public List<string> StoryValues { get => storyValues; set { OnBeforeChange?.Invoke(this);  storyValues = value; OnAfterChange?.Invoke(this);}}
+        public Personality Personality { get => personality; set { OnBeforeChange?.Invoke(this);  personality = value; OnAfterChange?.Invoke(this);}}
+        public string CharacterName { get => characterName; set { OnBeforeChange?.Invoke(this);  characterName = value; OnAfterChange?.Invoke(this);}}
+        public List<object> PersonalityPrompts { get => personalityPrompts; set { OnBeforeChange?.Invoke(this);  personalityPrompts = value; OnAfterChange?.Invoke(this);}}
+        public List<object> Dialogue { get => dialogue; set { OnBeforeChange?.Invoke(this);  dialogue = value; OnAfterChange?.Invoke(this);}}
+        public List<object> PeriodicBehaviors { get => periodicBehaviors; set { OnBeforeChange?.Invoke(this);  periodicBehaviors = value; OnAfterChange?.Invoke(this);}}
+        public List<object> ReactionBehaviors { get => reactionBehaviors; set { OnBeforeChange?.Invoke(this);  reactionBehaviors = value; OnAfterChange?.Invoke(this);}}
+        public string HousePartyVersion { get => housePartyVersion; set { OnBeforeChange?.Invoke(this);  housePartyVersion = value; OnAfterChange?.Invoke(this);}}
     }
 }
