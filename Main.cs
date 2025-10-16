@@ -170,7 +170,7 @@ public partial class Main : Form
     private Node SelectedNode = null!;
 
     //todo original story linking is still wrong
-    //filter/hide node types
+    //todo filter/hide node types
 
     //todo add info when trying to link incompatible notes
     //todo unify all node creation so its always the same
@@ -429,6 +429,7 @@ public partial class Main : Form
         //SystemSounds.Question.Play();
         if (MessageBox.Show("Delete \"" + removedNode.Text[..Math.Min(removedNode.Text.Length, 20)] + "[...]\"?", "Delete for real?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
         {
+            PropertyInspector.Controls.Clear();
             if (nodeToLinkFrom == removedNode)
             {
                 nodeToLinkFrom = Node.NullNode;
@@ -469,7 +470,6 @@ public partial class Main : Form
             {
                 NodeLinker.UpdateLinks(parent, SelectedCharacter, nodes[SelectedCharacter]);
             }
-            ShowProperties(Node.NullNode);
             Graph.Invalidate();
         }
     }
@@ -891,7 +891,10 @@ public partial class Main : Form
     private void UpdateLeftClick(PointF screenPos)
     {
         LeftClickFrameCounter++;
-        startSelectingMousePos = new((int)screenPos.X, (int)screenPos.Y);
+        if (LeftClickFrameCounter == 1)
+        {
+            startSelectingMousePos = new((int)screenPos.X, (int)screenPos.Y);
+        }
         if (LeftClickFrameCounter > 2)
         {
             if (!selecting)
@@ -2533,7 +2536,7 @@ public partial class Main : Form
             case NodeType.Criterion:
             {
                 PropertyInspector.RowCount = 1;
-                PropertyInspector.ColumnCount = 2;
+                PropertyInspector.ColumnCount = 9;
                 Criterion criterion = node.Data<Criterion>()!;
 
                 Label label = GetLabel("Order:");
@@ -2671,7 +2674,11 @@ public partial class Main : Form
                         dialogue.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(dialogue);
 
-                        PutEnumValue<DialogueStatuses>(node, criterion);
+                        ComboBox formula = GetComboBox();
+                        formula.Items.AddRange(Enum.GetNames<DialogueStatuses>());
+                        formula.SelectedItem = criterion.DialogueStatus.ToString();
+                        formula.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.DialogueStatus = Enum.Parse<DialogueStatuses>(formula.SelectedItem!.ToString()!)!);
+                        PropertyInspector.Controls.Add(formula);
                         break;
                     }
                     case CompareTypes.Distance:
@@ -2706,10 +2713,14 @@ public partial class Main : Form
                     }
                     case CompareTypes.Door:
                     {
-
                         PutCompareType(node, criterion);
                         PutEnumKey<Doors>(node, criterion);
-                        PutEnumOption<DoorOptionValues>(node, criterion);
+
+                        ComboBox formula = GetComboBox();
+                        formula.Items.AddRange(Enum.GetNames<DoorOptionValues>());
+                        formula.SelectedItem = criterion.DoorOptions.ToString();
+                        formula.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.DoorOptions = Enum.Parse<DoorOptionValues>(formula.SelectedItem!.ToString()!)!);
+                        PropertyInspector.Controls.Add(formula);
                         break;
                     }
                     case CompareTypes.Gender:
@@ -2980,7 +2991,7 @@ public partial class Main : Form
                                 quest.Items.Add(item.CharacterName + "|" + questData.Name);
                             }
                         }
-                        quest.SelectedItem = Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item1 ?? node.FileName + "|" + criterion.Key2;
+                        quest.SelectedItem = (Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item1 ?? node.FileName) + "|" + criterion.Key2;
                         quest.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) =>
                         {
                             criterion.Key2 = quest.SelectedItem.ToString()!.Split("|")[1];
@@ -2989,7 +3000,7 @@ public partial class Main : Form
                         });
                         quest.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(quest);
-                        PropertyInspector.SetColumnSpan(quest, 2);
+                        PropertyInspector.SetColumnSpan(quest, 3);
 
                         PutEquals(node, criterion);
                         PutEnumValue<QuestStatus>(node, criterion);
@@ -3377,7 +3388,7 @@ public partial class Main : Form
                                     case ClothingChangeOptions.ClothingType:
                                     {
                                         PutEnumValue<ClothingType>(node, gevent);
-                                        PutEnumOption<ClothingOnOff>(node, gevent);
+                                        PutEnumOption<OnOff>(node, gevent);
 
                                         if (gevent.Option == 0)
                                         {
@@ -3394,7 +3405,7 @@ public partial class Main : Form
                                     case ClothingChangeOptions.ChangeItem:
                                     {
                                         //todo items warable by - in value
-                                        PutEnumOption<ClothingOnOff>(node, gevent);
+                                        PutEnumOption<OnOff>(node, gevent);
 
                                         break;
                                     }
@@ -3428,7 +3439,7 @@ public partial class Main : Form
                             case ClothingOptions.ToggleWetEffect:
                             {
                                 PutEnumValue<ClothingType>(node, gevent);
-                                PutEnumOption<ClothingOnOff>(node, gevent);
+                                PutEnumOption<OnOff>(node, gevent);
 
                                 break;
                             }
@@ -3603,14 +3614,14 @@ public partial class Main : Form
                     {
                         PutCharacter1(node, gevent);
                         PutEnumOption2<IKTargets>(node, gevent);
-                        PutEnumOption<ClothingOnOff>(node, gevent);
+                        PutEnumOption<OnOff>(node, gevent);
 
                         if (gevent.Option == 0)
                         {
                             var box = GetComboBox();
                             box.Items.AddRange(Enum.GetNames<Characters>());
                             box.Items.AddRange(Enum.GetNames<Items>());
-                            box.SelectedItem = gevent.Key;
+                            box.SelectedItem = gevent.Key.Enumize();
                             box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Key = box.SelectedItem!.ToString()!);
                             PropertyInspector.Controls.Add(box, GeventPropertyCounter++, 1);
                         }
@@ -4716,7 +4727,7 @@ public partial class Main : Form
         {
             gevent.Value = options.Items[0]!.ToString()!;
         }
-        options.SelectedItem = gevent.Value;
+        options.SelectedItem = gevent.Value.Enumize();
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = options.SelectedItem!.ToString()!);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
@@ -4729,7 +4740,7 @@ public partial class Main : Form
         {
             gevent.Value2 = options.Items[0]!.ToString()!;
         }
-        options.SelectedItem = gevent.Value2;
+        options.SelectedItem = gevent.Value2.Enumize();
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value2 = options.SelectedItem!.ToString()!);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
@@ -4742,7 +4753,7 @@ public partial class Main : Form
         {
             gevent.Key = options.Items[0]!.ToString()!;
         }
-        options.SelectedItem = gevent.Key;
+        options.SelectedItem = gevent.Key.Enumize();
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Key = options.SelectedItem!.ToString()!);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
@@ -4797,7 +4808,7 @@ public partial class Main : Form
         {
             criterion.Value = options.Items[0]!.ToString()!;
         }
-        options.SelectedItem = criterion.Value;
+        options.SelectedItem = criterion.Value.Enumize();
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = options.SelectedItem!.ToString()!);
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
@@ -5021,7 +5032,7 @@ public partial class Main : Form
     {
         ComboBox item = GetComboBox();
         item.Items.AddRange(Enum.GetNames<Items>());
-        item.SelectedItem = eventTrigger.Value;
+        item.SelectedItem = eventTrigger.Value.Enumize();
         item.PerformLayout();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = item.SelectedItem!.ToString()!);
         PropertyInspector.Controls.Add(item);
@@ -5031,7 +5042,7 @@ public partial class Main : Form
     {
         ComboBox item = GetComboBox();
         item.Items.AddRange(Enum.GetNames<Items>());
-        item.SelectedItem = eventTrigger.Key;
+        item.SelectedItem = eventTrigger.Key.Enumize();
         item.PerformLayout();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Key = item.SelectedItem!.ToString()!);
         PropertyInspector.Controls.Add(item);
@@ -5235,7 +5246,7 @@ public partial class Main : Form
     {
         ComboBox item = GetComboBox();
         item.Items.AddRange(Enum.GetNames<Items>());
-        item.SelectedItem = criterion.Key!.Replace(" ", "");
+        item.SelectedItem = criterion.Key!.Enumize();
         item.PerformLayout();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = item.SelectedItem!.ToString()!);
         item.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";

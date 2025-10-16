@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-using System.Text.Json.Serialization;//Token:0x\w|d|\s|:*\n
+﻿using System.Text.Json.Serialization;//Token:0x\w|d|\s|:*\n
 
 namespace CSC.StoryItems
 {
@@ -188,7 +187,7 @@ namespace CSC.StoryItems
         }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public enum ClothingOnOff
+        public enum OnOff
         {
             On,
             Off,
@@ -414,6 +413,7 @@ namespace CSC.StoryItems
             ToggleWetEffect,
             ToggleBloodyEffect
         }
+        
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum AddRemoveActions
         {
@@ -745,6 +745,7 @@ namespace CSC.StoryItems
             Equals,
             Add
         }
+        
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum TurnOptions
         {

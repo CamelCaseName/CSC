@@ -8,6 +8,12 @@ namespace CSC.Components
 {
     public static class Extensions
     {
+
+        public static string Enumize(this string s)
+        {
+            return s.Replace(" ", "").Replace("'", "").Replace("-", "").Replace("(", "").Replace(")", "");
+        }
+
         public static Control? FindFocusedControl(this Control control)
         {
 
