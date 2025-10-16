@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;//Token:0x\w|d|\s|:*\n
+﻿using System.Diagnostics.Metrics;
+using System.Text.Json.Serialization;//Token:0x\w|d|\s|:*\n
 
 namespace CSC.StoryItems
 {
@@ -998,47 +999,6 @@ namespace CSC.StoryItems
         }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public enum Doors
-        {
-            BathroomDoor,
-            BedroomClosetDoorLeft,
-            BedroomClosetDoorRight,
-            CabinetLeft,
-            CabinetRight,
-            DeskDrawerLeft,
-            DeskDrawerRight,
-            EscapeHatch,
-            Fridge,
-            FrontDoor,
-            GarageDoor,
-            KitchenCabinet5,
-            KitchenCabinet6,
-            LaundryRoomDoor,
-            MasterBathroomDoor,
-            MasterBedroomDoor,
-            Nightstand1,
-            Nightstand2,
-            OfficeDrawerLeft,
-            OfficeDrawerRight,
-            PantryDoorLeft,
-            PantryDoorRight,
-            Safe, SliderDoor, SmallSpareClosetDoorL,
-            SmallSpareClosetDoorR,
-            SpareRoom2,
-            DoorSpareRoomDoor,
-            SRClosetDoorl,
-            SRClosetDoor2,
-            SRClosetDoor3,
-            SRClosetDoor4,
-            StudyClosetDoorL,
-            StudyClosetDoorR,
-            StudyDoor,
-            TerrariumSlider,
-            UpstairsBathroomDoor,
-            UtilityClosetDoor
-        }
-
-        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum SexualActs
         {
             None,
@@ -1324,7 +1284,7 @@ namespace CSC.StoryItems
             Item
         }
 
-        //fromhpcontent.asset,replacefollowingquieryby","
+        //from hpcontent.asset, replace following query by","
         //\s*\n\s+Roamable:\d\s*\n\s+AcceptableSexLocation:\d\s*\n\s+AcceptableWallSexLocation:\d\s*\n\s+AcceptableNavRecoveryTarget:\d\s*\n\s+NonWallSexUsesMyTransform:\d
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum MoveTargets
@@ -1508,422 +1468,775 @@ namespace CSC.StoryItems
             WatchTVSpot2,
         }
 
-        //(\s*\n\s+)EnableItemFunctions: \d(\s*\n\s+)ItemFunctions:\s*\n\s+[- \w*\s\n]*: \d[\s*\n\s+\w+: \d]+- Name: 
-        //replace with ,
+        //(\s+)EnableItemFunctions: \d\s+ItemFunctions:\s+(- \w+\s*)*SpecialType: 0\s+(\w+: \d\n+\s+)+- Name: 
+        //replace with ,\n
+        //consists of the Doors, Beds, Chairs, HottubSpots, SexSpots and burnable enums
+        //plus all items with specialtype: 0
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum Items
         {
-            ACUnit,
-            AirventArtRoom,
-            AirventDiningRoom,
-            AirventDownstairsGuestBathroom,
-            AirventGarageWall,
-            AirventKitchen,
-            AirventLaundryRoom,
-            AirventLivingRoom,
-            AirventMasterBathroom,
-            AirventMasterBedroom,
-            AirventSpareRoom,
-            AirventStudy,
-            AirventUpstairsGuestBathroom,
-            ApartmentComputer,
+            //chairs
+            [JsonStringEnumMemberName("Apartment Sofa Seat (Left)")]
             ApartmentSofaSeatLeft,
+            [JsonStringEnumMemberName("Apartment Sofa Seat (Right)")]
             ApartmentSofaSeatRight,
+            [JsonStringEnumMemberName("Armchair")]
             Armchair,
-            ArtRoomWindow,
-            AshleysPanties,
-            AshleyTop,
-            AuxiliaryDock,
-            BathroomDoor,
-            BatteryPack,
-            BedLeft,
-            BedRight,
-            BedEdge,
-            BedroomClosetDoorLeft,
-            BedroomClosetDoorRight,
-            BeerPongCupTrigger0,
-            BikeLock,
-            BikeLockKey,
-            Billboard,
-            BloodWall,
-            BlueHairDye,
-            Blueprints,
-            BoxofNails,
-            BreakerPanel,
-            Briefcase,
-            BriefcaseOpen,
-            Broom,
-            BugZapper,
-            Bushes,
-            Cabernet,
-            CabinetLeft,
-            CabinetRight,
-            Camera,
-            CatPicture,
-            CellPhoneJammer,
-            Chardonnay,
-            Chicken,
-            ChickenNuggets,
-            ChiliPeppers,
-            ChoclateSyrup,
-            ChocolateBar,
-            ChristmasGazeboStar,
-            ClearEyes,
-            ClosedBriefcase,
-            Clothes,
-            ClothesBasket1,
-            ClothesBasket2f,
-            ClothesBasket3,
-            Coffee,
-            Collar,
-            CollarBloody,
-            CompuBrahBedLeft,
-            CompuBrahBedRight,
-            CompuBrahSex,
-            Computer,
+            [JsonStringEnumMemberName("Computer Chair")]
             ComputerChair,
-            Condom,
+            [JsonStringEnumMemberName("Couch (Left)")]
             CouchLeft,
+            [JsonStringEnumMemberName("Couch (Middle)")]
             CouchMiddle,
+            [JsonStringEnumMemberName("Couch (Right)")]
             CouchRight,
-            CowboyScorpiosmus,
-            CreditCard,
-            Crowd,
-            Cucumber,
-            DarkLongSleeveWomensTop,
-            DeadSnake,
-            DereksShirt,
-            DeskDrawerLeft,
-            DeskDrawerRight,
-            Diary,
-            DirtMound,
-            DirtyClue1,
-            DirtyClue2,
-            DirtyClue3,
-            DiscardedMagazine,
-            DisembodiedHead,
-            DLiciousOutfit,
-            DoorBracingSpot,
-            DoorBracingSpot2,
-            DoubleSidedDildo,
-            DownstairsBathroomMirror,
+            [JsonStringEnumMemberName("DownstairsToilet")]
             DownstairsToilet,
-            Dresser,
-            Drone,
-            DroneRemote,
-            Dryer,
-            DryerDoor,
+            [JsonStringEnumMemberName("DryerSeat")]
             DryerSeat,
-            DryerStuckSpot,
-            DryerStuckSpotImmediate,
-            DuctTape,
-            DVD2,
-            ECigVape,
-            Eggs,
-            EmptyCup,
-            EscapeHatch,
-            EtherealClue,
-            FaceCream,
-            Faucet,
-            FiftyDollars,
-            FilmCamera,
-            FirePit,
-            Fireplace,
-            Firetrail,
-            FlamingoLeftA,
-            FlamingoRightB,
+            [JsonStringEnumMemberName("FlamingoSeatLeft")]
             FlamingoSeatLeft,
+            [JsonStringEnumMemberName("FlamingoSeatRight")]
             FlamingoSeatRight,
-            Flask,
-            FloorTowels,
-            Flower,
-            FoamFinger,
+            [JsonStringEnumMemberName("Frank's Chair")]
             FranksChair,
-            FreeSnake,
-            FreeSnakeFemale,
-            Freezer,
-            Fridge,
-            FrontDoor,
-            FrontWindowBracingSpot,
-            FrontWindowBracingSpot2,
-            FrontWindowBracingSpot3,
-            GarageDoor,
-            GarageBinMovable,
-            GarageWallAirventCover,
-            GastronomyBook,
-            Gazebo,
-            GazeboFuseBox,
-            Glasses,
-            GutGrip,
-            Gutter,
-            Hammer,
-            Hammer2,
-            HangingTentacle,
-            HedgeClippers,
-            HoleInFence,
-            HotTubBase,
-            HotAirBalloon,
-            HotTubSeat1,
-            HotTubSeat2,
-            HotTubSeat3,
-            HotTubSeat4,
-            HotTubSeat5,
-            HotTubCoverFolded,
-            HotTubCoverUnfolded,
-            JackDaniels,
-            Joint,
-            Katana,
-            Kettle,
-            Key,
-            Key2,
-            Key3,
-            Keychain,
-            KitchenCabinet5,
-            KitchenCabinet6,
-            KitchenCabinet7,
-            KitchenCabinet8,
-            Knife,
-            Laptop,
-            LaundryRoomDoor,
+            [JsonStringEnumMemberName("LawnChair1")]
             LawnChair1,
+            [JsonStringEnumMemberName("LawnChair2")]
             LawnChair2,
+            [JsonStringEnumMemberName("LawnChair3")]
             LawnChair3,
+            [JsonStringEnumMemberName("LawnChair4")]
             LawnChair4,
-            LeahEarpiece,
-            LivingRoomTV,
-            LizKatzButt,
-            LRTVBackButton,
-            LRTVPlayAllButton,
-            LRTVSongFiveButton,
-            LRTVSongFourButton,
-            LRTVSongOneButton,
-            LRTVSongSixButton,
-            LRTVSongThreeButton,
-            LRTVSongTwoButton,
-            MadisonsPhone,
-            Marijuana,
-            MasterBathroomDoor,
-            MasterBedroomDoor,
+            [JsonStringEnumMemberName("MasterBathTubEdgeSeat")]
             MasterBathTubEdgeSeat,
+            [JsonStringEnumMemberName("MasterBathTubSeat")]
             MasterBathTubSeat,
-            Matchbox,
-            Mayonnaise,
-            Merlot,
-            Microwave,
-            MicrowaveDoor,
-            MistletoeBallsDecoration,
-            MoneyMakersMonthly,
-            MotorOil,
-            MP3Player,
-            MP3PlayerCable,
-            MP3PlayerDC,
-            Mug,
-            NattyLite1,
-            NattyLite10,
-            NattyLite11,
-            NattyLite12,
-            NattyLite13,
-            NattyLite14,
-            NattyLite2,
-            NattyLite3,
-            NattyLite4,
-            NattyLite5,
-            NattyLite6,
-            NattyLite7,
-            NattyLite8,
-            NattyLite9,
-            NattyLiteOpen,
-            NerdyTapedGlasses,
-            Nightstand1,
-            Nightstand2,
-            Notebook,
-            Notepad,
+            [JsonStringEnumMemberName("Office Chair")]
             OfficeChair,
-            OfficeDrawerLeft,
-            OfficeDrawerRight,
-            OpenBriefcase,
-            OrangeBin1,
-            OrganizingBriefcaseSpot,
+            [JsonStringEnumMemberName("Outside Sofa 1 Left")]
             OutsideSofa1Left,
+            [JsonStringEnumMemberName("Outside Sofa 1 Middle")]
             OutsideSofa1Middle,
+            [JsonStringEnumMemberName("Outside Sofa 1 Right")]
             OutsideSofa1Right,
+            [JsonStringEnumMemberName("Outside Sofa 2 Left")]
             OutsideSofa2Left,
+            [JsonStringEnumMemberName("Outside Sofa 2 Middle")]
             OutsideSofa2Middle,
+            [JsonStringEnumMemberName("Outside Sofa 2 Right")]
             OutsideSofa2Right,
-            OwlPainting,
-            PaddockButton,
-            Painkillers,
-            PantryDoorLeft,
-            PantryDoorRight,
-            Paper,
-            PaperBag,
-            PaperBagCrunched,
+            [JsonStringEnumMemberName("Patio Armchair")]
             PatioArmchair,
+            [JsonStringEnumMemberName("Patio Armchair 2")]
             PatioArmchair2,
-            Pencil,
-            Penguin,
-            Petition,
-            Phone2,
-            Phone3,
-            Phone4,
-            Phone5,
-            Phone6,
-            PingPongBall,
-            PinkUnderwear,
-            PipeFix,
-            PipeWater,
-            PizzaBox,
-            PizzaBoxFortification,
-            PlankPileInYard,
-            PlanksFortification,
-            PlanksFortificationExtraNails,
-            PlayerBeerPongPractice,
-            PlexiglassHotTub,
-            PlexiglassStacked,
-            Popcorn,
-            Popper,
-            PopperBox,
-            Potatoes,
+            [JsonStringEnumMemberName("Pouf")]
             Pouf,
-            PrintableClue,
-            Printer,
-            RedSoloCup0,
-            RedSoloCup1,
-            RedSoloCup2,
-            RedSoloCup3,
-            RedSoloCup4,
-            RedSoloCup5,
-            RedSoloCup6,
-            RedSoloCup7,
-            RedSoloCup8,
-            RedSoloCup9,
-            RemoteControl,
-            RipppedWhalePoster,
+            [JsonStringEnumMemberName("RoofSeatLeft")]
             RoofSeatLeft,
+            [JsonStringEnumMemberName("RoofSeatRight")]
             RoofSeatRight,
-            Router,
-            Rum,
-            RumOpen,
-            Safe,
-            Salami,
-            Salmon,
-            Satchel,
-            ScorpionTequila,
-            SDCard,
-            ShakeLight,
-            SleepingMaskFolded,
-            SleepingMaskMountable,
-            SliderDoor,
-            SmallSpareClosetDoorL,
-            SmallSpareClosetDoorR,
-            Snowball,
-            SnowballBucket,
-            Soda,
+            [JsonStringEnumMemberName("Sofa (Left)")]
             SofaLeft,
+            [JsonStringEnumMemberName("Sofa (Right)")]
             SofaRight,
-            SoloBeerPongTable,
-            SoloPingPongBallStorage,
-            SpareRoom2Door,
-            SpareRoomDoor,
+            [JsonStringEnumMemberName("SpareRoomSofaLeft")]
             SpareRoomSofaLeft,
+            [JsonStringEnumMemberName("SpareRoomSofaMiddle")]
             SpareRoomSofaMiddle,
+            [JsonStringEnumMemberName("SpareRoomSofaRight")]
             SpareRoomSofaRight,
-            Speaker1,
-            Speaker2,
-            Spoon,
-            SprayPaintCan,
-            SRClosetDoor1,
-            SRClosetDoor2,
-            SRClosetDoor3,
-            SRClosetDoor4,
-            Starbomb,
-            StarbombBox,
-            Stepstool,
-            StepstoolStandSpot,
-            Stove,
-            StudyClosetDoorL,
-            StudyClosetDoorR,
-            StudyDoor,
-            StudyLaptopTypingSpot,
-            Sundress,
-            Sunglasses,
-            Sweeties,
-            Tablet,
-            TalkingFish,
-            Tentacle,
-            Terrarium,
-            Thermos,
-            Thermostat,
-            Toaster,
-            Towel,
-            Towel2,
-            Towel3,
-            TrashCan,
-            Trunk,
-            UndressingNeighbor,
-            UpstairsBathroomDoor,
-            UpstairsBathroomMirror,
+            [JsonStringEnumMemberName("UpstairsBathroomToilet")]
             UpstairsBathroomToilet,
+            [JsonStringEnumMemberName("UpstairsBathTubEdgeSeat")]
             UpstairsBathTubEdgeSeat,
+            [JsonStringEnumMemberName("UpstairsBathTubSeat")]
             UpstairsBathTubSeat,
-            UpstairsMasterBathroomMirror,
-            USBStick,
-            UtilityClosetDoor,
-            ValentinesChocolates,
+            [JsonStringEnumMemberName("Vanity Chair")]
             VanityChair,
-            Vibrator,
-            VickiesPanties,
-            Vodka,
-            VoiceRecorder,
-            Washer,
+            [JsonStringEnumMemberName("WasherSeat")]
             WasherSeat,
+            //beds
+            [JsonStringEnumMemberName("Bed (Left)")]
+            BedLeft,
+            [JsonStringEnumMemberName("Bed (Right)")]
+            BedRight,
+            [JsonStringEnumMemberName("Compubrah Bed(Left)")]
+            CompubrahBedLeft,
+            [JsonStringEnumMemberName("Compubrah Bed(Right)")]
+            CompubrahBedRight,
+            //doors
+            [JsonStringEnumMemberName("Bathroom Door")]
+            BathroomDoor,
+            [JsonStringEnumMemberName("Bedroom Closet Door (Left)")]
+            BedroomClosetDoorLeft,
+            [JsonStringEnumMemberName("Bedroom Closet Door (Right)")]
+            BedroomClosetDoorRight,
+            [JsonStringEnumMemberName("CabinetLeft")]
+            CabinetLeft,
+            [JsonStringEnumMemberName("CabinetRight")]
+            CabinetRight,
+            [JsonStringEnumMemberName("Desk Drawer Left")]
+            DeskDrawerLeft,
+            [JsonStringEnumMemberName("Desk Drawer Right")]
+            DeskDrawerRight,
+            [JsonStringEnumMemberName("Dryer Door")]
+            DryerDoor,
+            [JsonStringEnumMemberName("Escape Hatch")]
+            EscapeHatch,
+            [JsonStringEnumMemberName("Freezer")]
+            Freezer,
+            [JsonStringEnumMemberName("Fridge")]
+            Fridge,
+            [JsonStringEnumMemberName("Front Door")]
+            FrontDoor,
+            [JsonStringEnumMemberName("Garage Door")]
+            GarageDoor,
+            [JsonStringEnumMemberName("KitchenCabinet5")]
+            KitchenCabinet5,
+            [JsonStringEnumMemberName("KitchenCabinet6")]
+            KitchenCabinet6,
+            [JsonStringEnumMemberName("KitchenCabinet7")]
+            KitchenCabinet7,
+            [JsonStringEnumMemberName("KitchenCabinet8")]
+            KitchenCabinet8,
+            [JsonStringEnumMemberName("Laundry Room Door")]
+            LaundryRoomDoor,
+            [JsonStringEnumMemberName("Master Bathroom Door")]
+            MasterBathroomDoor,
+            [JsonStringEnumMemberName("Master Bedroom Door")]
+            MasterBedroomDoor,
+            [JsonStringEnumMemberName("Microwave Door")]
+            MicrowaveDoor,
+            [JsonStringEnumMemberName("Nightstand1")]
+            Nightstand1,
+            [JsonStringEnumMemberName("Nightstand2")]
+            Nightstand2,
+            [JsonStringEnumMemberName("Office Drawer Left")]
+            OfficeDrawerLeft,
+            [JsonStringEnumMemberName("Office Drawer Right")]
+            OfficeDrawerRight,
+            [JsonStringEnumMemberName("Pantry Door (Left)")]
+            PantryDoorLeft,
+            [JsonStringEnumMemberName("Pantry Door (Right)")]
+            PantryDoorRight,
+            [JsonStringEnumMemberName("Safe")]
+            Safe,
+            [JsonStringEnumMemberName("Slider Door")]
+            SliderDoor,
+            [JsonStringEnumMemberName("Small Spare Closet Door (L)")]
+            SmallSpareClosetDoorL,
+            [JsonStringEnumMemberName("Small Spare Closet Door (R)")]
+            SmallSpareClosetDoorR,
+            [JsonStringEnumMemberName("Spare Room 2 Door")]
+            SpareRoom2Door,
+            [JsonStringEnumMemberName("Spare Room Door")]
+            SpareRoomDoor,
+            [JsonStringEnumMemberName("SRClosetDoor1")]
+            SRClosetDoor1,
+            [JsonStringEnumMemberName("SRClosetDoor2")]
+            SRClosetDoor2,
+            [JsonStringEnumMemberName("SRClosetDoor3")]
+            SRClosetDoor3,
+            [JsonStringEnumMemberName("SRClosetDoor4")]
+            SRClosetDoor4,
+            [JsonStringEnumMemberName("Study Closet Door (L)")]
+            StudyClosetDoorL,
+            [JsonStringEnumMemberName("Study Closet Door (R)")]
+            StudyClosetDoorR,
+            [JsonStringEnumMemberName("Study Door")]
+            StudyDoor,
+            [JsonStringEnumMemberName("Upstairs Bathroom Door")]
+            UpstairsBathroomDoor,
+            [JsonStringEnumMemberName("Utility Closet Door")]
+            UtilityClosetDoor,
+            //burnables
+            [JsonStringEnumMemberName("Chicken")]
+            Chicken,
+            [JsonStringEnumMemberName("Disembodied Head")]
+            DisembodiedHead,
+            [JsonStringEnumMemberName("Foam Finger")]
+            FoamFinger,
+            [JsonStringEnumMemberName("Penguin")]
+            Pengiun,
+            //minigame spots
+            PlayerBeerPongPractice,
+            //sexspots
+            BedEdge,
+            CompuBrahSex,
+            //hot tub seats
+            [JsonStringEnumMemberName("HotTub Seat 1")]
+            HotTubSeat1,
+            [JsonStringEnumMemberName("HotTub Seat 2")]
+            HotTubSeat2,
+            [JsonStringEnumMemberName("HotTub Seat 3")]
+            HotTubSeat3,
+            [JsonStringEnumMemberName("HotTub Seat 4")]
+            HotTubSeat4,
+            [JsonStringEnumMemberName("HotTub Seat 5")]
+            HotTubSeat5,
+            //rest/specialtype:0
+            [JsonStringEnumMemberName("AC Unit")]
+            ACUnit,
+            [JsonStringEnumMemberName("Airvent ArtRoom")]
+            AirventArtRoom,
+            [JsonStringEnumMemberName("Airvent DiningRoom")]
+            AirventDiningRoom,
+            [JsonStringEnumMemberName("Airvent DownstairsGuestBathroom")]
+            AirventDownstairsGuestBathroom,
+            [JsonStringEnumMemberName("Airvent GarageWall")]
+            AirventGarageWall,
+            [JsonStringEnumMemberName("Airvent Kitchen")]
+            AirventKitchen,
+            [JsonStringEnumMemberName("Airvent LaundryRoom")]
+            AirventLaundryRoom,
+            [JsonStringEnumMemberName("Airvent LivingRoom")]
+            AirventLivingRoom,
+            [JsonStringEnumMemberName("Airvent MasterBathroom")]
+            AirventMasterBathroom,
+            [JsonStringEnumMemberName("Airvent MasterBedroom")]
+            AirventMasterBedroom,
+            [JsonStringEnumMemberName("Airvent SpareRoom")]
+            AirventSpareRoom,
+            [JsonStringEnumMemberName("Airvent Study")]
+            AirventStudy,
+            [JsonStringEnumMemberName("Airvent UpstairsGuestBathroom")]
+            AirventUpstairsGuestBathroom,
+            [JsonStringEnumMemberName("Apartment Computer")]
+            ApartmentComputer,
+            [JsonStringEnumMemberName("ArtRoomWindow")]
+            ArtRoomWindow,
+            [JsonStringEnumMemberName("Ashley's Panties")]
+            AshleysPanties,
+            [JsonStringEnumMemberName("AshleyTop")]
+            AshleyTop,
+            [JsonStringEnumMemberName("Auxiliary Dock")]
+            AuxiliaryDock,
+            [JsonStringEnumMemberName("Battery Pack")]
+            BatteryPack,
+            [JsonStringEnumMemberName("BeerPongCupTrigger0")]
+            BeerPongCupTrigger0,
+            [JsonStringEnumMemberName("BikeLock")]
+            BikeLock,
+            [JsonStringEnumMemberName("BikeLockKey")]
+            BikeLockKey,
+            [JsonStringEnumMemberName("Billboard")]
+            Billboard,
+            [JsonStringEnumMemberName("BloodWall")]
+            BloodWall,
+            [JsonStringEnumMemberName("Blue Hair Dye")]
+            BlueHairDye,
+            [JsonStringEnumMemberName("Blueprints")]
+            Blueprints,
+            [JsonStringEnumMemberName("Box of Nails")]
+            BoxofNails,
+            [JsonStringEnumMemberName("Breaker Panel")]
+            BreakerPanel,
+            [JsonStringEnumMemberName("Briefcase")]
+            Briefcase,
+            [JsonStringEnumMemberName("BriefcaseOpen")]
+            BriefcaseOpen,
+            [JsonStringEnumMemberName("Broom")]
+            Broom,
+            [JsonStringEnumMemberName("Bug Zapper")]
+            BugZapper,
+            [JsonStringEnumMemberName("Bushes")]
+            Bushes,
+            [JsonStringEnumMemberName("Cabernet")]
+            Cabernet,
+            [JsonStringEnumMemberName("Camera")]
+            Camera,
+            [JsonStringEnumMemberName("CatPicture")]
+            CatPicture,
+            [JsonStringEnumMemberName("Cell Phone Jammer")]
+            CellPhoneJammer,
+            [JsonStringEnumMemberName("Chardonnay")]
+            Chardonnay,
+            [JsonStringEnumMemberName("Chicken Nuggets")]
+            ChickenNuggets,
+            [JsonStringEnumMemberName("Chili Peppers")]
+            ChiliPeppers,
+            [JsonStringEnumMemberName("Choclate Syrup")]
+            ChoclateSyrup,
+            [JsonStringEnumMemberName("ChocolateBar")]
+            ChocolateBar,
+            [JsonStringEnumMemberName("ChristmasGazeboStar")]
+            ChristmasGazeboStar,
+            [JsonStringEnumMemberName("Clear Eyes")]
+            ClearEyes,
+            [JsonStringEnumMemberName("Closed Briefcase")]
+            ClosedBriefcase,
+            [JsonStringEnumMemberName("Clothes")]
+            Clothes,
+            [JsonStringEnumMemberName("Clothes Basket 1")]
+            ClothesBasket1,
+            [JsonStringEnumMemberName("Clothes Basket 2f")]
+            ClothesBasket2f,
+            [JsonStringEnumMemberName("Clothes Basket 3")]
+            ClothesBasket3,
+            [JsonStringEnumMemberName("Coffee")]
+            Coffee,
+            [JsonStringEnumMemberName("Collar")]
+            Collar,
+            [JsonStringEnumMemberName("CollarBloody")]
+            CollarBloody,
+            [JsonStringEnumMemberName("Computer")]
+            Computer,
+            [JsonStringEnumMemberName("Condom")]
+            Condom,
+            [JsonStringEnumMemberName("Cowboy Scorpiosmus")]
+            CowboyScorpiosmus,
+            [JsonStringEnumMemberName("Credit Card")]
+            CreditCard,
+            [JsonStringEnumMemberName("Crowd")]
+            Crowd,
+            [JsonStringEnumMemberName("Cucumber")]
+            Cucumber,
+            [JsonStringEnumMemberName("Dark Long Sleeve Women's Top")]
+            DarkLongSleeveWomensTop,
+            [JsonStringEnumMemberName("DeadSnake")]
+            DeadSnake,
+            [JsonStringEnumMemberName("Derek's Shirt")]
+            DereksShirt,
+            [JsonStringEnumMemberName("Diary")]
+            Diary,
+            [JsonStringEnumMemberName("DirtMound")]
+            DirtMound,
+            [JsonStringEnumMemberName("DirtyClue1")]
+            DirtyClue1,
+            [JsonStringEnumMemberName("DirtyClue2")]
+            DirtyClue2,
+            [JsonStringEnumMemberName("DirtyClue3")]
+            DirtyClue3,
+            [JsonStringEnumMemberName("Discarded Magazine")]
+            DiscardedMagazine,
+            [JsonStringEnumMemberName("DLiciousOutfit")]
+            DLiciousOutfit,
+            [JsonStringEnumMemberName("DoorBracingSpot")]
+            DoorBracingSpot,
+            [JsonStringEnumMemberName("DoorBracingSpot2")]
+            DoorBracingSpot2,
+            [JsonStringEnumMemberName("Double-Sided Dildo")]
+            DoubleSidedDildo,
+            [JsonStringEnumMemberName("DownstairsBathroomMirror")]
+            DownstairsBathroomMirror,
+            [JsonStringEnumMemberName("Dresser")]
+            Dresser,
+            [JsonStringEnumMemberName("Drone")]
+            Drone,
+            [JsonStringEnumMemberName("Drone Remote")]
+            DroneRemote,
+            [JsonStringEnumMemberName("Dryer")]
+            Dryer,
+            [JsonStringEnumMemberName("DryerStuckSpot")]
+            DryerStuckSpot,
+            [JsonStringEnumMemberName("DryerStuckSpotImmediate")]
+            DryerStuckSpotImmediate,
+            [JsonStringEnumMemberName("Duct Tape")]
+            DuctTape,
+            [JsonStringEnumMemberName("DVD2")]
+            DVD2,
+            [JsonStringEnumMemberName("E-Cig Vape")]
+            ECigVape,
+            [JsonStringEnumMemberName("Eggs")]
+            Eggs,
+            [JsonStringEnumMemberName("Empty Cup")]
+            EmptyCup,
+            [JsonStringEnumMemberName("EtherealClue")]
+            EtherealClue,
+            [JsonStringEnumMemberName("Face Cream")]
+            FaceCream,
+            [JsonStringEnumMemberName("Faucet")]
+            Faucet,
+            [JsonStringEnumMemberName("Fifty Dollars")]
+            FiftyDollars,
+            [JsonStringEnumMemberName("Film Camera")]
+            FilmCamera,
+            [JsonStringEnumMemberName("Fire Pit")]
+            FirePit,
+            [JsonStringEnumMemberName("Fireplace")]
+            Fireplace,
+            [JsonStringEnumMemberName("Firetrail")]
+            Firetrail,
+            [JsonStringEnumMemberName("FlamingoLeftA")]
+            FlamingoLeftA,
+            [JsonStringEnumMemberName("FlamingoRightB")]
+            FlamingoRightB,
+            [JsonStringEnumMemberName("Flask")]
+            Flask,
+            [JsonStringEnumMemberName("Floor Towels")]
+            FloorTowels,
+            [JsonStringEnumMemberName("Flower")]
+            Flower,
+            [JsonStringEnumMemberName("FreeSnake")]
+            FreeSnake,
+            [JsonStringEnumMemberName("FreeSnakeFemale")]
+            FreeSnakeFemale,
+            [JsonStringEnumMemberName("FrontWindowBracingSpot")]
+            FrontWindowBracingSpot,
+            [JsonStringEnumMemberName("FrontWindowBracingSpot2")]
+            FrontWindowBracingSpot2,
+            [JsonStringEnumMemberName("FrontWindowBracingSpot3")]
+            FrontWindowBracingSpot3,
+            [JsonStringEnumMemberName("GarageBinMovable")]
+            GarageBinMovable,
+            [JsonStringEnumMemberName("GarageWall Airvent Cover")]
+            GarageWallAirventCover,
+            [JsonStringEnumMemberName("Gastronomy Book")]
+            GastronomyBook,
+            [JsonStringEnumMemberName("Gazebo")]
+            Gazebo,
+            [JsonStringEnumMemberName("GazeboFuseBox")]
+            GazeboFuseBox,
+            [JsonStringEnumMemberName("Glasses")]
+            Glasses,
+            [JsonStringEnumMemberName("Gut Grip")]
+            GutGrip,
+            [JsonStringEnumMemberName("Gutter")]
+            Gutter,
+            [JsonStringEnumMemberName("Hammer")]
+            Hammer,
+            [JsonStringEnumMemberName("Hammer2")]
+            Hammer2,
+            [JsonStringEnumMemberName("HangingTentacle")]
+            HangingTentacle,
+            [JsonStringEnumMemberName("Hedge Clippers")]
+            HedgeClippers,
+            [JsonStringEnumMemberName("HoleInFence")]
+            HoleInFence,
+            [JsonStringEnumMemberName("Hot Tub Base")]
+            HotTubBase,
+            [JsonStringEnumMemberName("HotAirBalloon")]
+            HotAirBalloon,
+            [JsonStringEnumMemberName("HotTubCoverFolded")]
+            HotTubCoverFolded,
+            [JsonStringEnumMemberName("HotTubCoverUnfolded")]
+            HotTubCoverUnfolded,
+            [JsonStringEnumMemberName("Jack Daniel's")]
+            JackDaniels,
+            [JsonStringEnumMemberName("Joint")]
+            Joint,
+            [JsonStringEnumMemberName("Katana")]
+            Katana,
+            [JsonStringEnumMemberName("Kettle")]
+            Kettle,
+            [JsonStringEnumMemberName("Key")]
+            Key,
+            [JsonStringEnumMemberName("Key2")]
+            Key2,
+            [JsonStringEnumMemberName("Key3")]
+            Key3,
+            [JsonStringEnumMemberName("Keychain")]
+            Keychain,
+            [JsonStringEnumMemberName("Knife")]
+            Knife,
+            [JsonStringEnumMemberName("Laptop")]
+            Laptop,
+            [JsonStringEnumMemberName("LeahEarpiece")]
+            LeahEarpiece,
+            [JsonStringEnumMemberName("LivingRoomTV")]
+            LivingRoomTV,
+            [JsonStringEnumMemberName("LizKatzButt")]
+            LizKatzButt,
+            [JsonStringEnumMemberName("LRTVBackButton")]
+            LRTVBackButton,
+            [JsonStringEnumMemberName("LRTVPlayAllButton")]
+            LRTVPlayAllButton,
+            [JsonStringEnumMemberName("LRTVSongFiveButton")]
+            LRTVSongFiveButton,
+            [JsonStringEnumMemberName("LRTVSongFourButton")]
+            LRTVSongFourButton,
+            [JsonStringEnumMemberName("LRTVSongOneButton")]
+            LRTVSongOneButton,
+            [JsonStringEnumMemberName("LRTVSongSixButton")]
+            LRTVSongSixButton,
+            [JsonStringEnumMemberName("LRTVSongThreeButton")]
+            LRTVSongThreeButton,
+            [JsonStringEnumMemberName("LRTVSongTwoButton")]
+            LRTVSongTwoButton,
+            [JsonStringEnumMemberName("Madison's Phone")]
+            MadisonsPhone,
+            [JsonStringEnumMemberName("Marijuana")]
+            Marijuana,
+            [JsonStringEnumMemberName("Matchbox")]
+            Matchbox,
+            [JsonStringEnumMemberName("Mayonnaise")]
+            Mayonnaise,
+            [JsonStringEnumMemberName("Merlot")]
+            Merlot,
+            [JsonStringEnumMemberName("Microwave")]
+            Microwave,
+            [JsonStringEnumMemberName("MistletoeBallsDecoration")]
+            MistletoeBallsDecoration,
+            [JsonStringEnumMemberName("Money Makers Monthly")]
+            MoneyMakersMonthly,
+            [JsonStringEnumMemberName("Motor Oil")]
+            MotorOil,
+            [JsonStringEnumMemberName("MP3 Player")]
+            MP3Player,
+            [JsonStringEnumMemberName("MP3 Player Cable")]
+            MP3PlayerCable,
+            [JsonStringEnumMemberName("MP3 Player DC")]
+            MP3PlayerDC,
+            [JsonStringEnumMemberName("Mug")]
+            Mug,
+            [JsonStringEnumMemberName("Natty Lite 1")]
+            NattyLite1,
+            [JsonStringEnumMemberName("Natty Lite 10")]
+            NattyLite10,
+            [JsonStringEnumMemberName("Natty Lite 11")]
+            NattyLite11,
+            [JsonStringEnumMemberName("Natty Lite 12")]
+            NattyLite12,
+            [JsonStringEnumMemberName("Natty Lite 13")]
+            NattyLite13,
+            [JsonStringEnumMemberName("Natty Lite 14")]
+            NattyLite14,
+            [JsonStringEnumMemberName("Natty Lite 2")]
+            NattyLite2,
+            [JsonStringEnumMemberName("Natty Lite 3")]
+            NattyLite3,
+            [JsonStringEnumMemberName("Natty Lite 4")]
+            NattyLite4,
+            [JsonStringEnumMemberName("Natty Lite 5")]
+            NattyLite5,
+            [JsonStringEnumMemberName("Natty Lite 6")]
+            NattyLite6,
+            [JsonStringEnumMemberName("Natty Lite 7")]
+            NattyLite7,
+            [JsonStringEnumMemberName("Natty Lite 8")]
+            NattyLite8,
+            [JsonStringEnumMemberName("Natty Lite 9")]
+            NattyLite9,
+            [JsonStringEnumMemberName("Natty Lite Open")]
+            NattyLiteOpen,
+            [JsonStringEnumMemberName("Nerdy Taped Glasses")]
+            NerdyTapedGlasses,
+            [JsonStringEnumMemberName("Notebook")]
+            Notebook,
+            [JsonStringEnumMemberName("Notepad")]
+            Notepad,
+            [JsonStringEnumMemberName("Open Briefcase")]
+            OpenBriefcase,
+            [JsonStringEnumMemberName("OrangeBin1")]
+            OrangeBin1,
+            [JsonStringEnumMemberName("OrganizingBriefcaseSpot")]
+            OrganizingBriefcaseSpot,
+            [JsonStringEnumMemberName("OwlPainting")]
+            OwlPainting,
+            [JsonStringEnumMemberName("PaddockButton")]
+            PaddockButton,
+            [JsonStringEnumMemberName("Painkillers")]
+            Painkillers,
+            [JsonStringEnumMemberName("Paper")]
+            Paper,
+            [JsonStringEnumMemberName("Paper Bag")]
+            PaperBag,
+            [JsonStringEnumMemberName("Paper Bag Crunched")]
+            PaperBagCrunched,
+            [JsonStringEnumMemberName("Pencil")]
+            Pencil,
+            [JsonStringEnumMemberName("Petition")]
+            Petition,
+            [JsonStringEnumMemberName("Phone2")]
+            Phone2,
+            [JsonStringEnumMemberName("Phone3")]
+            Phone3,
+            [JsonStringEnumMemberName("Phone4")]
+            Phone4,
+            [JsonStringEnumMemberName("Phone5")]
+            Phone5,
+            [JsonStringEnumMemberName("Phone6")]
+            Phone6,
+            [JsonStringEnumMemberName("PingPongBall")]
+            PingPongBall,
+            [JsonStringEnumMemberName("PinkUnderwear")]
+            PinkUnderwear,
+            [JsonStringEnumMemberName("PipeFix")]
+            PipeFix,
+            [JsonStringEnumMemberName("PipeWater")]
+            PipeWater,
+            [JsonStringEnumMemberName("Pizza Box")]
+            PizzaBox,
+            [JsonStringEnumMemberName("PizzaBoxFortification")]
+            PizzaBoxFortification,
+            [JsonStringEnumMemberName("PlankPileInYard")]
+            PlankPileInYard,
+            [JsonStringEnumMemberName("PlanksFortification")]
+            PlanksFortification,
+            [JsonStringEnumMemberName("PlanksFortificationExtraNails")]
+            PlanksFortificationExtraNails,
+            [JsonStringEnumMemberName("PlexiglassHotTub")]
+            PlexiglassHotTub,
+            [JsonStringEnumMemberName("PlexiglassStacked")]
+            PlexiglassStacked,
+            [JsonStringEnumMemberName("Popcorn")]
+            Popcorn,
+            [JsonStringEnumMemberName("Popper")]
+            Popper,
+            [JsonStringEnumMemberName("PopperBox")]
+            PopperBox,
+            [JsonStringEnumMemberName("Potatoes")]
+            Potatoes,
+            [JsonStringEnumMemberName("PrintableClue")]
+            PrintableClue,
+            [JsonStringEnumMemberName("Printer")]
+            Printer,
+            [JsonStringEnumMemberName("Red Solo Cup 0")]
+            RedSoloCup0,
+            [JsonStringEnumMemberName("Red Solo Cup 1")]
+            RedSoloCup1,
+            [JsonStringEnumMemberName("Red Solo Cup 2")]
+            RedSoloCup2,
+            [JsonStringEnumMemberName("Red Solo Cup 3")]
+            RedSoloCup3,
+            [JsonStringEnumMemberName("Red Solo Cup 4")]
+            RedSoloCup4,
+            [JsonStringEnumMemberName("Red Solo Cup 5")]
+            RedSoloCup5,
+            [JsonStringEnumMemberName("Red Solo Cup 6")]
+            RedSoloCup6,
+            [JsonStringEnumMemberName("Red Solo Cup 7")]
+            RedSoloCup7,
+            [JsonStringEnumMemberName("Red Solo Cup 8")]
+            RedSoloCup8,
+            [JsonStringEnumMemberName("Red Solo Cup 9")]
+            RedSoloCup9,
+            [JsonStringEnumMemberName("Remote Control")]
+            RemoteControl,
+            [JsonStringEnumMemberName("RipppedWhalePoster")]
+            RipppedWhalePoster,
+            [JsonStringEnumMemberName("Router")]
+            Router,
+            [JsonStringEnumMemberName("Rum")]
+            Rum,
+            [JsonStringEnumMemberName("RumOpen")]
+            RumOpen,
+            [JsonStringEnumMemberName("Salami")]
+            Salami,
+            [JsonStringEnumMemberName("Salmon")]
+            Salmon,
+            [JsonStringEnumMemberName("Satchel")]
+            Satchel,
+            [JsonStringEnumMemberName("Scorpion Tequila")]
+            ScorpionTequila,
+            [JsonStringEnumMemberName("SD Card")]
+            SDCard,
+            [JsonStringEnumMemberName("Shake Light")]
+            ShakeLight,
+            [JsonStringEnumMemberName("SleepingMaskFolded")]
+            SleepingMaskFolded,
+            [JsonStringEnumMemberName("SleepingMaskMountable")]
+            SleepingMaskMountable,
+            [JsonStringEnumMemberName("Snowball")]
+            Snowball,
+            [JsonStringEnumMemberName("SnowballBucket")]
+            SnowballBucket,
+            [JsonStringEnumMemberName("Soda")]
+            Soda,
+            [JsonStringEnumMemberName("SoloBeerPongTable")]
+            SoloBeerPongTable,
+            [JsonStringEnumMemberName("SoloPingPongBallStorage")]
+            SoloPingPongBallStorage,
+            [JsonStringEnumMemberName("Speaker1")]
+            Speaker1,
+            [JsonStringEnumMemberName("Speaker2")]
+            Speaker2,
+            [JsonStringEnumMemberName("Spoon")]
+            Spoon,
+            [JsonStringEnumMemberName("SprayPaintCan")]
+            SprayPaintCan,
+            [JsonStringEnumMemberName("Starbomb")]
+            Starbomb,
+            [JsonStringEnumMemberName("StarbombBox")]
+            StarbombBox,
+            [JsonStringEnumMemberName("Stepstool")]
+            Stepstool,
+            [JsonStringEnumMemberName("StepstoolStandSpot")]
+            StepstoolStandSpot,
+            [JsonStringEnumMemberName("Stove")]
+            Stove,
+            [JsonStringEnumMemberName("StudyLaptopTypingSpot")]
+            StudyLaptopTypingSpot,
+            [JsonStringEnumMemberName("Sundress")]
+            Sundress,
+            [JsonStringEnumMemberName("Sunglasses")]
+            Sunglasses,
+            [JsonStringEnumMemberName("Sweeties")]
+            Sweeties,
+            [JsonStringEnumMemberName("Tablet")]
+            Tablet,
+            [JsonStringEnumMemberName("Talking Fish")]
+            TalkingFish,
+            [JsonStringEnumMemberName("Tentacle")]
+            Tentacle,
+            [JsonStringEnumMemberName("Terrarium")]
+            Terrarium,
+            [JsonStringEnumMemberName("Thermos")]
+            Thermos,
+            [JsonStringEnumMemberName("Thermostat")]
+            Thermostat,
+            [JsonStringEnumMemberName("Toaster")]
+            Toaster,
+            [JsonStringEnumMemberName("Towel")]
+            Towel,
+            [JsonStringEnumMemberName("Towel2")]
+            Towel2,
+            [JsonStringEnumMemberName("Towel3")]
+            Towel3,
+            [JsonStringEnumMemberName("Trash Can")]
+            TrashCan,
+            [JsonStringEnumMemberName("Trunk")]
+            Trunk,
+            [JsonStringEnumMemberName("Undressing Neighbor")]
+            UndressingNeighbor,
+            [JsonStringEnumMemberName("UpstairsMasterBathroomMirror")]
+            UpstairsMasterBathroomMirror,
+            [JsonStringEnumMemberName("USB Stick")]
+            USBStick,
+            [JsonStringEnumMemberName("Valentines Chocolates")]
+            ValentinesChocolates,
+            [JsonStringEnumMemberName("Vibrator")]
+            Vibrator,
+            [JsonStringEnumMemberName("Vickie's Panties")]
+            VickiesPanties,
+            [JsonStringEnumMemberName("Vodka")]
+            Vodka,
+            [JsonStringEnumMemberName("VoiceRecorder")]
+            VoiceRecorder,
+            [JsonStringEnumMemberName("Washer")]
+            Washer,
+            [JsonStringEnumMemberName("WaterMain")]
             WaterMain,
+            [JsonStringEnumMemberName("WhalePoster")]
             WhalePoster,
+            [JsonStringEnumMemberName("Whipped Cream")]
             WhippedCream,
+            [JsonStringEnumMemberName("Wine Rack")]
             WineRack,
+            [JsonStringEnumMemberName("Wrench")]
             Wrench,
+            [JsonStringEnumMemberName("YouTool")]
             YouTool,
         }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum Cutscenes
         {
+            ACExplosion_A,
+            ACExplosion_M,
+            ACExplosion_MA,
+            AmyPlayerBedroomSex,
+            AshleyFinale,
             AshleyFinale_c,
-            DerekFinale_c,
-            FrankBlowjob_c,
-            FrankFinale_c,
-            F_AmyBrittney_AshleyRoom_Voyeur_c,
-            F_AshleyFinale_c,
-            F_BrittneyFinale_c,
-            F_DerekFinale_c,
-            F_FrankFinale_c,
-            F_KatherineFinale_c,
-            F_MP3Reach,
-            F_PatrickFinale_c,
-            F_PlayerGarageSex_c,
-            F_PlayerMasterBedroomSex1_c,
-            F_PlayerMasterBedroomSex_Straight_c,
-            F_RachaelFinale_c,
-            F_ThreesomeFFF_AshleyRoom_c,
-            F_ThreesomeFFM_MasterBedroom_c,
-            F_VickieFinale_c,
-            Intro_F,
-            Intro_M,
-            KatherineFinale_c,
-            MP3Reach,
-            Patjump,
-            PlayerGarageSex_c,
-            PlayerMasterBedroomSex1_c,
-            RachaelFinale_c,
-            ThreesomeFFM_AshleyRoom_c,
-            ThreesomeFFM_EasterEgg_c,
-            ThreesomeFFM_Gazebo_c,
-            ThreesomeFFM_MasterBedroom_c,
-            ThreesomeMMF_1_Gazebo_c,
-            ThreesomeMMF_ArtRoom_c,
-            VickieFinale_c,
+            AshleySupporter,
+            AshleySupporter_c,
             DC_FenceEvent,
             DC_FenceEvent_Trailer,
+            DerekFinale,
+            DerekFinale_c,
+            DerekSupporter,
+            DerekSupporter_c,
             DojaFinale,
             DojaPerformanceCompleteFail,
             DojaPerformanceDroneFail,
@@ -1931,79 +2244,101 @@ namespace CSC.StoryItems
             DojaPerformanceHotTubFail,
             DojaPerformanceLive,
             DojaPerformancePatFail,
-            F_DojaFinale,
-            AmyPlayerBedroomSex,
-            AshleyFinale,
-            AshleySupporter,
-            DerekFinale,
-            DerekSupporter,
-            FrankBlowjob,
-            FrankFinale,
             F_AmyBrittney_AshleyRoom_Voyeur,
+            F_AmyBrittney_AshleyRoom_Voyeur_c,
             F_AshleyFinale,
+            F_AshleyFinale_c,
             F_AshleySupporter,
+            F_AshleySupporter_c,
             F_BrittneyFinale,
+            F_BrittneyFinale_c,
             F_DerekFinale,
+            F_DerekFinale_c,
             F_DerekSupporter,
+            F_DerekSupporter_c,
+            F_DojaFinale,
             F_FrankFinale,
+            F_FrankFinale_c,
+            F_FridgeReveal,
             F_KatherineFinale,
+            F_KatherineFinale_c,
             F_LizFinale,
+            F_LizFinale_c,
             F_LizVR,
+            F_LizVR_c,
             F_LizWashroom,
+            F_LizWashroom_c,
+            F_MP3Reach,
             F_PatrickFinale,
+            F_PatrickFinale_c,
             F_PlayerGarageSex,
-            F_PlayerMasterBedroomSex1,
-            F_PlayerMasterBedroomSex_Straight1,
+            F_PlayerGarageSex_c,
             F_PlayerMasterBedroomSex_Straight,
+            F_PlayerMasterBedroomSex_Straight_c,
+            F_PlayerMasterBedroomSex_Straight1,
+            F_PlayerMasterBedroomSex1,
+            F_PlayerMasterBedroomSex1_c,
             F_RachaelFinale,
+            F_RachaelFinale_c,
             F_TentacleMastSeat1,
             F_TentacleMastSeat2,
             F_TentacleMastSeat3,
             F_TentacleMastSeat4,
             F_ThreesomeFFF_AshleyRoom,
+            F_ThreesomeFFF_AshleyRoom_c,
             F_ThreesomeFFM_MasterBedroom,
+            F_ThreesomeFFM_MasterBedroom_c,
             F_VickieFinale,
+            F_VickieFinale_c,
+            FrankBlowjob,
+            FrankBlowjob_c,
+            FrankFinale,
+            FrankFinale_c,
+            FridgeReveal,
             GenericSpareRoom,
+            Intro_F,
+            Intro_M,
             KatherineFinale,
+            KatherineFinale_c,
             LizChanging,
+            LizChanging_c,
+            LizEntry,
             LizFinale,
+            LizFinale_c,
             LizTentacle,
+            LizTentacle_c,
             LizVR,
+            LizVR_c,
             LizWashroom,
+            LizWashroom_c,
+            MP3Reach,
+            Patjump,
             PlayerGarageSex,
+            PlayerGarageSex_c,
             PlayerMasterBedroomSex1,
+            PlayerMasterBedroomSex1_c,
             RachaelFinale,
+            RachaelFinale_c,
             TentacleMastSeat1,
             TentacleMastSeat2,
             TentacleMastSeat3,
             TentacleMastSeat4,
-            ThreesomeFFM_AshleyRoom,
-            ThreesomeFFM_EasterEgg,
-            ThreesomeFFM_Gazebo,
-            ThreesomeFFM_MasterBedroom,
-            ThreesomeMMF_1_Gazebo,
-            ThreesomeMMF_ArtRoom,
-            VickieFinale,
-            ACExplosion_A,
-            ACExplosion_M,
-            ACExplosion_MA,
-            FridgeReveal,
-            F_FridgeReveal,
-            F_LizFinale_c,
-            F_LizVR_c,
-            F_LizWashroom_c,
-            LizChanging_c,
-            LizEntry,
-            LizFinale_c,
-            LizTentacle_c,
-            LizVR_c,
-            LizWashroom_c,
             TentacleReveal,
+            ThreesomeFFM_AshleyRoom,
+            ThreesomeFFM_AshleyRoom_c,
+            ThreesomeFFM_EasterEgg,
+            ThreesomeFFM_EasterEgg_c,
+            ThreesomeFFM_Gazebo,
+            ThreesomeFFM_Gazebo_c,
+            ThreesomeFFM_MasterBedroom,
+            ThreesomeFFM_MasterBedroom_c,
+            ThreesomeMMF_1_Gazebo,
+            ThreesomeMMF_1_Gazebo_c,
+            ThreesomeMMF_ArtRoom,
+            ThreesomeMMF_ArtRoom_c,
             VentRelease,
-            AshleySupporter_c,
-            DerekSupporter_c,
-            F_AshleySupporter_c,
-            F_DerekSupporter_c
+            VickieFinale,
+            VickieFinale_c,
         }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -2043,6 +2378,7 @@ namespace CSC.StoryItems
             TrashKnockedOver1,
             TrashKnockedOver2,
             Zipper,
+            [JsonStringEnumMemberName("033737654-signature-4")]
             _033737654signature4,
             LKdoorbell_final
         }
@@ -2083,13 +2419,794 @@ namespace CSC.StoryItems
             Feet = 50,
             Hands = 60
         }
+
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum ClothingTypeOrName
         {
-
             ByName,
-
             ByType
+        }
+
+        //sepcialtype: 7
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum Burnables
+        {
+            [JsonStringEnumMemberName("Chicken")]
+            Chicken,
+            [JsonStringEnumMemberName("Disembodied Head")]
+            DisembodiedHead,
+            [JsonStringEnumMemberName("Foam Finger")]
+            FoamFinger,
+            [JsonStringEnumMemberName("Penguin")]
+            Pengiun,
+        }
+
+        //sepcialtype: 6
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum MiniGameSpot
+        {
+            PlayerBeerPongPractice,
+        }
+
+        //sepcialtype: 5
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum SexSpot
+        {
+            BedEdge,
+            CompuBrahSex,
+        }
+
+        //sepcialtype: 4
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum HotTubSeats
+        {
+            [JsonStringEnumMemberName("HotTub Seat 1")]
+            HotTubSeat1,
+            [JsonStringEnumMemberName("HotTub Seat 2")]
+            HotTubSeat2,
+            [JsonStringEnumMemberName("HotTub Seat 3")]
+            HotTubSeat3,
+            [JsonStringEnumMemberName("HotTub Seat 4")]
+            HotTubSeat4,
+            [JsonStringEnumMemberName("HotTub Seat 5")]
+            HotTubSeat5,
+        }
+
+        //specialtype: 3
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum Beds
+        {
+            [JsonStringEnumMemberName("Bed (Left)")]
+            BedLeft,
+            [JsonStringEnumMemberName("Bed (Right)")]
+            BedRight,
+            [JsonStringEnumMemberName("Compubrah Bed(Left)")]
+            CompubrahBedLeft,
+            [JsonStringEnumMemberName("Compubrah Bed(Right)")]
+            CompubrahBedRight,
+        }
+
+        //speacialtype : 2
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum Chairs
+        {
+            [JsonStringEnumMemberName("Apartment Sofa Seat (Left)")]
+            ApartmentSofaSeatLeft,
+            [JsonStringEnumMemberName("Apartment Sofa Seat (Right)")]
+            ApartmentSofaSeatRight,
+            [JsonStringEnumMemberName("Armchair")]
+            Armchair,
+            [JsonStringEnumMemberName("Computer Chair")]
+            ComputerChair,
+            [JsonStringEnumMemberName("Couch (Left)")]
+            CouchLeft,
+            [JsonStringEnumMemberName("Couch (Middle)")]
+            CouchMiddle,
+            [JsonStringEnumMemberName("Couch (Right)")]
+            CouchRight,
+            [JsonStringEnumMemberName("DownstairsToilet")]
+            DownstairsToilet,
+            [JsonStringEnumMemberName("DryerSeat")]
+            DryerSeat,
+            [JsonStringEnumMemberName("FlamingoSeatLeft")]
+            FlamingoSeatLeft,
+            [JsonStringEnumMemberName("FlamingoSeatRight")]
+            FlamingoSeatRight,
+            [JsonStringEnumMemberName("Frank's Chair")]
+            FranksChair,
+            [JsonStringEnumMemberName("LawnChair1")]
+            LawnChair1,
+            [JsonStringEnumMemberName("LawnChair2")]
+            LawnChair2,
+            [JsonStringEnumMemberName("LawnChair3")]
+            LawnChair3,
+            [JsonStringEnumMemberName("LawnChair4")]
+            LawnChair4,
+            [JsonStringEnumMemberName("MasterBathTubEdgeSeat")]
+            MasterBathTubEdgeSeat,
+            [JsonStringEnumMemberName("MasterBathTubSeat")]
+            MasterBathTubSeat,
+            [JsonStringEnumMemberName("Office Chair")]
+            OfficeChair,
+            [JsonStringEnumMemberName("Outside Sofa 1 Left")]
+            OutsideSofa1Left,
+            [JsonStringEnumMemberName("Outside Sofa 1 Middle")]
+            OutsideSofa1Middle,
+            [JsonStringEnumMemberName("Outside Sofa 1 Right")]
+            OutsideSofa1Right,
+            [JsonStringEnumMemberName("Outside Sofa 2 Left")]
+            OutsideSofa2Left,
+            [JsonStringEnumMemberName("Outside Sofa 2 Middle")]
+            OutsideSofa2Middle,
+            [JsonStringEnumMemberName("Outside Sofa 2 Right")]
+            OutsideSofa2Right,
+            [JsonStringEnumMemberName("Patio Armchair")]
+            PatioArmchair,
+            [JsonStringEnumMemberName("Patio Armchair 2")]
+            PatioArmchair2,
+            [JsonStringEnumMemberName("Pouf")]
+            Pouf,
+            [JsonStringEnumMemberName("RoofSeatLeft")]
+            RoofSeatLeft,
+            [JsonStringEnumMemberName("RoofSeatRight")]
+            RoofSeatRight,
+            [JsonStringEnumMemberName("Sofa (Left)")]
+            SofaLeft,
+            [JsonStringEnumMemberName("Sofa (Right)")]
+            SofaRight,
+            [JsonStringEnumMemberName("SpareRoomSofaLeft")]
+            SpareRoomSofaLeft,
+            [JsonStringEnumMemberName("SpareRoomSofaMiddle")]
+            SpareRoomSofaMiddle,
+            [JsonStringEnumMemberName("SpareRoomSofaRight")]
+            SpareRoomSofaRight,
+            [JsonStringEnumMemberName("UpstairsBathroomToilet")]
+            UpstairsBathroomToilet,
+            [JsonStringEnumMemberName("UpstairsBathTubEdgeSeat")]
+            UpstairsBathTubEdgeSeat,
+            [JsonStringEnumMemberName("UpstairsBathTubSeat")]
+            UpstairsBathTubSeat,
+            [JsonStringEnumMemberName("Vanity Chair")]
+            VanityChair,
+            [JsonStringEnumMemberName("WasherSeat")]
+            WasherSeat,
+        }
+
+        //specialtype:1
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum Doors
+        {
+            [JsonStringEnumMemberName("Bathroom Door")]
+            BathroomDoor,
+            [JsonStringEnumMemberName("Bedroom Closet Door (Left)")]
+            BedroomClosetDoorLeft,
+            [JsonStringEnumMemberName("Bedroom Closet Door (Right)")]
+            BedroomClosetDoorRight,
+            [JsonStringEnumMemberName("CabinetLeft")]
+            CabinetLeft,
+            [JsonStringEnumMemberName("CabinetRight")]
+            CabinetRight,
+            [JsonStringEnumMemberName("Desk Drawer Left")]
+            DeskDrawerLeft,
+            [JsonStringEnumMemberName("Desk Drawer Right")]
+            DeskDrawerRight,
+            [JsonStringEnumMemberName("Dryer Door")]
+            DryerDoor,
+            [JsonStringEnumMemberName("Escape Hatch")]
+            EscapeHatch,
+            [JsonStringEnumMemberName("Freezer")]
+            Freezer,
+            [JsonStringEnumMemberName("Fridge")]
+            Fridge,
+            [JsonStringEnumMemberName("Front Door")]
+            FrontDoor,
+            [JsonStringEnumMemberName("Garage Door")]
+            GarageDoor,
+            [JsonStringEnumMemberName("KitchenCabinet5")]
+            KitchenCabinet5,
+            [JsonStringEnumMemberName("KitchenCabinet6")]
+            KitchenCabinet6,
+            [JsonStringEnumMemberName("KitchenCabinet7")]
+            KitchenCabinet7,
+            [JsonStringEnumMemberName("KitchenCabinet8")]
+            KitchenCabinet8,
+            [JsonStringEnumMemberName("Laundry Room Door")]
+            LaundryRoomDoor,
+            [JsonStringEnumMemberName("Master Bathroom Door")]
+            MasterBathroomDoor,
+            [JsonStringEnumMemberName("Master Bedroom Door")]
+            MasterBedroomDoor,
+            [JsonStringEnumMemberName("Microwave Door")]
+            MicrowaveDoor,
+            [JsonStringEnumMemberName("Nightstand1")]
+            Nightstand1,
+            [JsonStringEnumMemberName("Nightstand2")]
+            Nightstand2,
+            [JsonStringEnumMemberName("Office Drawer Left")]
+            OfficeDrawerLeft,
+            [JsonStringEnumMemberName("Office Drawer Right")]
+            OfficeDrawerRight,
+            [JsonStringEnumMemberName("Pantry Door (Left)")]
+            PantryDoorLeft,
+            [JsonStringEnumMemberName("Pantry Door (Right)")]
+            PantryDoorRight,
+            [JsonStringEnumMemberName("Safe")]
+            Safe,
+            [JsonStringEnumMemberName("Slider Door")]
+            SliderDoor,
+            [JsonStringEnumMemberName("Small Spare Closet Door (L)")]
+            SmallSpareClosetDoorL,
+            [JsonStringEnumMemberName("Small Spare Closet Door (R)")]
+            SmallSpareClosetDoorR,
+            [JsonStringEnumMemberName("Spare Room 2 Door")]
+            SpareRoom2Door,
+            [JsonStringEnumMemberName("Spare Room Door")]
+            SpareRoomDoor,
+            [JsonStringEnumMemberName("SRClosetDoor1")]
+            SRClosetDoor1,
+            [JsonStringEnumMemberName("SRClosetDoor2")]
+            SRClosetDoor2,
+            [JsonStringEnumMemberName("SRClosetDoor3")]
+            SRClosetDoor3,
+            [JsonStringEnumMemberName("SRClosetDoor4")]
+            SRClosetDoor4,
+            [JsonStringEnumMemberName("Study Closet Door (L)")]
+            StudyClosetDoorL,
+            [JsonStringEnumMemberName("Study Closet Door (R)")]
+            StudyClosetDoorR,
+            [JsonStringEnumMemberName("Study Door")]
+            StudyDoor,
+            [JsonStringEnumMemberName("Upstairs Bathroom Door")]
+            UpstairsBathroomDoor,
+            [JsonStringEnumMemberName("Utility Closet Door")]
+            UtilityClosetDoor,
+        }
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum ItemsType0
+        {
+            [JsonStringEnumMemberName("AC Unit")]
+            ACUnit,
+            [JsonStringEnumMemberName("Airvent ArtRoom")]
+            AirventArtRoom,
+            [JsonStringEnumMemberName("Airvent DiningRoom")]
+            AirventDiningRoom,
+            [JsonStringEnumMemberName("Airvent DownstairsGuestBathroom")]
+            AirventDownstairsGuestBathroom,
+            [JsonStringEnumMemberName("Airvent GarageWall")]
+            AirventGarageWall,
+            [JsonStringEnumMemberName("Airvent Kitchen")]
+            AirventKitchen,
+            [JsonStringEnumMemberName("Airvent LaundryRoom")]
+            AirventLaundryRoom,
+            [JsonStringEnumMemberName("Airvent LivingRoom")]
+            AirventLivingRoom,
+            [JsonStringEnumMemberName("Airvent MasterBathroom")]
+            AirventMasterBathroom,
+            [JsonStringEnumMemberName("Airvent MasterBedroom")]
+            AirventMasterBedroom,
+            [JsonStringEnumMemberName("Airvent SpareRoom")]
+            AirventSpareRoom,
+            [JsonStringEnumMemberName("Airvent Study")]
+            AirventStudy,
+            [JsonStringEnumMemberName("Airvent UpstairsGuestBathroom")]
+            AirventUpstairsGuestBathroom,
+            [JsonStringEnumMemberName("Apartment Computer")]
+            ApartmentComputer,
+            [JsonStringEnumMemberName("ArtRoomWindow")]
+            ArtRoomWindow,
+            [JsonStringEnumMemberName("Ashley's Panties")]
+            AshleysPanties,
+            [JsonStringEnumMemberName("AshleyTop")]
+            AshleyTop,
+            [JsonStringEnumMemberName("Auxiliary Dock")]
+            AuxiliaryDock,
+            [JsonStringEnumMemberName("Battery Pack")]
+            BatteryPack,
+            [JsonStringEnumMemberName("BeerPongCupTrigger0")]
+            BeerPongCupTrigger0,
+            [JsonStringEnumMemberName("BikeLock")]
+            BikeLock,
+            [JsonStringEnumMemberName("BikeLockKey")]
+            BikeLockKey,
+            [JsonStringEnumMemberName("Billboard")]
+            Billboard,
+            [JsonStringEnumMemberName("BloodWall")]
+            BloodWall,
+            [JsonStringEnumMemberName("Blue Hair Dye")]
+            BlueHairDye,
+            [JsonStringEnumMemberName("Blueprints")]
+            Blueprints,
+            [JsonStringEnumMemberName("Box of Nails")]
+            BoxofNails,
+            [JsonStringEnumMemberName("Breaker Panel")]
+            BreakerPanel,
+            [JsonStringEnumMemberName("Briefcase")]
+            Briefcase,
+            [JsonStringEnumMemberName("BriefcaseOpen")]
+            BriefcaseOpen,
+            [JsonStringEnumMemberName("Broom")]
+            Broom,
+            [JsonStringEnumMemberName("Bug Zapper")]
+            BugZapper,
+            [JsonStringEnumMemberName("Bushes")]
+            Bushes,
+            [JsonStringEnumMemberName("Cabernet")]
+            Cabernet,
+            [JsonStringEnumMemberName("Camera")]
+            Camera,
+            [JsonStringEnumMemberName("CatPicture")]
+            CatPicture,
+            [JsonStringEnumMemberName("Cell Phone Jammer")]
+            CellPhoneJammer,
+            [JsonStringEnumMemberName("Chardonnay")]
+            Chardonnay,
+            [JsonStringEnumMemberName("Chicken Nuggets")]
+            ChickenNuggets,
+            [JsonStringEnumMemberName("Chili Peppers")]
+            ChiliPeppers,
+            [JsonStringEnumMemberName("Choclate Syrup")]
+            ChoclateSyrup,
+            [JsonStringEnumMemberName("ChocolateBar")]
+            ChocolateBar,
+            [JsonStringEnumMemberName("ChristmasGazeboStar")]
+            ChristmasGazeboStar,
+            [JsonStringEnumMemberName("Clear Eyes")]
+            ClearEyes,
+            [JsonStringEnumMemberName("Closed Briefcase")]
+            ClosedBriefcase,
+            [JsonStringEnumMemberName("Clothes")]
+            Clothes,
+            [JsonStringEnumMemberName("Clothes Basket 1")]
+            ClothesBasket1,
+            [JsonStringEnumMemberName("Clothes Basket 2f")]
+            ClothesBasket2f,
+            [JsonStringEnumMemberName("Clothes Basket 3")]
+            ClothesBasket3,
+            [JsonStringEnumMemberName("Coffee")]
+            Coffee,
+            [JsonStringEnumMemberName("Collar")]
+            Collar,
+            [JsonStringEnumMemberName("CollarBloody")]
+            CollarBloody,
+            [JsonStringEnumMemberName("Computer")]
+            Computer,
+            [JsonStringEnumMemberName("Condom")]
+            Condom,
+            [JsonStringEnumMemberName("Cowboy Scorpiosmus")]
+            CowboyScorpiosmus,
+            [JsonStringEnumMemberName("Credit Card")]
+            CreditCard,
+            [JsonStringEnumMemberName("Crowd")]
+            Crowd,
+            [JsonStringEnumMemberName("Cucumber")]
+            Cucumber,
+            [JsonStringEnumMemberName("Dark Long Sleeve Women's Top")]
+            DarkLongSleeveWomensTop,
+            [JsonStringEnumMemberName("DeadSnake")]
+            DeadSnake,
+            [JsonStringEnumMemberName("Derek's Shirt")]
+            DereksShirt,
+            [JsonStringEnumMemberName("Diary")]
+            Diary,
+            [JsonStringEnumMemberName("DirtMound")]
+            DirtMound,
+            [JsonStringEnumMemberName("DirtyClue1")]
+            DirtyClue1,
+            [JsonStringEnumMemberName("DirtyClue2")]
+            DirtyClue2,
+            [JsonStringEnumMemberName("DirtyClue3")]
+            DirtyClue3,
+            [JsonStringEnumMemberName("Discarded Magazine")]
+            DiscardedMagazine,
+            [JsonStringEnumMemberName("DLiciousOutfit")]
+            DLiciousOutfit,
+            [JsonStringEnumMemberName("DoorBracingSpot")]
+            DoorBracingSpot,
+            [JsonStringEnumMemberName("DoorBracingSpot2")]
+            DoorBracingSpot2,
+            [JsonStringEnumMemberName("Double-Sided Dildo")]
+            DoubleSidedDildo,
+            [JsonStringEnumMemberName("DownstairsBathroomMirror")]
+            DownstairsBathroomMirror,
+            [JsonStringEnumMemberName("Dresser")]
+            Dresser,
+            [JsonStringEnumMemberName("Drone")]
+            Drone,
+            [JsonStringEnumMemberName("Drone Remote")]
+            DroneRemote,
+            [JsonStringEnumMemberName("Dryer")]
+            Dryer,
+            [JsonStringEnumMemberName("DryerStuckSpot")]
+            DryerStuckSpot,
+            [JsonStringEnumMemberName("DryerStuckSpotImmediate")]
+            DryerStuckSpotImmediate,
+            [JsonStringEnumMemberName("Duct Tape")]
+            DuctTape,
+            [JsonStringEnumMemberName("DVD2")]
+            DVD2,
+            [JsonStringEnumMemberName("E-Cig Vape")]
+            ECigVape,
+            [JsonStringEnumMemberName("Eggs")]
+            Eggs,
+            [JsonStringEnumMemberName("Empty Cup")]
+            EmptyCup,
+            [JsonStringEnumMemberName("EtherealClue")]
+            EtherealClue,
+            [JsonStringEnumMemberName("Face Cream")]
+            FaceCream,
+            [JsonStringEnumMemberName("Faucet")]
+            Faucet,
+            [JsonStringEnumMemberName("Fifty Dollars")]
+            FiftyDollars,
+            [JsonStringEnumMemberName("Film Camera")]
+            FilmCamera,
+            [JsonStringEnumMemberName("Fire Pit")]
+            FirePit,
+            [JsonStringEnumMemberName("Fireplace")]
+            Fireplace,
+            [JsonStringEnumMemberName("Firetrail")]
+            Firetrail,
+            [JsonStringEnumMemberName("FlamingoLeftA")]
+            FlamingoLeftA,
+            [JsonStringEnumMemberName("FlamingoRightB")]
+            FlamingoRightB,
+            [JsonStringEnumMemberName("Flask")]
+            Flask,
+            [JsonStringEnumMemberName("Floor Towels")]
+            FloorTowels,
+            [JsonStringEnumMemberName("Flower")]
+            Flower,
+            [JsonStringEnumMemberName("FreeSnake")]
+            FreeSnake,
+            [JsonStringEnumMemberName("FreeSnakeFemale")]
+            FreeSnakeFemale,
+            [JsonStringEnumMemberName("FrontWindowBracingSpot")]
+            FrontWindowBracingSpot,
+            [JsonStringEnumMemberName("FrontWindowBracingSpot2")]
+            FrontWindowBracingSpot2,
+            [JsonStringEnumMemberName("FrontWindowBracingSpot3")]
+            FrontWindowBracingSpot3,
+            [JsonStringEnumMemberName("GarageBinMovable")]
+            GarageBinMovable,
+            [JsonStringEnumMemberName("GarageWall Airvent Cover")]
+            GarageWallAirventCover,
+            [JsonStringEnumMemberName("Gastronomy Book")]
+            GastronomyBook,
+            [JsonStringEnumMemberName("Gazebo")]
+            Gazebo,
+            [JsonStringEnumMemberName("GazeboFuseBox")]
+            GazeboFuseBox,
+            [JsonStringEnumMemberName("Glasses")]
+            Glasses,
+            [JsonStringEnumMemberName("Gut Grip")]
+            GutGrip,
+            [JsonStringEnumMemberName("Gutter")]
+            Gutter,
+            [JsonStringEnumMemberName("Hammer")]
+            Hammer,
+            [JsonStringEnumMemberName("Hammer2")]
+            Hammer2,
+            [JsonStringEnumMemberName("HangingTentacle")]
+            HangingTentacle,
+            [JsonStringEnumMemberName("Hedge Clippers")]
+            HedgeClippers,
+            [JsonStringEnumMemberName("HoleInFence")]
+            HoleInFence,
+            [JsonStringEnumMemberName("Hot Tub Base")]
+            HotTubBase,
+            [JsonStringEnumMemberName("HotAirBalloon")]
+            HotAirBalloon,
+            [JsonStringEnumMemberName("HotTubCoverFolded")]
+            HotTubCoverFolded,
+            [JsonStringEnumMemberName("HotTubCoverUnfolded")]
+            HotTubCoverUnfolded,
+            [JsonStringEnumMemberName("Jack Daniel's")]
+            JackDaniels,
+            [JsonStringEnumMemberName("Joint")]
+            Joint,
+            [JsonStringEnumMemberName("Katana")]
+            Katana,
+            [JsonStringEnumMemberName("Kettle")]
+            Kettle,
+            [JsonStringEnumMemberName("Key")]
+            Key,
+            [JsonStringEnumMemberName("Key2")]
+            Key2,
+            [JsonStringEnumMemberName("Key3")]
+            Key3,
+            [JsonStringEnumMemberName("Keychain")]
+            Keychain,
+            [JsonStringEnumMemberName("Knife")]
+            Knife,
+            [JsonStringEnumMemberName("Laptop")]
+            Laptop,
+            [JsonStringEnumMemberName("LeahEarpiece")]
+            LeahEarpiece,
+            [JsonStringEnumMemberName("LivingRoomTV")]
+            LivingRoomTV,
+            [JsonStringEnumMemberName("LizKatzButt")]
+            LizKatzButt,
+            [JsonStringEnumMemberName("LRTVBackButton")]
+            LRTVBackButton,
+            [JsonStringEnumMemberName("LRTVPlayAllButton")]
+            LRTVPlayAllButton,
+            [JsonStringEnumMemberName("LRTVSongFiveButton")]
+            LRTVSongFiveButton,
+            [JsonStringEnumMemberName("LRTVSongFourButton")]
+            LRTVSongFourButton,
+            [JsonStringEnumMemberName("LRTVSongOneButton")]
+            LRTVSongOneButton,
+            [JsonStringEnumMemberName("LRTVSongSixButton")]
+            LRTVSongSixButton,
+            [JsonStringEnumMemberName("LRTVSongThreeButton")]
+            LRTVSongThreeButton,
+            [JsonStringEnumMemberName("LRTVSongTwoButton")]
+            LRTVSongTwoButton,
+            [JsonStringEnumMemberName("Madison's Phone")]
+            MadisonsPhone,
+            [JsonStringEnumMemberName("Marijuana")]
+            Marijuana,
+            [JsonStringEnumMemberName("Matchbox")]
+            Matchbox,
+            [JsonStringEnumMemberName("Mayonnaise")]
+            Mayonnaise,
+            [JsonStringEnumMemberName("Merlot")]
+            Merlot,
+            [JsonStringEnumMemberName("Microwave")]
+            Microwave,
+            [JsonStringEnumMemberName("MistletoeBallsDecoration")]
+            MistletoeBallsDecoration,
+            [JsonStringEnumMemberName("Money Makers Monthly")]
+            MoneyMakersMonthly,
+            [JsonStringEnumMemberName("Motor Oil")]
+            MotorOil,
+            [JsonStringEnumMemberName("MP3 Player")]
+            MP3Player,
+            [JsonStringEnumMemberName("MP3 Player Cable")]
+            MP3PlayerCable,
+            [JsonStringEnumMemberName("MP3 Player DC")]
+            MP3PlayerDC,
+            [JsonStringEnumMemberName("Mug")]
+            Mug,
+            [JsonStringEnumMemberName("Natty Lite 1")]
+            NattyLite1,
+            [JsonStringEnumMemberName("Natty Lite 10")]
+            NattyLite10,
+            [JsonStringEnumMemberName("Natty Lite 11")]
+            NattyLite11,
+            [JsonStringEnumMemberName("Natty Lite 12")]
+            NattyLite12,
+            [JsonStringEnumMemberName("Natty Lite 13")]
+            NattyLite13,
+            [JsonStringEnumMemberName("Natty Lite 14")]
+            NattyLite14,
+            [JsonStringEnumMemberName("Natty Lite 2")]
+            NattyLite2,
+            [JsonStringEnumMemberName("Natty Lite 3")]
+            NattyLite3,
+            [JsonStringEnumMemberName("Natty Lite 4")]
+            NattyLite4,
+            [JsonStringEnumMemberName("Natty Lite 5")]
+            NattyLite5,
+            [JsonStringEnumMemberName("Natty Lite 6")]
+            NattyLite6,
+            [JsonStringEnumMemberName("Natty Lite 7")]
+            NattyLite7,
+            [JsonStringEnumMemberName("Natty Lite 8")]
+            NattyLite8,
+            [JsonStringEnumMemberName("Natty Lite 9")]
+            NattyLite9,
+            [JsonStringEnumMemberName("Natty Lite Open")]
+            NattyLiteOpen,
+            [JsonStringEnumMemberName("Nerdy Taped Glasses")]
+            NerdyTapedGlasses,
+            [JsonStringEnumMemberName("Notebook")]
+            Notebook,
+            [JsonStringEnumMemberName("Notepad")]
+            Notepad,
+            [JsonStringEnumMemberName("Open Briefcase")]
+            OpenBriefcase,
+            [JsonStringEnumMemberName("OrangeBin1")]
+            OrangeBin1,
+            [JsonStringEnumMemberName("OrganizingBriefcaseSpot")]
+            OrganizingBriefcaseSpot,
+            [JsonStringEnumMemberName("OwlPainting")]
+            OwlPainting,
+            [JsonStringEnumMemberName("PaddockButton")]
+            PaddockButton,
+            [JsonStringEnumMemberName("Painkillers")]
+            Painkillers,
+            [JsonStringEnumMemberName("Paper")]
+            Paper,
+            [JsonStringEnumMemberName("Paper Bag")]
+            PaperBag,
+            [JsonStringEnumMemberName("Paper Bag Crunched")]
+            PaperBagCrunched,
+            [JsonStringEnumMemberName("Pencil")]
+            Pencil,
+            [JsonStringEnumMemberName("Petition")]
+            Petition,
+            [JsonStringEnumMemberName("Phone2")]
+            Phone2,
+            [JsonStringEnumMemberName("Phone3")]
+            Phone3,
+            [JsonStringEnumMemberName("Phone4")]
+            Phone4,
+            [JsonStringEnumMemberName("Phone5")]
+            Phone5,
+            [JsonStringEnumMemberName("Phone6")]
+            Phone6,
+            [JsonStringEnumMemberName("PingPongBall")]
+            PingPongBall,
+            [JsonStringEnumMemberName("PinkUnderwear")]
+            PinkUnderwear,
+            [JsonStringEnumMemberName("PipeFix")]
+            PipeFix,
+            [JsonStringEnumMemberName("PipeWater")]
+            PipeWater,
+            [JsonStringEnumMemberName("Pizza Box")]
+            PizzaBox,
+            [JsonStringEnumMemberName("PizzaBoxFortification")]
+            PizzaBoxFortification,
+            [JsonStringEnumMemberName("PlankPileInYard")]
+            PlankPileInYard,
+            [JsonStringEnumMemberName("PlanksFortification")]
+            PlanksFortification,
+            [JsonStringEnumMemberName("PlanksFortificationExtraNails")]
+            PlanksFortificationExtraNails,
+            [JsonStringEnumMemberName("PlexiglassHotTub")]
+            PlexiglassHotTub,
+            [JsonStringEnumMemberName("PlexiglassStacked")]
+            PlexiglassStacked,
+            [JsonStringEnumMemberName("Popcorn")]
+            Popcorn,
+            [JsonStringEnumMemberName("Popper")]
+            Popper,
+            [JsonStringEnumMemberName("PopperBox")]
+            PopperBox,
+            [JsonStringEnumMemberName("Potatoes")]
+            Potatoes,
+            [JsonStringEnumMemberName("PrintableClue")]
+            PrintableClue,
+            [JsonStringEnumMemberName("Printer")]
+            Printer,
+            [JsonStringEnumMemberName("Red Solo Cup 0")]
+            RedSoloCup0,
+            [JsonStringEnumMemberName("Red Solo Cup 1")]
+            RedSoloCup1,
+            [JsonStringEnumMemberName("Red Solo Cup 2")]
+            RedSoloCup2,
+            [JsonStringEnumMemberName("Red Solo Cup 3")]
+            RedSoloCup3,
+            [JsonStringEnumMemberName("Red Solo Cup 4")]
+            RedSoloCup4,
+            [JsonStringEnumMemberName("Red Solo Cup 5")]
+            RedSoloCup5,
+            [JsonStringEnumMemberName("Red Solo Cup 6")]
+            RedSoloCup6,
+            [JsonStringEnumMemberName("Red Solo Cup 7")]
+            RedSoloCup7,
+            [JsonStringEnumMemberName("Red Solo Cup 8")]
+            RedSoloCup8,
+            [JsonStringEnumMemberName("Red Solo Cup 9")]
+            RedSoloCup9,
+            [JsonStringEnumMemberName("Remote Control")]
+            RemoteControl,
+            [JsonStringEnumMemberName("RipppedWhalePoster")]
+            RipppedWhalePoster,
+            [JsonStringEnumMemberName("Router")]
+            Router,
+            [JsonStringEnumMemberName("Rum")]
+            Rum,
+            [JsonStringEnumMemberName("RumOpen")]
+            RumOpen,
+            [JsonStringEnumMemberName("Salami")]
+            Salami,
+            [JsonStringEnumMemberName("Salmon")]
+            Salmon,
+            [JsonStringEnumMemberName("Satchel")]
+            Satchel,
+            [JsonStringEnumMemberName("Scorpion Tequila")]
+            ScorpionTequila,
+            [JsonStringEnumMemberName("SD Card")]
+            SDCard,
+            [JsonStringEnumMemberName("Shake Light")]
+            ShakeLight,
+            [JsonStringEnumMemberName("SleepingMaskFolded")]
+            SleepingMaskFolded,
+            [JsonStringEnumMemberName("SleepingMaskMountable")]
+            SleepingMaskMountable,
+            [JsonStringEnumMemberName("Snowball")]
+            Snowball,
+            [JsonStringEnumMemberName("SnowballBucket")]
+            SnowballBucket,
+            [JsonStringEnumMemberName("Soda")]
+            Soda,
+            [JsonStringEnumMemberName("SoloBeerPongTable")]
+            SoloBeerPongTable,
+            [JsonStringEnumMemberName("SoloPingPongBallStorage")]
+            SoloPingPongBallStorage,
+            [JsonStringEnumMemberName("Speaker1")]
+            Speaker1,
+            [JsonStringEnumMemberName("Speaker2")]
+            Speaker2,
+            [JsonStringEnumMemberName("Spoon")]
+            Spoon,
+            [JsonStringEnumMemberName("SprayPaintCan")]
+            SprayPaintCan,
+            [JsonStringEnumMemberName("Starbomb")]
+            Starbomb,
+            [JsonStringEnumMemberName("StarbombBox")]
+            StarbombBox,
+            [JsonStringEnumMemberName("Stepstool")]
+            Stepstool,
+            [JsonStringEnumMemberName("StepstoolStandSpot")]
+            StepstoolStandSpot,
+            [JsonStringEnumMemberName("Stove")]
+            Stove,
+            [JsonStringEnumMemberName("StudyLaptopTypingSpot")]
+            StudyLaptopTypingSpot,
+            [JsonStringEnumMemberName("Sundress")]
+            Sundress,
+            [JsonStringEnumMemberName("Sunglasses")]
+            Sunglasses,
+            [JsonStringEnumMemberName("Sweeties")]
+            Sweeties,
+            [JsonStringEnumMemberName("Tablet")]
+            Tablet,
+            [JsonStringEnumMemberName("Talking Fish")]
+            TalkingFish,
+            [JsonStringEnumMemberName("Tentacle")]
+            Tentacle,
+            [JsonStringEnumMemberName("Terrarium")]
+            Terrarium,
+            [JsonStringEnumMemberName("Thermos")]
+            Thermos,
+            [JsonStringEnumMemberName("Thermostat")]
+            Thermostat,
+            [JsonStringEnumMemberName("Toaster")]
+            Toaster,
+            [JsonStringEnumMemberName("Towel")]
+            Towel,
+            [JsonStringEnumMemberName("Towel2")]
+            Towel2,
+            [JsonStringEnumMemberName("Towel3")]
+            Towel3,
+            [JsonStringEnumMemberName("Trash Can")]
+            TrashCan,
+            [JsonStringEnumMemberName("Trunk")]
+            Trunk,
+            [JsonStringEnumMemberName("Undressing Neighbor")]
+            UndressingNeighbor,
+            [JsonStringEnumMemberName("UpstairsMasterBathroomMirror")]
+            UpstairsMasterBathroomMirror,
+            [JsonStringEnumMemberName("USB Stick")]
+            USBStick,
+            [JsonStringEnumMemberName("Valentines Chocolates")]
+            ValentinesChocolates,
+            [JsonStringEnumMemberName("Vibrator")]
+            Vibrator,
+            [JsonStringEnumMemberName("Vickie's Panties")]
+            VickiesPanties,
+            [JsonStringEnumMemberName("Vodka")]
+            Vodka,
+            [JsonStringEnumMemberName("VoiceRecorder")]
+            VoiceRecorder,
+            [JsonStringEnumMemberName("Washer")]
+            Washer,
+            [JsonStringEnumMemberName("WaterMain")]
+            WaterMain,
+            [JsonStringEnumMemberName("WhalePoster")]
+            WhalePoster,
+            [JsonStringEnumMemberName("Whipped Cream")]
+            WhippedCream,
+            [JsonStringEnumMemberName("Wine Rack")]
+            WineRack,
+            [JsonStringEnumMemberName("Wrench")]
+            Wrench,
+            [JsonStringEnumMemberName("YouTool")]
+            YouTool,
         }
     }
 }

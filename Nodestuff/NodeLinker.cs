@@ -17,6 +17,7 @@ namespace CSC.Nodestuff
         private static readonly List<Node> InventoryItems = [];
         private static readonly List<Node> StoryItems = [];
         private static readonly List<Node> Properties = [];
+        private static readonly string[] StateNames = Enum.GetNames<InteractiveStates>();
 
         private static void AllLink(Node source, Node destination, bool link)
         {
@@ -668,11 +669,11 @@ namespace CSC.Nodestuff
             {
                 if (destination.DataType == typeof(GameEvent))
                 {
-                    //todo too involved to include for now
+                    //todo (charactergroups) too involved to include for now
                 }
                 else if (destination.DataType == typeof(Criterion))
                 {
-                    //todo too involved to include for now
+                    //todo (charactergroups) too involved to include for now
                 }
             }
             else if (source.DataType == typeof(AlternateText))
@@ -951,6 +952,7 @@ namespace CSC.Nodestuff
                     if (link)
                     {
                         var e = destination.Data<GameEvent>()!;
+                        e.EventType = GameEvents.Quest;
                         e.Key = source.Data<Quest>()!.ID;
                         e.Value = source.Data<Quest>()!.Name;
                         e.Option = (int)QuestActions.Start;
@@ -1010,8 +1012,79 @@ namespace CSC.Nodestuff
             }
             else if (source.DataType == typeof(string))
             {
-                //todo detect node type from node type and use string then?
-                //should be only values i think
+                //either value or state
+                if (StateNames.Contains(source.Data<string>()))
+                {
+                    //state
+                    if (destination.DataType == typeof(Criterion))
+                    {
+                        if (link)
+                        {
+                            var crit = destination.Data<Criterion>()!;
+                            crit.CompareType = CompareTypes.State;
+                            crit.Character = source.FileName;
+                            crit.Value = source.Data<string>() ?? InteractiveStates.Alive.ToString();
+                            crit.BoolValue = BoolCritera.True;
+                        }
+                        else
+                        {
+                            destination.Data<Criterion>()!.CompareType = CompareTypes.Never;
+                        }
+                    }
+                    else if (destination.DataType == typeof(GameEvent))
+                    {
+                        if (link)
+                        {
+                            var e = destination.Data<GameEvent>()!;
+                            e.EventType = GameEvents.State;
+                            e.Value = source.Data<string>()!;
+                            e.Option = (int)AddRemoveActions.Add;
+                            e.Character = source.FileName;
+                            e.Character2 = string.Empty;
+                        }
+                        else
+                        {
+                            destination.Data<GameEvent>()!.EventType = GameEvents.None;
+                        }
+                    }
+                }
+                else
+                {
+                    //value
+                    if (destination.DataType == typeof(Criterion))
+                    {
+                        if (link)
+                        {
+                            var crit = destination.Data<Criterion>()!;
+                            crit.CompareType = CompareTypes.Value;
+                            crit.Key = source.Data<string>()!;
+                            crit.Character = source.FileName;
+                            crit.Value = "";
+                        }
+                        else
+                        {
+                            destination.Data<Criterion>()!.CompareType = CompareTypes.Never;
+                        }
+                    }
+                    else if (destination.DataType == typeof(GameEvent))
+                    {
+                        if (link)
+                        {
+                            var e = destination.Data<GameEvent>()!;
+                            e.EventType = GameEvents.ModifyValue;
+                            e.Key = source.Data<string>()!;
+                            e.Value = "0";
+                            e.Option = (int)Modification.Add;
+                            e.Character = source.FileName;
+                            e.Character2 = string.Empty;
+                        }
+                        else
+                        {
+                            destination.Data<GameEvent>()!.EventType = GameEvents.None;
+                        }
+
+                    }
+                }
             }
         }
 
@@ -1168,7 +1241,7 @@ namespace CSC.Nodestuff
                 {
                     if (!Node.AllowedFileNames.Contains(criterion.Character) && !string.IsNullOrWhiteSpace(criterion.Character))
                     {
-                        //todo once charactergroups are implemented correctly
+                        //todo (charactergroup) once charactergroups are implemented correctly
                         criterion.Character = Main.Player;
                     }
                     //node is dialogue so data should contain the criteria itself!
@@ -1633,7 +1706,7 @@ namespace CSC.Nodestuff
                 {
                     if (!Node.AllowedFileNames.Contains(gameEvent.Character) && !string.IsNullOrWhiteSpace(gameEvent.Character))
                     {
-                        //todo once charactergroups are implemented correctly
+                        //todo (charactergroup) once charactergroups are implemented correctly
                         gameEvent.Character = Main.Player;
                     }
 

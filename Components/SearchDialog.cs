@@ -96,7 +96,13 @@ namespace CSC.Components
 
         private void Results_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            TreeNode sNode = resultsTree.SelectedNode;
+            TreeNode? sNode = resultsTree.SelectedNode;
+
+            if (sNode is null)
+            {
+                return;
+            }
+
             //is node, not a filename
             if (sNode.Text.Contains('|'))
             {
@@ -108,7 +114,7 @@ namespace CSC.Components
             }
             else
             {
-                if (sNode.Parent.Text.Contains('|')
+                if ((sNode.Parent?.Text?.Contains('|') ?? false)
                     && sNode.Parent.Tag is Node n)
                 {
                     Main.SelectFile(sNode.Text.Split(':')[1].Trim());

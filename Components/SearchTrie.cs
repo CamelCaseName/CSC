@@ -44,6 +44,11 @@ namespace CSC.Components
             nodecounter = 0;
         }
 
+        public static void SetSettings()
+        {
+            doFuzzy = true;
+        }
+
         public static async void Initialize(Dictionary<string, NodeStore> stores)
         {
             Reset();
@@ -184,11 +189,14 @@ namespace CSC.Components
             nodeText = node.Type.ToString().ToLower().AsSpan();
             AddToTree(node, nodeText);
 
+            //so we can do searches like "amy dialogue hello" and we can then check the search results and remove all that doesnt fit
+            nodeText = node.OrigFileName.ToLower().AsSpan();
+            AddToTree(node, nodeText);
+
             if (Initialized)
             {
                 OnSearchDataChange?.Invoke();
             }
-            //todo add else clause with adding to 0 length, or fix node.Text return to always return at least node type...
         }
 
         private static void AddToTree(Node node, ReadOnlySpan<char> nodeText)
@@ -453,5 +461,4 @@ namespace CSC.Components
     }
 
     internal sealed class SearchTreeLevel : Dictionary<char, SearchTreeNode> { }
-
 }
