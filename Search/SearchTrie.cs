@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using static CSC.StoryItems.StoryEnums;
 
-namespace CSC.Components
+namespace CSC.Search
 {
     internal static class SearchTrie
     {
@@ -86,7 +86,7 @@ namespace CSC.Components
                 BuiltTree = true;
 
                 var end = DateTime.UtcNow;
-                Debug.WriteLine($"populated the search trees for {nodecounter} nodes with {SearchTrie.StartsWithTreeDepth} steps for StartsWith() and {SearchTrie.ContainsTreeDepth} steps for Contains() in {(end - start).TotalMilliseconds}ms");
+                Debug.WriteLine($"populated the search trees for {nodecounter} nodes with {StartsWithTreeDepth} steps for StartsWith() and {ContainsTreeDepth} steps for Contains() in {(end - start).TotalMilliseconds}ms");
 
                 Main.SetSearchWindowTitle("Search:");
             });
@@ -119,13 +119,13 @@ namespace CSC.Components
         private static void RemoveFromTree(Node node, ReadOnlySpan<char> nodeText)
         {//startswith() lookup up to a length
             var level = StartsWithTree;
-            int limit = Math.Min(nodeText.Length, SearchTrie.StartsWithTreeDepth);
+            int limit = Math.Min(nodeText.Length, StartsWithTreeDepth);
 
             for (int j = 0; j < nodeText.Length; j++)
             {
                 //contains() lookup up to a certain string starting lenght
                 var container = ContainsTree;
-                int containerlimit = Math.Min(nodeText.Length - j, SearchTrie.ContainsTreeDepth);
+                int containerlimit = Math.Min(nodeText.Length - j, ContainsTreeDepth);
                 int loopLimit = Math.Max(limit, containerlimit);
                 for (int i = 0; i < loopLimit; i++)
                 {
@@ -206,13 +206,13 @@ namespace CSC.Components
 
             //startswith() lookup up to a length
             var level = StartsWithTree;
-            int limit = Math.Min(nodeText.Length, SearchTrie.StartsWithTreeDepth);
+            int limit = Math.Min(nodeText.Length, StartsWithTreeDepth);
 
             for (int j = 0; j < nodeText.Length; j++)
             {
                 //contains() lookup up to a certain string starting lenght
                 var container = ContainsTree;
-                int containerlimit = Math.Min(nodeText.Length - j, SearchTrie.ContainsTreeDepth);
+                int containerlimit = Math.Min(nodeText.Length - j, ContainsTreeDepth);
                 int loopLimit = Math.Max(limit, containerlimit);
                 for (int i = 0; i < loopLimit; i++)
                 {

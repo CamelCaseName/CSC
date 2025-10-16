@@ -1,5 +1,6 @@
 using CSC.Components;
 using CSC.Nodestuff;
+using CSC.Search;
 using CSC.StoryItems;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -3600,7 +3601,7 @@ public partial class Main : Form
                         value.SelectedItem = gevent.Value;
                         value.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => gevent.Value = value.SelectedItem.ToString()!);
                         PropertyInspector.Controls.Add(value, GeventPropertyCounter++, 1);
-                        PropertyInspector.SetColumnSpan(value, 2);
+                        PropertyInspector.SetColumnSpan(value, 3);
 
                         break;
                     }

@@ -1853,7 +1853,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.EventTriggers:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.GameEvent && n.StaticText == gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.EventTrigger && n.StaticText == gameEvent.Value);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -1870,9 +1870,9 @@ namespace CSC.Nodestuff
                             else if (dupeTo)
                             {
                                 //create and add event, hasnt been referenced yet, we can not know its id if it doesnt already exist
-                                var _event = new Node("NA-" + gameEvent.Value, NodeType.GameEvent, gameEvent.Value!)
+                                var _event = new Node(gameEvent.Value, NodeType.EventTrigger, gameEvent.Value)
                                 {
-                                    FileName = Main.SelectedCharacter!
+                                    FileName = gameEvent.Character!
                                 };
                                 searchIn.Add(_event);
                                 nodes.AddChild(node, _event);

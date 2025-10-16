@@ -994,7 +994,7 @@ namespace CSC.Nodestuff
                                 break;
                             }
                         }
-                        goto case default;
+                        return Data<EventTrigger>()?.Name ?? "unnamed event trigger";
                     }
                     case NodeType.ItemGroup:
                     {

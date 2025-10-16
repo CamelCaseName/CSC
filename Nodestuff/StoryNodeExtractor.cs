@@ -310,7 +310,7 @@ namespace CSC.Nodestuff
             foreach (EventTrigger playerReaction in story.PlayerReactions ?? [])
             {
                 //add items to list
-                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty) { RawData = playerReaction };
+                var nodeReaction = new Node(playerReaction.Name ?? string.Empty, NodeType.EventTrigger, playerReaction.Id ?? string.Empty) { RawData = playerReaction };
 
                 //get actions for item
                 nodeReaction.AddEvents(playerReaction.Events ?? [], nodes);
@@ -360,7 +360,7 @@ namespace CSC.Nodestuff
             foreach (EventTrigger playerReaction in story.Reactions ?? [])
             {
                 //add items to list
-                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty) { RawData = playerReaction, FileName = story.CharacterName! };
+                var nodeReaction = new Node(playerReaction.Name ?? string.Empty, NodeType.EventTrigger, playerReaction.Id ?? string.Empty) { RawData = playerReaction, FileName = story.CharacterName! };
                 //get actions for item
                 nodeReaction.AddEvents(playerReaction.Events ?? [], nodes);
 

@@ -1,4 +1,5 @@
 ﻿using CSC.Nodestuff;
+using CSC.Search;
 using System.Diagnostics;
 using System.Media;
 using System.Threading.Tasks;
@@ -51,6 +52,9 @@ namespace CSC.Components
             }
 
             resultsTree.Enabled = false;
+            resultsTree.AfterSelect -= Results_AfterSelect!;
+
+            var selectedBefore = resultsTree.SelectedNode;
 
             var results = SearchTrie.Search(searchterm.Text);
 
@@ -80,7 +84,32 @@ namespace CSC.Components
             resultsTree.Nodes.Clear();
             resultsTree.Nodes.AddRange([.. treeNodes]);
             resultsTree.PerformLayout();
+
             resultsTree.Enabled = true;
+
+            if (selectedBefore is not null)
+            {
+                foreach (TreeNode node in resultsTree.Nodes)
+                {
+                    foreach (TreeNode child in node.Nodes)
+                    {
+                        if (child.Text == selectedBefore.Text)
+                        {
+                            resultsTree.SelectedNode = child;
+                            resultsTree.AfterSelect += Results_AfterSelect!;
+                            return;
+                        }
+                    }
+                    if (node.Text == selectedBefore.Text)
+                    {
+                        resultsTree.SelectedNode = node;
+                        resultsTree.AfterSelect += Results_AfterSelect!;
+                        return;
+                    }
+                }
+            }
+
+            resultsTree.AfterSelect += Results_AfterSelect!;
             return;
         }
 
