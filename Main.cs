@@ -4305,17 +4305,28 @@ public partial class Main : Form
                     }
                     case EventTypes.StartedIntimacyAct:
                     {
-                        //todo EventTypes.StartedIntimacyAct:
+                        PutEnumKey<SexualActs>(node, eventTrigger);
+                        if(eventTrigger.Key == SexualActs.Masturbating.ToString())
+                        {
+                            PutCharacterValue(node, eventTrigger);
+                        }
+                        else
+                        {
+                            eventTrigger.Value = eventTrigger.CharacterToReactTo;
+                        }
+                            break;
+                    }
+                    case EventTypes.PlayerReleasesItem:
+                    {
+                        eventTrigger.Value = string.Empty;
+                        PutItemValue(node, eventTrigger);
+                        PutStartCondition(node, eventTrigger);
                         break;
                     }
                     case EventTypes.PlayerGrabsItem:
                     {
-                        //todo EventTypes.PlayerGrabsItem:
-                        break;
-                    }
-                    case EventTypes.PlayerReleasesItem:
-                    {
-                        //todo EventTypes.PlayerReleasesItem:
+                        PutItemValue(node, eventTrigger);
+                        PutStartCondition(node, eventTrigger);
                         break;
                     }
                     case EventTypes.Periodically:
@@ -4336,12 +4347,7 @@ public partial class Main : Form
                     }
                     case EventTypes.OnItemFunction:
                     {
-                        //todo EventTypes.OnItemFunction:
-                        break;
-                    }
-                    case EventTypes.PokedByVibrator:
-                    {
-                        //todo EventTypes.PokedByVibrator:
+                        //todo (itemfunctions) EventTypes.OnItemFunction:
                         break;
                     }
                     case EventTypes.PeesOnItem:
@@ -4361,13 +4367,20 @@ public partial class Main : Form
                     case EventTypes.StartedUsingActionItem:
                     case EventTypes.StoppedUsingActionItem:
                     {
-                        //todo EventTypes.StoppedUsingActionItem:
+                        PutStartCondition(node, eventTrigger);
+                        PutItemValue(node, eventTrigger);
                         break;
                     }
+                    case EventTypes.PokedByVibrator:
                     case EventTypes.OnFriendshipIncreaseWith:
                     case EventTypes.OnFriendshipDecreaseWith:
                     case EventTypes.OnRomanceDecreaseWith:
                     case EventTypes.OnRomanceIncreaseWith:
+                    {
+                        PutStartCondition(node, eventTrigger);
+                        PutCharacterValue(node, eventTrigger);
+                        break;
+                    }
                     case EventTypes.PlayerInteractsWithCharacter:
                     {
                         PutStartCondition(node, eventTrigger);
@@ -4376,7 +4389,8 @@ public partial class Main : Form
                     }
                     case EventTypes.PlayerInteractsWithItem:
                     {
-                        //todo EventTypes.PlayerInteractsWithItem:
+                        PutStartCondition(node, eventTrigger);
+                        PutCharacter(node, eventTrigger);
                         break;
                     }
                     case EventTypes.OnAfterCutSceneEnds:
@@ -4530,7 +4544,7 @@ public partial class Main : Form
                     PropertyInspector.Controls.Add(label2);
                 }
                 break;
-            }
+            } 
             case NodeType.Personality:
             {
                 Label label = GetLabel(node.FileName + "'s " + node.ID);
@@ -4783,6 +4797,19 @@ public partial class Main : Form
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Key)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
         options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
+        PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
+    }
+
+    private void PutEnumKey<E>(Node node, EventTrigger et) where E : struct, Enum
+    {
+        var options = GetComboBox();
+        options.Items.AddRange(Enum.GetNames<E>());
+        if (!Enum.GetNames<E>().Contains(et.Key))
+        {
+            et.Key = options.Items[0]!.ToString()!;
+        }
+        options.SelectedItem = et.Key.Enumize();
+        options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => et.Key = options.SelectedItem!.ToString()!);
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
