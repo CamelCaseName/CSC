@@ -2707,7 +2707,7 @@ public partial class Main : Form
                         obj2.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(obj2);
 
-                        PutComparison(node, criterion);
+                        PutEquation(node, criterion);
                         PutNumericOption(node, criterion);
 
                         break;
@@ -2760,6 +2760,9 @@ public partial class Main : Form
                     case CompareTypes.IsOnlyInVicinityOf:
                     case CompareTypes.IsOnlyInVisionOf:
                     case CompareTypes.IsOnlyInVicinityAndVisionOf:
+                    case CompareTypes.Vision:
+                    case CompareTypes.SameZoneAs:
+                    case CompareTypes.IsInFrontOf:
                     {
                         PutCharacter1(node, criterion);
                         PutCompareType(node, criterion);
@@ -2781,13 +2784,9 @@ public partial class Main : Form
                         break;
                     }
                     case CompareTypes.IsBeingSpokenTo:
-                    {
-                        PutCompareType(node, criterion);
-                        PutCharacter1(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
+                    case CompareTypes.IsInHouse:
                     case CompareTypes.IsCharacterEnabled:
+                    case CompareTypes.MetByPlayer:
                     {
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
@@ -2810,12 +2809,10 @@ public partial class Main : Form
                         break;
                     }
                     case CompareTypes.IsExplicitGameVersion:
-                    {
-                        PutCompareType(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
                     case CompareTypes.IsGameUncensored:
+                    case CompareTypes.IsNewGame:
+                    case CompareTypes.ScreenFadeVisible:
+                    case CompareTypes.UseLegacyIntimacy:
                     {
                         PutCompareType(node, criterion);
                         PutBoolCriteria(node, criterion);
@@ -2825,27 +2822,6 @@ public partial class Main : Form
                     {
                         PutCompareType(node, criterion);
                         PutEnumValueText<Packages>(node, criterion);
-                        break;
-                    }
-                    case CompareTypes.IsInFrontOf:
-                    {
-                        PutCharacter1(node, criterion);
-                        PutCompareType(node, criterion);
-                        PutCharacter2(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
-                    case CompareTypes.IsInHouse:
-                    {
-                        PutCharacter1(node, criterion);
-                        PutCompareType(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
-                    case CompareTypes.IsNewGame:
-                    {
-                        PutCompareType(node, criterion);
-                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.IsZoneEmpty:
@@ -2871,7 +2847,7 @@ public partial class Main : Form
 
                         box = GetComboBox();
                         box.Items.AddRange(Enum.GetNames<ItemFromItemGroupComparisonTypes>());
-                        box.SelectedItem = criterion.ItemComparison.ToString();
+                        box.SelectedItem = criterion.ItemFromItemGroupComparison.ToString();
                         box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.ItemFromItemGroupComparison = Enum.Parse<ItemFromItemGroupComparisonTypes>(box.SelectedItem!.ToString()!));
                         PropertyInspector.Controls.Add(box);
 
@@ -2901,19 +2877,12 @@ public partial class Main : Form
 
                         break;
                     }
-                    case CompareTypes.MetByPlayer:
-                    {
-                        PutCompareType(node, criterion);
-                        PutCharacter1(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
                     case CompareTypes.Personality:
                     {
                         PutCompareType(node, criterion);
                         PutCharacter1(node, criterion);
                         PutEnumKey<PersonalityTraits>(node, criterion);
-                        PutComparison(node, criterion);
+                        PutEquation(node, criterion);
                         PutNumericValue(node, criterion);
                         break;
                     }
@@ -2943,7 +2912,7 @@ public partial class Main : Form
                     {
                         PutCompareType(node, criterion);
                         PutEnumKey<PlayerPrefs>(node, criterion);
-                        PutComparison(node, criterion);
+                        PutEquation(node, criterion);
                         PutTextValue(node, criterion);
 
                         break;
@@ -3007,20 +2976,6 @@ public partial class Main : Form
                         PutEnumValue<QuestStatus>(node, criterion);
                         break;
                     }
-                    case CompareTypes.SameZoneAs:
-                    {
-                        PutCharacter1(node, criterion);
-                        PutCompareType(node, criterion);
-                        PutCharacter2(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
-                    case CompareTypes.ScreenFadeVisible:
-                    {
-                        PutCompareType(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
                     case CompareTypes.Social:
                     {
                         PutCompareType(node, criterion);
@@ -3032,7 +2987,7 @@ public partial class Main : Form
                         social.AddComboBoxHandler(node, nodes[SelectedCharacter], (sender, values) => criterion.SocialStatus = Enum.Parse<SocialStatuses>(social.SelectedItem!.ToString()!));
                         PropertyInspector.Controls.Add(social);
 
-                        PutComparison(node, criterion);
+                        PutEquation(node, criterion);
                         PutNumericValue(node, criterion);
                         break;
                     }
@@ -3072,7 +3027,7 @@ public partial class Main : Form
                         value.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(value);
 
-                        PutComparison(node, criterion);
+                        PutEquation(node, criterion);
 
                         TextBox obj2 = new()
                         {
@@ -3085,20 +3040,6 @@ public partial class Main : Form
                         obj2.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(obj2);
 
-                        break;
-                    }
-                    case CompareTypes.Vision:
-                    {
-                        PutCharacter1(node, criterion);
-                        PutCompareType(node, criterion);
-                        PutCharacter2(node, criterion);
-                        PutBoolCriteria(node, criterion);
-                        break;
-                    }
-                    case CompareTypes.UseLegacyIntimacy:
-                    {
-                        PutCompareType(node, criterion);
-                        PutBoolCriteria(node, criterion);
                         break;
                     }
                     case CompareTypes.Never:
@@ -5184,7 +5125,7 @@ public partial class Main : Form
         PropertyInspector.Controls.Add(option);
     }
 
-    private void PutComparison(Node node, Criterion criterion)
+    private void PutEquation(Node node, Criterion criterion)
     {
         ComboBox equ = GetComboBox();
         equ.Items.AddRange(Enum.GetNames<ComparisonEquations>());
@@ -5207,9 +5148,6 @@ public partial class Main : Form
         ComboBox zone = GetComboBox();
         zone.Items.AddRange(Enum.GetNames<Zones>());
         zone.SelectedItem = criterion.Key;
-        zone.SelectionLength = 0;
-        zone.SelectionStart = 0;
-        zone.PerformLayout();
         zone.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = (string)zone.SelectedItem!);
         zone.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(zone);
@@ -5220,10 +5158,6 @@ public partial class Main : Form
         ComboBox compareType = GetComboBox();
         compareType.Items.AddRange(Enum.GetNames<CompareTypes>());
         compareType.SelectedItem = criterion.CompareType.ToString();
-        compareType.SelectedText = string.Empty;
-        compareType.SelectionLength = 0;
-        compareType.SelectionStart = 0;
-        compareType.PerformLayout();
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.CompareType = Enum.Parse<CompareTypes>((string)compareType.SelectedItem!));
         compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(compareType);
@@ -5234,9 +5168,6 @@ public partial class Main : Form
         ComboBox compareType = GetComboBox();
         compareType.Items.AddRange(Enum.GetNames<Characters>());
         compareType.SelectedItem = criterion.Character;
-        compareType.SelectionLength = 0;
-        compareType.SelectionStart = 0;
-        compareType.PerformLayout();
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Character = (string)compareType.SelectedItem!);
         compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(compareType);
@@ -5248,10 +5179,6 @@ public partial class Main : Form
         ComboBox compareType = GetComboBox();
         compareType.Items.AddRange(Enum.GetNames<Characters>());
         compareType.SelectedItem = criterion.Character2;
-        compareType.SelectedText = string.Empty;
-        compareType.SelectionLength = 0;
-        compareType.SelectionStart = 0;
-        compareType.PerformLayout();
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Character2 = (string)compareType.SelectedItem!);
         compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(compareType);
@@ -5262,9 +5189,6 @@ public partial class Main : Form
         ComboBox boolValue = GetComboBox();
         boolValue.Items.AddRange(Enum.GetNames<BoolCritera>());
         boolValue.SelectedItem = criterion.BoolValue!.ToString();
-        boolValue.SelectionLength = 0;
-        boolValue.SelectionStart = 0;
-        boolValue.PerformLayout();
         boolValue.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.BoolValue = Enum.Parse<BoolCritera>(boolValue.SelectedItem!.ToString()!));
         boolValue.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(boolValue);
@@ -5275,7 +5199,6 @@ public partial class Main : Form
         ComboBox item = GetComboBox();
         item.Items.AddRange(Enum.GetNames<Items>());
         item.SelectedItem = criterion.Key!.Enumize();
-        item.PerformLayout();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = item.SelectedItem!.ToString()!);
         item.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(item);
@@ -5286,7 +5209,6 @@ public partial class Main : Form
         ComboBox equals = GetComboBox();
         equals.Items.AddRange(Enum.GetNames<EqualsValues>());
         equals.SelectedIndex = (int)criterion.EqualsValue!;
-        equals.PerformLayout();
         equals.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.EqualsValue = (EqualsValues)equals.SelectedIndex);
         equals.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(equals);

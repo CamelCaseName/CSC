@@ -56,6 +56,7 @@ namespace CSC.Components
             foreach (string item in list)
             {
                 sb.Append(item);
+                sb.Append(", ");
             }
             return sb.ToString();
         }

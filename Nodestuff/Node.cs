@@ -1,9 +1,13 @@
 ﻿using CSC.Components;
 using CSC.StoryItems;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
+using System.Runtime.ConstrainedExecution;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using static CSC.StoryItems.StoryEnums;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace CSC.Nodestuff
 {
@@ -272,19 +276,21 @@ namespace CSC.Nodestuff
                 switch (Type)
                 {
                     case NodeType.Null:
+                    {
                         return "Null node!";
+                    }
                     case NodeType.CharacterGroup:
                     {
                         return $"{Data<CharacterGroup>()?.Id}|{Data<CharacterGroup>()?.Name} -> {Data<CharacterGroup>()?.CharactersInGroup?.ListRepresentation()}";
                     }
                     case NodeType.Criterion:
                     {
-                        //todo
+                        var criterion = Data<Criterion>()!;
                         switch (Data<Criterion>()?.CompareType)
                         {
                             case CompareTypes.Never:
                             {
-                                break;
+                                return "Never";
                             }
                             case CompareTypes.CharacterFromCharacterGroup:
                             {
@@ -292,197 +298,149 @@ namespace CSC.Nodestuff
                             }
                             case CompareTypes.Clothing:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {(ClothingSet)criterion.Option} {criterion.BoolValue}";
                             }
                             case CompareTypes.CoinFlip:
                             {
-                                break;
+                                return "Coinflip";
                             }
                             case CompareTypes.CompareValues:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.ValueFormula} {criterion.Character2} {criterion.Key2}";
                             }
                             case CompareTypes.CriteriaGroup:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Value} {criterion.Key2} {criterion.BoolValue}";
                             }
                             case CompareTypes.CutScene:
                             {
-                                break;
+                                return $"{criterion.CompareType}  {criterion.Value} {criterion.BoolValue}";
                             }
                             case CompareTypes.Dialogue:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {criterion.DialogueStatus}";
                             }
                             case CompareTypes.Distance:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.Key2} {criterion.EquationValue} {criterion.Option}";
                             }
                             case CompareTypes.Door:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.DoorOptions}";
                             }
                             case CompareTypes.Gender:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {(Gender)criterion.Option}";
                             }
                             case CompareTypes.IntimacyPartner:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.EqualsValue} {criterion.Value}";
                             }
                             case CompareTypes.IntimacyState:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.EqualsValue} {criterion.Value}";
                             }
                             case CompareTypes.InZone:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.BoolValue}";
                             }
                             case CompareTypes.InVicinity:
-                            {
-                                break;
-                            }
                             case CompareTypes.InVicinityAndVision:
+                            case CompareTypes.IsOnlyInVicinityOf:
+                            case CompareTypes.IsOnlyInVisionOf:
+                            case CompareTypes.IsOnlyInVicinityAndVisionOf:
+                            case CompareTypes.Vision:
+                            case CompareTypes.SameZoneAs:
+                            case CompareTypes.IsInFrontOf:
                             {
-                                break;
+                                return $"{criterion.Character} {criterion.CompareType} {criterion.Character2} {criterion.BoolValue}";
                             }
                             case CompareTypes.Item:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.ItemComparison}";
                             }
                             case CompareTypes.IsBeingSpokenTo:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsOnlyInVicinityOf:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsOnlyInVisionOf:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsOnlyInVicinityAndVisionOf:
-                            {
-                                break;
-                            }
                             case CompareTypes.IsCharacterEnabled:
+                            case CompareTypes.IsInHouse:
+                            case CompareTypes.MetByPlayer:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.BoolValue}";
                             }
                             case CompareTypes.IsCurrentlyBeingUsed:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.BoolValue}";
                             }
                             case CompareTypes.IsCurrentlyUsing:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.BoolValue}";
                             }
                             case CompareTypes.IsExplicitGameVersion:
-                            {
-                                break;
-                            }
                             case CompareTypes.IsGameUncensored:
+                            case CompareTypes.IsNewGame:
+                            case CompareTypes.ScreenFadeVisible:
+                            case CompareTypes.UseLegacyIntimacy:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.BoolValue}";
                             }
                             case CompareTypes.IsPackageInstalled:
                             {
-                                break;
-                            }
-                            case CompareTypes.IsInFrontOf:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsInHouse:
-                            {
-                                break;
-                            }
-                            case CompareTypes.IsNewGame:
-                            {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Value}";
                             }
                             case CompareTypes.IsZoneEmpty:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.BoolValue}";
                             }
                             case CompareTypes.ItemFromItemGroup:
                             {
-                                break;
-                            }
-                            case CompareTypes.MetByPlayer:
-                            {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.ItemFromItemGroupComparison} {(criterion.ItemFromItemGroupComparison == ItemFromItemGroupComparisonTypes.IsVisibleTo ? criterion.Character : "")} {criterion.BoolValue}";
                             }
                             case CompareTypes.Personality:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.EquationValue} {criterion.Value}";
                             }
                             case CompareTypes.PlayerGender:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Value}";
                             }
                             case CompareTypes.PlayerInventory:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.PlayerInventoryOption} {(criterion.PlayerInventoryOption == PlayerInventoryOptions.HasItem ? criterion.Key : "")} {criterion.BoolValue}";
                             }
                             case CompareTypes.PlayerPrefs:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.EquationValue} {criterion.Value}";
                             }
                             case CompareTypes.Posing:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.PoseOption} {(criterion.PoseOption == PoseOptions.CurrentPose ? (criterion.EqualsValue.ToString() + criterion.Value) : criterion.BoolValue)}";
                             }
                             case CompareTypes.Property:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {criterion.BoolValue}";
                             }
                             case CompareTypes.Quest:
                             {
-                                break;
-                            }
-                            case CompareTypes.SameZoneAs:
-                            {
-                                break;
-                            }
-                            case CompareTypes.ScreenFadeVisible:
-                            {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character}'s {criterion.Key2} {criterion.EqualsValue} {criterion.Value}";
                             }
                             case CompareTypes.Social:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.SocialStatus} {criterion.EquationValue} {criterion.Value}";
                             }
                             case CompareTypes.State:
                             {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {criterion.BoolValue}";
                             }
                             case CompareTypes.Value:
                             {
-                                break;
-                            }
-                            case CompareTypes.Vision:
-                            {
-                                break;
-                            }
-                            case CompareTypes.UseLegacyIntimacy:
-                            {
-                                break;
+                                return $"{criterion.CompareType} {criterion.Key} {criterion.EquationValue} {criterion.Value}";
                             }
                             case CompareTypes.None:
-                            {
-                                break;
-                            }
                             default:
                             {
                                 break;
                             }
                         }
-                        {
-                            var criterion = Data<Criterion>()!;
-                            return $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-                        }
+                        return $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                     }
                     case NodeType.ItemAction:
                     {
@@ -526,7 +484,7 @@ namespace CSC.Nodestuff
                         try
                         {
                             //todo
-                            switch (Data<GameEvent>()?.EventType)
+                            switch (gevent.EventType)
                             {
                                 case GameEvents.AddForce:
                                 {
@@ -1074,6 +1032,7 @@ namespace CSC.Nodestuff
         public static Node CreateCriteriaNode(Criterion criterion, string filename, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
+            //var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.Data<Criterion>()?.Character == criterion.Character && n.Data<Criterion>()?.Value == criterion.Value && n.Data<Criterion>()?.Key == criterion.Key && n.Data<Criterion>()?.CompareType== criterion.CompareType);
             var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}");
             if (result is not null)
             {
