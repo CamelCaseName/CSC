@@ -701,6 +701,16 @@ public partial class Main : Form
         }
         else if (e.Button != MouseButtons.None)
         {
+            foreach (var dropdown in PropertyInspector.Controls)
+            {
+                if (dropdown is ComboBox box)
+                {
+                    if (box.DroppedDown && box.Focused)
+                    {
+                        return;
+                    }
+                }
+            }
             Graph.Focus();
         }
         else if (e.Button == MouseButtons.None && MouseButtons == MouseButtons.Middle)
@@ -789,7 +799,23 @@ public partial class Main : Form
     {
         UpdateLeftRightClickStates(graphPos);
         EndPan();
-        UpdateHighlightNode(graphPos);
+
+        bool doHighlight = true;
+        foreach (var dropdown in PropertyInspector.Controls)
+        {
+            if (dropdown is ComboBox box)
+            {
+                if (box.DroppedDown && box.Focused)
+                {
+                    doHighlight = false;
+                    break;
+                }
+            }
+        }
+        if (doHighlight)
+        {
+            UpdateHighlightNode(graphPos);
+        }
         TryCreateOverlayBitmap();
     }
 
@@ -4248,7 +4274,7 @@ public partial class Main : Form
                     case EventTypes.StartedIntimacyAct:
                     {
                         PutEnumKey<SexualActs>(node, eventTrigger);
-                        if(eventTrigger.Key == SexualActs.Masturbating.ToString())
+                        if (eventTrigger.Key == SexualActs.Masturbating.ToString())
                         {
                             PutCharacterValue(node, eventTrigger);
                         }
@@ -4256,7 +4282,7 @@ public partial class Main : Form
                         {
                             eventTrigger.Value = eventTrigger.CharacterToReactTo;
                         }
-                            break;
+                        break;
                     }
                     case EventTypes.PlayerReleasesItem:
                     {
@@ -4486,7 +4512,7 @@ public partial class Main : Form
                     PropertyInspector.Controls.Add(label2);
                 }
                 break;
-            } 
+            }
             case NodeType.Personality:
             {
                 Label label = GetLabel(node.FileName + "'s " + node.ID);

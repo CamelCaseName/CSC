@@ -1,13 +1,9 @@
 ﻿using CSC.Components;
 using CSC.StoryItems;
 using System.Data;
-using System.Data.Common;
 using System.Diagnostics;
-using System.Runtime.ConstrainedExecution;
-using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using static CSC.StoryItems.StoryEnums;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace CSC.Nodestuff
 {
@@ -45,14 +41,6 @@ namespace CSC.Nodestuff
         }
     }
 
-    public enum ClickedNodeTypes
-    {
-        Null,
-        Highlight,
-        Info,
-        OpenInEditor,
-        Edit
-    }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NodeType
