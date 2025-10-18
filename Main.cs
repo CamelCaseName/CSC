@@ -171,9 +171,8 @@ public partial class Main : Form
     private Node SelectedNode = null!;
 
     //todo original story linking is still wrong
-    //todo investigate duplicate GUIDs
     //todo filter/hide node types
-    //todo switch rendering
+    //todo switch rendering to direct2d
     //todo add story node cache on disk
     //todo add story search tree cache on disk
 

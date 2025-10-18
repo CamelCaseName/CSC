@@ -6,7 +6,7 @@ namespace CSC.Search
 {
     internal static class SearchTrie
     {
-        private const int ContainsTreeDepth = 11;
+        private const int ContainsTreeDepth = 9;
         private const StringComparison SearchCulture = StringComparison.InvariantCultureIgnoreCase;
 
         private static readonly Dictionary<string, int> FileToIndex = new(22);
@@ -150,20 +150,11 @@ namespace CSC.Search
                 AddToTree(node, nodeText);
             }
 
-            nodeText = node.Text.AsSpan();
-            if (nodeText.Length > 0)
-            {
-                AddToTree(node, nodeText);
-            }
-
             nodeText = node.ID.ToLower().AsSpan();
             if (nodeText.Length > 0)
             {
                 AddToTree(node, nodeText);
             }
-
-            nodeText = node.Type.ToString().ToLower().AsSpan();
-            AddToTree(node, nodeText);
 
             //so we can do searches like "amy dialogue hello" and we can then check the search results and remove all that doesnt fit
             nodeText = node.OrigFileName.ToLower().AsSpan();
@@ -324,12 +315,15 @@ namespace CSC.Search
                 return;
             }
 
+            var searchlowered = new char[searchValue.Length];
+            searchValue.ToLower(searchlowered, System.Globalization.CultureInfo.InvariantCulture);
+
             var testcontains = ContainsTree;
-            int testcontainslimit = Math.Min(searchValue.Length, ContainsTreeDepth) - 1;
+            int testcontainslimit = Math.Min(searchlowered.Length, ContainsTreeDepth) - 1;
             //walk down the tree as far as we need to
             for (int i = 0; i < testcontainslimit; i++)
             {
-                if (testcontains.TryGetValue(searchValue[i], out var tup))
+                if (testcontains.TryGetValue(searchlowered[i], out var tup))
                 {
                     testcontains = tup.tree;
                 }
@@ -340,15 +334,19 @@ namespace CSC.Search
             }
 
             //check last tree level's results
-            if (testcontains.TryGetValue(searchValue[testcontainslimit], out var containsres))
+            if (testcontains.TryGetValue(searchlowered[testcontainslimit], out var containsres))
             {
-                if (searchValue.Length <= ContainsTreeDepth)
+                if (searchlowered.Length <= ContainsTreeDepth)
                 {
                     foreach (var node in containsres.list)
                     {
                         if (settings.HasFlag(SearchSettings.CaseSensitive))
                         {
                             if (node.Text.AsSpan().Contains(searchValue, StringComparison.InvariantCulture))
+                            {
+                                results.Add(node);
+                            }
+                            else if (node.ID.AsSpan().Contains(searchValue, StringComparison.InvariantCulture))
                             {
                                 results.Add(node);
                             }
@@ -369,10 +367,18 @@ namespace CSC.Search
                             {
                                 results.Add(node);
                             }
+                            else if (node.ID.AsSpan().Contains(searchValue, StringComparison.InvariantCulture))
+                            {
+                                results.Add(node);
+                            }
                         }
                         else
                         {
-                            if (node.Text.AsSpan().Contains(searchValue, SearchCulture))
+                            if (node.Text.AsSpan().Contains(searchlowered, SearchCulture))
+                            {
+                                results.Add(node);
+                            }
+                            else if (node.ID.AsSpan().Contains(searchlowered, SearchCulture))
                             {
                                 results.Add(node);
                             }

@@ -225,6 +225,7 @@ namespace CSC.Components
                     settings &= ~SearchSettings.FirstWordFile;
                     settings &= ~SearchSettings.NodeContentOnly;
                     Filterlabel.Text = "Modifiers: " + settings.ToString();
+                    SearchImpl();
                     break;
                 case 1:
                     modifierCheck.Checked = settings.HasFlag(SearchSettings.OneWord);
@@ -247,8 +248,6 @@ namespace CSC.Components
                 modifierCheck.Visible = true;
                 ignoreModifierCheckState = false;
             }
-
-            SearchImpl();
         }
 
         private void Casesensitivity_CheckedChanged(object sender, EventArgs e)
@@ -345,6 +344,7 @@ namespace CSC.Components
 
             //update filter display
             Filterlabel.Text = "Modifiers: " + settings.ToString();
+            SearchImpl();
         }
     }
 }
