@@ -156,6 +156,12 @@ namespace CSC.Search
                 AddToTree(node, nodeText);
             }
 
+            nodeText = node.ID.ToLower().AsSpan();
+            if (nodeText.Length > 0)
+            {
+                AddToTree(node, nodeText);
+            }
+
             nodeText = node.Type.ToString().ToLower().AsSpan();
             AddToTree(node, nodeText);
 

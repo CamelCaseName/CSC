@@ -1852,7 +1852,7 @@ namespace CSC.Nodestuff
                         }
                         case GameEvents.EventTriggers:
                         {
-                            result = searchIn.Find((n) => n.Type == NodeType.EventTrigger && n.StaticText == gameEvent.Value);
+                            result = searchIn.Find((n) => n.Type == NodeType.EventTrigger && n.Text == gameEvent.Value);
                             if (result is not null)
                             {
                                 if (dupeTo)
@@ -2731,7 +2731,13 @@ namespace CSC.Nodestuff
                         node.ID = 0.ToString();
                     }
 
-                    var result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                    List<Node> result;
+                    if(node.Type == NodeType.EventTrigger && !GUIDRegex().IsMatch(node.ID))
+                    {
+                        result =  templist2.FindAll(n => n.Type == node.Type && n.Text == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                    }
+
+                    result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
                     foreach (var foundNode in result)
                     {
                         if (foundNode is not null)
