@@ -1082,7 +1082,6 @@ namespace CSC.Nodestuff
                         {
                             destination.Data<GameEvent>()!.EventType = GameEvents.None;
                         }
-
                     }
                 }
             }
@@ -2766,13 +2765,21 @@ namespace CSC.Nodestuff
                 {
                     Node? duplicateNode = tempList[j];
 
+                    //eventtriggers have duplicate names but the data isnt the same
                     if (node.ID == duplicateNode.ID && node.OrigFileName == duplicateNode.OrigFileName)
                     {
                         if (!GUIDRegex().IsMatch(duplicateNode.ID))
                         {
                             if (node.Type == duplicateNode.Type)
                             {
-                                Debugger.Break();
+                                if (node.Type == NodeType.EventTrigger && node.DataType == typeof(EventTrigger) && duplicateNode.DataType == typeof(EventTrigger))
+                                {
+                                    duplicateNode.Data<EventTrigger>()!.Id = Guid.NewGuid().ToString();
+                                }
+                                else
+                                {
+                                    Debugger.Break();
+                                }
                             }
                             continue;
                         }

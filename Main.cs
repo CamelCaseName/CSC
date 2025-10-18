@@ -171,7 +171,11 @@ public partial class Main : Form
     private Node SelectedNode = null!;
 
     //todo original story linking is still wrong
+    //todo investigate duplicate GUIDs
     //todo filter/hide node types
+    //todo switch rendering
+    //todo add story node cache on disk
+    //todo add story search tree cache on disk
 
     //todo add info when trying to link incompatible notes
     //todo unify all node creation so its always the same
