@@ -195,7 +195,7 @@ namespace CSC
             Graph.Name = "Graph";
             Graph.Size = new Size(1241, 417);
             Graph.TabIndex = 0;
-            Graph.Paint += Main_Paint;
+            Graph.Paint += Graph_Paint;
             Graph.MouseClick += HandleMouseEvents;
             Graph.MouseDoubleClick += HandleMouseEvents;
             Graph.MouseWheel += HandleMouseEvents;

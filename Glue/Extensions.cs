@@ -1,10 +1,9 @@
 using CSC.Nodestuff;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
-using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CSC.Components
+namespace CSC.Glue
 {
     public static class Extensions
     {
@@ -77,97 +76,6 @@ namespace CSC.Components
                 NodeLinker.UpdateLinks(node, node.FileName, nodes);
                 Main.RedrawGraph();
             };
-        }
-    }
-
-    public static class EEnum
-    {
-        public static string StringParse<T>(string value) where T : struct, Enum
-        {
-            if (Enum.TryParse(value, out T result))
-            {
-                return result.ToString()!;
-            }
-            else
-            {
-                return string.Empty;
-            }
-        }
-
-        public static T CastParse<T>(string value) where T : struct, Enum
-        {
-            if (Enum.TryParse(value, out T result))
-            {
-                return result;
-            }
-            else
-            {
-                return default;
-            }
-        }
-        public static string StringParse<T>(int value) where T : struct, Enum
-        {
-            if (Enum.IsDefined(typeof(T), value))
-            {
-                return Enum.GetName(typeof(T), value) ?? string.Empty;
-            }
-            else
-            {
-                return string.Empty;
-            }
-        }
-
-        public static T CastParse<T>(int value) where T : struct, Enum
-        {
-            if (Enum.IsDefined(typeof(T), value))
-            {
-                var name = Enum.GetName(typeof(T), value) ?? string.Empty;
-                if (!string.IsNullOrEmpty(name))
-                {
-                    return Enum.Parse<T>(name);
-                }
-                return default;
-            }
-            else
-            {
-                return default;
-            }
-        }
-    }
-
-    public class NodeParentComparer(NodeStore store) : IComparer<Node>
-    {
-        private readonly NodeStore Store = store;
-
-        public int Compare(Node? x, Node? y)
-        {
-            if (x is null)
-            {
-                return -1;
-            }
-            else if (y is null)
-            {
-                return 1;
-            }
-            return Store.Childs(y)?.Count ?? 0 - Store.Childs(x)?.Count ?? 0;
-        }
-    }
-
-    public class NodeChildComparer(NodeStore store) : IComparer<Node>
-    {
-        private readonly NodeStore Store = store;
-
-        public int Compare(Node? x, Node? y)
-        {
-            if (x is null)
-            {
-                return -1;
-            }
-            else if (y is null)
-            {
-                return 1;
-            }
-            return Store.Parents(x)?.Count ?? 0 - Store.Parents(y)?.Count ?? 0;
         }
     }
 }

@@ -1,4 +1,6 @@
 using CSC.Components;
+using CSC.Direct2D;
+using CSC.Glue;
 using CSC.Nodestuff;
 using CSC.Search;
 using CSC.StoryItems;
@@ -6,130 +8,72 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Numerics;
 using System.Text.Json;
 using static CSC.StoryItems.StoryEnums;
+using Enum = System.Enum;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace CSC;
 
 public partial class Main : Form
 {
+    private bool adding;
     private bool CurrentlyInPan = false;
     private bool IsCtrlPressed;
+    private bool isFirstLoad = true;
     private bool IsShiftPressed;
-    private const TextFormatFlags TextFlags = TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak | TextFormatFlags.LeftAndRightPadding;
-    private float AfterZoomNodeX;
-    private float AfterZoomNodeY;
-    private float BeforeZoomNodeX;
-    private float BeforeZoomNodeY;
-    private float StartPanOffsetX = 0f;
-    private float StartPanOffsetY = 0f;
-    private Font scaledFont = new(DefaultFont.FontFamily, 8f);
+    private bool selecting;
+    private bool subtracting;
+    private const string Anybody = "Anybody";
+    private int GeventPropertyCounter = 0;
+    internal float AfterZoomNodeX;
+    internal float AfterZoomNodeY;
+    internal float BeforeZoomNodeX;
+    internal float BeforeZoomNodeY;
+    internal float StartPanOffsetX = 0f;
+    internal float StartPanOffsetY = 0f;
     private Node highlightNode;
     private Node movedNode;
     private Node nodeToLinkFrom;
+    private Point oldMousePosBeforeSpawnWindow = Point.Empty;
+    private Point startSelectingMousePos = Point.Empty;
+    private readonly int scaleX = (int)(NodeSizeX * 1.5f);
+    private readonly int scaleY = (int)(NodeSizeY * 1.5f);
+    private readonly List<int> maxYperX = [];
+    public static readonly List<Node> selected = [];
+    private readonly List<Node> visited = [];
+    private readonly List<SizeF> SelectedNodeOffsets = [];
+    private static readonly SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
+    private static readonly SizeF CircleSize = new(15, 15);
+    private RectangleF adjustedMouseClipBounds;
+    private SearchDialog searchWindow = null!;
+    private SizeF OffsetFromDragClick = SizeF.Empty;
+    private static bool needsSaving;
+    private static MainStory Story = null!;
+    private static readonly Dictionary<string, NodeStore> nodes = [];
+    private static string _selectedCharacter = NoCharacter;
+    private string StoryFolder = string.Empty;
+    public bool MovingChild = false;
+    public const int NodeSizeX = 200;
+    public const int NodeSizeY = 50;
+    public const string HousePartyVersion = "1.4.2";
+    public const string NoCharacter = "None";
+    public const string Player = "Player";
+    public static readonly Dictionary<string, CharacterStory> Stories = [];
     private static readonly Dictionary<string, float> OffsetX = [];
     private static readonly Dictionary<string, float> OffsetY = [];
     private static readonly Dictionary<string, float> Scaling = [];
-    private readonly HatchBrush InterlinkedNodeBrush;
-    private readonly int scaleX = (int)(NodeSizeX * 1.5f);
-    private readonly int scaleY = (int)(NodeSizeY * 1.5f);
-    private readonly SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
-    private readonly List<int> maxYperX = [];
-    private readonly List<Node> visited = [];
-    private readonly List<Node> selected = [];
-    private readonly Pen clickedLinePen;
-    private readonly Pen highlightPen;
-    private readonly Pen linePen;
-    private readonly Pen circlePen;
-    private readonly Pen nodeToLinkPen;
-    private readonly SolidBrush ClickedNodeBrush;
-    private readonly SolidBrush HighlightNodeBrush;
-    private readonly SolidBrush NodeToLinkNextBrush;
-    private readonly SolidBrush achievementNodeBrush;
-    private readonly SolidBrush alternateTextNodeBrush;
-    private readonly SolidBrush bgcNodeBrush;
-    private readonly SolidBrush bgcResponseNodeBrush;
-    private readonly SolidBrush characterGroupNodeBrush;
-    private readonly SolidBrush clothingNodeBrush;
-    private readonly SolidBrush criteriaGroupNodeBrush;
-    private readonly SolidBrush criterionNodeBrush;
-    private readonly SolidBrush cutsceneNodeBrush;
-    private readonly SolidBrush defaultNodeBrush;
-    private readonly SolidBrush dialogueNodeBrush;
-    private readonly SolidBrush doorNodeBrush;
-    private readonly SolidBrush eventNodeBrush;
-    private readonly SolidBrush eventTriggerNodeBrush;
-    private readonly SolidBrush inventoryNodeBrush;
-    private readonly SolidBrush itemActionNodeBrush;
-    private readonly SolidBrush itemGroupBehaviourNodeBrush;
-    private readonly SolidBrush itemGroupInteractionNodeBrush;
-    private readonly SolidBrush itemGroupNodeBrush;
-    private readonly SolidBrush itemNodeBrush;
-    private readonly SolidBrush personalityNodeBrush;
-    private readonly SolidBrush poseNodeBrush;
-    private readonly SolidBrush propertyNodeBrush;
-    private readonly SolidBrush questNodeBrush;
-    private readonly SolidBrush responseNodeBrush;
-    private readonly SolidBrush socialNodeBrush;
-    private readonly SolidBrush stateNodeBrush;
-    private readonly SolidBrush valueNodeBrush;
-    private readonly SolidBrush darkachievementNodeBrush;
-    private readonly SolidBrush darkalternateTextNodeBrush;
-    private readonly SolidBrush darkbgcNodeBrush;
-    private readonly SolidBrush darkbgcResponseNodeBrush;
-    private readonly SolidBrush darkcharacterGroupNodeBrush;
-    private readonly SolidBrush darkclothingNodeBrush;
-    private readonly SolidBrush darkcriteriaGroupNodeBrush;
-    private readonly SolidBrush darkcriterionNodeBrush;
-    private readonly SolidBrush darkcutsceneNodeBrush;
-    private readonly SolidBrush darkdefaultNodeBrush;
-    private readonly SolidBrush darkdialogueNodeBrush;
-    private readonly SolidBrush darkdoorNodeBrush;
-    private readonly SolidBrush darkeventNodeBrush;
-    private readonly SolidBrush darkeventTriggerNodeBrush;
-    private readonly SolidBrush darkinventoryNodeBrush;
-    private readonly SolidBrush darkitemActionNodeBrush;
-    private readonly SolidBrush darkitemGroupBehaviourNodeBrush;
-    private readonly SolidBrush darkitemGroupInteractionNodeBrush;
-    private readonly SolidBrush darkitemGroupNodeBrush;
-    private readonly SolidBrush darkitemNodeBrush;
-    private readonly SolidBrush darkpersonalityNodeBrush;
-    private readonly SolidBrush darkposeNodeBrush;
-    private readonly SolidBrush darkpropertyNodeBrush;
-    private readonly SolidBrush darkquestNodeBrush;
-    private readonly SolidBrush darkresponseNodeBrush;
-    private readonly SolidBrush darksocialNodeBrush;
-    private readonly SolidBrush darkstateNodeBrush;
-    private readonly SolidBrush darkvalueNodeBrush;
+    //do all node related rendering in direct2d but keep the simple stuff in gdi+ because why change
+    private D2DRenderer render;
+    //gdi+ resources
     private readonly SolidBrush SelectionFill;
     private readonly Pen SelectionEdge;
-    private SearchDialog searchWindow = null!;
-    private RectangleF adjustedMouseClipBounds;
-    private SizeF OffsetFromDragClick = SizeF.Empty;
-    private readonly List<SizeF> SelectedNodeOffsets = [];
-    private SizeF CircleSize = new(15, 15);
+    private readonly Pen nodeToLinkPen;
     private CachedBitmap? oldGraph;
-    private static MainStory Story = null!;
-    public static readonly Dictionary<string, CharacterStory> Stories = [];
-    private static readonly Dictionary<string, NodeStore> nodes = [];
-    private static string _selectedCharacter = NoCharacter;
-    public bool MovingChild = false;
-    private int GeventPropertyCounter = 0;
-    public const int NodeSizeX = 200;
-    public const int NodeSizeY = 50;
-    public const string NoCharacter = "None";
-    public const string Player = "Player";
-    private const string Anybody = "Anybody";
-    private RectangleF adjustedVisibleClipBounds = new();
-    private Point oldMousePosBeforeSpawnWindow = Point.Empty;
-    private bool selecting;
-    private bool subtracting;
-    private bool adding;
-    private Point startSelectingMousePos = Point.Empty;
-    private string StoryFolder = string.Empty;
-    public const string HousePartyVersion = "1.4.2";
-    private bool isFirstLoad = true;
-    private static bool needsSaving;
+
+    internal static float Scalee => Scaling[SelectedCharacter];
+    internal static Vector2 Offset => new(OffsetX[SelectedCharacter], OffsetY[SelectedCharacter]);
 
     private static Main Instance { get; set; } = null!;
 
@@ -170,7 +114,11 @@ public partial class Main : Form
     public static bool NeedsSaving { get => needsSaving; set => needsSaving = value; }
     private Node SelectedNode = null!;
 
-    //todo original story linking is still wrong
+    public static Node Selected => Instance.SelectedNode;
+    public static Node Highlight => Instance.highlightNode;
+    public static Node LinkFrom => Instance.nodeToLinkFrom;
+
+    //todo we need to pause updating the search during a typing streak and cumulatively update after its done
     //todo filter/hide node types
     //todo switch rendering to direct2d
 
@@ -188,117 +136,36 @@ public partial class Main : Form
         StoryTree.ExpandAll();
         Application.AddMessageFilter(new MouseMessageFilter());
         MouseMessageFilter.MouseMove += HandleMouseEvents;
-        linePen = new Pen(Color.FromArgb(75, 75, 75), 0.2f)
-        {
-            EndCap = LineCap.Triangle,
-            StartCap = LineCap.Round
-        };
-        SelectionEdge = new Pen(Color.LightGray, 1f);
-        circlePen = new Pen(Color.FromArgb(75, 75, 75), 0.5f)
-        {
-            EndCap = LineCap.Triangle,
-            StartCap = LineCap.Round
-        };
-        clickedLinePen = new Pen(Brushes.LightGray, 3)
-        {
-            EndCap = LineCap.Triangle,
-            StartCap = LineCap.Round
-        };
-        highlightPen = new Pen(Brushes.DeepPink, 3)
-        {
-            EndCap = LineCap.Triangle,
-            StartCap = LineCap.Round
-        };
+
         nodeToLinkPen = new Pen(Brushes.LightCyan, 3)
         {
             EndCap = LineCap.Triangle,
             StartCap = LineCap.Round
         };
-        defaultNodeBrush = new SolidBrush(Color.FromArgb(100, 100, 100));
-        achievementNodeBrush = new SolidBrush(Color.FromArgb(200, 10, 200));
-        alternateTextNodeBrush = new SolidBrush(Color.FromArgb(110, 120, 190));
-        bgcNodeBrush = new SolidBrush(Color.FromArgb(40, 190, 255));
-        bgcResponseNodeBrush = new SolidBrush(Color.FromArgb(150, 225, 255));
-        characterGroupNodeBrush = new SolidBrush(Color.FromArgb(190, 180, 130));
-        clothingNodeBrush = new SolidBrush(Color.FromArgb(95, 235, 60));
-        criteriaGroupNodeBrush = new SolidBrush(Color.FromArgb(150, 50, 50));
-        criterionNodeBrush = new SolidBrush(Color.FromArgb(180, 20, 40));
-        cutsceneNodeBrush = new SolidBrush(Color.FromArgb(235, 30, 160));
-        dialogueNodeBrush = new SolidBrush(Color.FromArgb(45, 60, 185));
-        doorNodeBrush = new SolidBrush(Color.FromArgb(200, 225, 65));
-        eventNodeBrush = new SolidBrush(Color.FromArgb(50, 150, 50));
-        eventTriggerNodeBrush = new SolidBrush(Color.FromArgb(60, 100, 70));
-        inventoryNodeBrush = new SolidBrush(Color.FromArgb(65, 225, 185));
-        itemActionNodeBrush = new SolidBrush(Color.FromArgb(85, 195, 195));
-        itemGroupBehaviourNodeBrush = new SolidBrush(Color.FromArgb(160, 200, 195));
-        itemGroupInteractionNodeBrush = new SolidBrush(Color.FromArgb(95, 120, 115));
-        itemGroupNodeBrush = new SolidBrush(Color.FromArgb(45, 190, 165));
-        itemNodeBrush = new SolidBrush(Color.FromArgb(45, 255, 255));
-        personalityNodeBrush = new SolidBrush(Color.FromArgb(255, 255, 90));
-        poseNodeBrush = new SolidBrush(Color.FromArgb(255, 210, 90));
-        propertyNodeBrush = new SolidBrush(Color.FromArgb(255, 90, 150));
-        questNodeBrush = new SolidBrush(Color.FromArgb(255, 103, 0));
-        responseNodeBrush = new SolidBrush(Color.FromArgb(55, 155, 225));
-        socialNodeBrush = new SolidBrush(Color.FromArgb(255, 160, 90));
-        stateNodeBrush = new SolidBrush(Color.FromArgb(40, 190, 50));
-        valueNodeBrush = new SolidBrush(Color.FromArgb(120, 0, 150));
 
-        //darker color variants
-        float darkening = 0.18f;
-        darkdefaultNodeBrush = new SolidBrush(defaultNodeBrush.Color.Times(darkening));
-        darkachievementNodeBrush = new SolidBrush(achievementNodeBrush.Color.Times(darkening));
-        darkalternateTextNodeBrush = new SolidBrush(alternateTextNodeBrush.Color.Times(darkening));
-        darkbgcNodeBrush = new SolidBrush(bgcNodeBrush.Color.Times(darkening));
-        darkbgcResponseNodeBrush = new SolidBrush(bgcResponseNodeBrush.Color.Times(darkening));
-        darkcharacterGroupNodeBrush = new SolidBrush(characterGroupNodeBrush.Color.Times(darkening));
-        darkclothingNodeBrush = new SolidBrush(clothingNodeBrush.Color.Times(darkening));
-        darkcriteriaGroupNodeBrush = new SolidBrush(criteriaGroupNodeBrush.Color.Times(darkening));
-        darkcriterionNodeBrush = new SolidBrush(criterionNodeBrush.Color.Times(darkening));
-        darkcutsceneNodeBrush = new SolidBrush(cutsceneNodeBrush.Color.Times(darkening));
-        darkdialogueNodeBrush = new SolidBrush(dialogueNodeBrush.Color.Times(darkening));
-        darkdoorNodeBrush = new SolidBrush(doorNodeBrush.Color.Times(darkening));
-        darkeventNodeBrush = new SolidBrush(eventNodeBrush.Color.Times(darkening));
-        darkeventTriggerNodeBrush = new SolidBrush(eventTriggerNodeBrush.Color.Times(darkening));
-        darkinventoryNodeBrush = new SolidBrush(inventoryNodeBrush.Color.Times(darkening));
-        darkitemActionNodeBrush = new SolidBrush(itemActionNodeBrush.Color.Times(darkening));
-        darkitemGroupBehaviourNodeBrush = new SolidBrush(itemGroupBehaviourNodeBrush.Color.Times(darkening));
-        darkitemGroupInteractionNodeBrush = new SolidBrush(itemGroupInteractionNodeBrush.Color.Times(darkening));
-        darkitemGroupNodeBrush = new SolidBrush(itemGroupNodeBrush.Color.Times(darkening));
-        darkitemNodeBrush = new SolidBrush(itemNodeBrush.Color.Times(darkening));
-        darkpersonalityNodeBrush = new SolidBrush(personalityNodeBrush.Color.Times(darkening));
-        darkposeNodeBrush = new SolidBrush(poseNodeBrush.Color.Times(darkening));
-        darkpropertyNodeBrush = new SolidBrush(propertyNodeBrush.Color.Times(darkening));
-        darkquestNodeBrush = new SolidBrush(questNodeBrush.Color.Times(darkening));
-        darkresponseNodeBrush = new SolidBrush(responseNodeBrush.Color.Times(darkening));
-        darksocialNodeBrush = new SolidBrush(socialNodeBrush.Color.Times(darkening));
-        darkstateNodeBrush = new SolidBrush(stateNodeBrush.Color.Times(darkening));
-        darkvalueNodeBrush = new SolidBrush(valueNodeBrush.Color.Times(darkening));
-
-        HighlightNodeBrush = new SolidBrush(Color.DarkCyan);
-        InterlinkedNodeBrush = new HatchBrush(HatchStyle.LightUpwardDiagonal, Color.DeepPink, BackColor);
-        ClickedNodeBrush = new SolidBrush(Color.BlueViolet);
-        NodeToLinkNextBrush = new SolidBrush(Color.LightGray);
         SelectionFill = new SolidBrush(Color.FromArgb(80, Color.Gray));
+        SelectionEdge = new Pen(Color.LightGray, 1f);
 
         NodeSpawnBox.Items.AddRange(Enum.GetNames<SpawnableNodeType>());
 
         PropertyInspector.SizeChanged += (_, _) => UpdatePropertyColoumnWidths();
 
         nodes.Add(NoCharacter, new(NoCharacter));
-        Scaling.Add(NoCharacter, 0.3f);
-        OffsetX.Add(NoCharacter, 0);
-        OffsetY.Add(NoCharacter, 0);
+        Scaling.Add(Main.NoCharacter, 0.3f);
+        OffsetX.Add(Main.NoCharacter, 0);
+        OffsetY.Add(Main.NoCharacter, 0);
 
         nodes.Add(Player, new(Player));
-        Scaling.Add(Player, 0.3f);
-        OffsetX.Add(Player, 0);
-        OffsetY.Add(Player, 0);
+        Scaling.Add(Main.Player, 0.3f);
+        OffsetX.Add(Main.Player, 0);
+        OffsetY.Add(Main.Player, 0);
 
         SelectedNode = Node.NullNode;
         highlightNode = Node.NullNode;
         movedNode = Node.NullNode;
         nodeToLinkFrom = Node.NullNode;
 
+        render = new();
         Graph.Invalidate();
     }
 
@@ -309,6 +176,10 @@ public partial class Main : Form
             if (MessageBox.Show("Are you sure, you want to close the Program?", "Close the Program?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
             {
                 e!.Cancel = true;
+            }
+            if (!e!.Cancel)
+            {
+                render.Release();
             }
             return;
         }
@@ -334,7 +205,12 @@ public partial class Main : Form
             case DialogResult.Cancel:
                 e!.Cancel = true;
                 break;
-                //rest do nothing
+                //rest do nothing#
+        }
+
+        if (!e!.Cancel)
+        {
+            render.Release();
         }
     }
 
@@ -796,6 +672,12 @@ public partial class Main : Form
             }
             break;
         }
+    }
+
+    private void SetPanOffset(Point location)
+    {
+        StartPanOffsetX = location.X;
+        StartPanOffsetY = location.Y;
     }
 
     private void OnNone(PointF graphPos)
@@ -1397,7 +1279,7 @@ public partial class Main : Form
         StoryTree.Nodes.AddRange([treeNode2]);
     }
 
-    private static void DrawEdge(Graphics g, Node parent, Node child, Pen pen, PointF start = default, PointF end = default)
+    private static void DrawLinkTo(Graphics g, Node parent, Node child, Pen pen, PointF start = default, PointF end = default)
     {
         int third = 0;
 
@@ -1443,11 +1325,9 @@ public partial class Main : Form
         }
 
         g.DrawBezier(pen, start, controlStart, controlEnd, end);
-        //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
-        //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
     }
 
-    private static PointF GetStartHeightFromThird(Node parent, PointF start, int third)
+    public static PointF GetStartHeightFromThird(Node parent, PointF start, int third)
     {
         if (third == 0)
         {
@@ -1465,7 +1345,7 @@ public partial class Main : Form
         return start;
     }
 
-    private static int GetEdgeStartHeight(Node parent, Node child, int third)
+    public static int GetEdgeStartHeight(Node parent, Node child, int third)
     {
         if (parent.DataType == typeof(Dialogue) && child.DataType == typeof(GameEvent))
         {
@@ -1504,68 +1384,13 @@ public partial class Main : Form
         return third;
     }
 
-    private void DrawNode(Graphics g, Node node, SolidBrush brush, bool lightText = false)
-    {
-        if (node == Node.NullNode)
-        {
-            return;
-        }
-        if (Scaling[SelectedCharacter] > 0.28f)
-        {
-            GetLinkCircleRects(node, out RectangleF leftRect, out RectangleF rightRect);
-
-            g.DrawEllipse(circlePen, leftRect);
-            g.DrawEllipse(circlePen, rightRect);
-        }
-        if (node == SelectedNode)
-        {
-            lightText = true;
-            if (node.FileName != SelectedCharacter)
-            {
-                lightText = true;
-                g.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 25), 18f));
-            }
-            g.FillPath(ClickedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
-        }
-        else if (node.FileName != SelectedCharacter)
-        {
-            g.FillPath(InterlinkedNodeBrush, RoundedRect(ScaleRect(node.Rectangle, 15), 15f));
-        }
-
-        g.FillPath(brush, RoundedRect(node.Rectangle, 10f));
-        if (selected.Contains(node))
-        {
-            g.DrawRectangle(SelectionEdge, node.Rectangle);
-        }
-
-        if (Scaling[SelectedCharacter] > 0.28f)
-        {
-            var scaledRect = GetScaledRect(node.RectangleNonF, Scaling[SelectedCharacter]);
-            scaledRect.Location += new Size(3, 3);
-            scaledRect.Size -= new Size(6, 6);
-
-            Color textColor = lightText ? Color.White : Color.DarkGray;
-            if ((brush.Color.R * 0.299 + brush.Color.G * 0.587 + brush.Color.B * 0.114) > 150)
-            {
-                textColor = Color.Black;
-            }
-
-            TextRenderer.DrawText(g,
-                                  node.Text[..Math.Min(node.Text.Length, 100)],
-                                  scaledFont,
-                                  scaledRect,
-                                  textColor,
-                                  TextFlags);
-        }
-    }
-
-    private void GetLinkCircleRects(Node node, out RectangleF leftRect, out RectangleF rightRect)
+    public static void GetLinkCircleRects(Node node, out RectangleF leftRect, out RectangleF rightRect)
     {
         leftRect = new RectangleF(node.Position + new SizeF(-CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
         rightRect = new RectangleF(node.Position + new SizeF(node.Size.Width - CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
         if (node.FileName != SelectedCharacter)
         {
-            if (node == SelectedNode)
+            if (node == Instance.SelectedNode)
             {
                 leftRect.Location -= new SizeF(25 / 2, 0);
                 rightRect.Location += new SizeF(25 / 2, 0);
@@ -1576,46 +1401,11 @@ public partial class Main : Form
                 rightRect.Location += new SizeF(15 / 2, 0);
             }
         }
-        else if (node == SelectedNode)
+        else if (node == Instance.SelectedNode)
         {
             leftRect.Location -= new SizeF(15 / 2, 0);
             rightRect.Location += new SizeF(15 / 2, 0);
         }
-    }
-
-    private static RectangleF ScaleRect(RectangleF rect, float increase) => new(rect.X - (increase / 2), rect.Y - (increase / 2), rect.Width + increase, rect.Height + increase);
-
-    private static GraphicsPath RoundedRect(RectangleF bounds, float radius)
-    {//see https://stackoverflow.com/questions/33853434/how-to-draw-a-rounded-rectangle-in-c-sharp
-
-        float diameter = radius * 2;
-        SizeF size = new(diameter, diameter);
-        RectangleF arc = new(bounds.Location, size);
-        GraphicsPath path = new();
-
-        if (radius == 0)
-        {
-            path.AddRectangle(bounds);
-            return path;
-        }
-
-        // top left arc  
-        path.AddArc(arc, 180, 90);
-
-        // top right arc  
-        arc.X = bounds.Right - diameter;
-        path.AddArc(arc, 270, 90);
-
-        // bottom right arc  
-        arc.Y = bounds.Bottom - diameter;
-        path.AddArc(arc, 0, 90);
-
-        // bottom left arc 
-        arc.X = bounds.Left;
-        path.AddArc(arc, 90, 90);
-
-        path.CloseFigure();
-        return path;
     }
 
     private void EndPan()
@@ -1628,69 +1418,13 @@ public partial class Main : Form
         }
     }
 
-    private SolidBrush GetNodeColor(NodeType type, bool light)
-    {
-        return type switch
-        {
-            NodeType.Null => light ? defaultNodeBrush : darkdefaultNodeBrush,
-            NodeType.CharacterGroup => light ? characterGroupNodeBrush : darkcharacterGroupNodeBrush,
-            NodeType.Criterion => light ? criterionNodeBrush : darkcriterionNodeBrush,
-            NodeType.ItemAction => light ? itemActionNodeBrush : darkitemActionNodeBrush,
-            NodeType.ItemGroupBehaviour => light ? itemGroupBehaviourNodeBrush : darkitemGroupBehaviourNodeBrush,
-            NodeType.ItemGroupInteraction => light ? itemGroupInteractionNodeBrush : darkitemGroupInteractionNodeBrush,
-            NodeType.Pose => light ? poseNodeBrush : darkposeNodeBrush,
-            NodeType.Achievement => light ? achievementNodeBrush : darkachievementNodeBrush,
-            NodeType.BGC => light ? bgcNodeBrush : darkbgcNodeBrush,
-            NodeType.BGCResponse => light ? bgcResponseNodeBrush : darkbgcResponseNodeBrush,
-            NodeType.Clothing => light ? clothingNodeBrush : darkclothingNodeBrush,
-            NodeType.CriteriaGroup => light ? criteriaGroupNodeBrush : darkcriteriaGroupNodeBrush,
-            NodeType.Cutscene => light ? cutsceneNodeBrush : darkcutsceneNodeBrush,
-            NodeType.Dialogue => light ? dialogueNodeBrush : darkdialogueNodeBrush,
-            NodeType.AlternateText => light ? alternateTextNodeBrush : darkalternateTextNodeBrush,
-            NodeType.Door => light ? doorNodeBrush : darkdoorNodeBrush,
-            NodeType.GameEvent => light ? eventNodeBrush : darkeventNodeBrush,
-            NodeType.EventTrigger => light ? eventTriggerNodeBrush : darkeventTriggerNodeBrush,
-            NodeType.Inventory => light ? inventoryNodeBrush : darkinventoryNodeBrush,
-            NodeType.StoryItem => light ? itemNodeBrush : darkitemNodeBrush,
-            NodeType.ItemGroup => light ? itemGroupNodeBrush : darkitemGroupNodeBrush,
-            NodeType.Personality => light ? personalityNodeBrush : darkpersonalityNodeBrush,
-            NodeType.Property => light ? propertyNodeBrush : darkpropertyNodeBrush,
-            NodeType.Quest => light ? questNodeBrush : darkquestNodeBrush,
-            NodeType.Response => light ? responseNodeBrush : darkresponseNodeBrush,
-            NodeType.Social => light ? socialNodeBrush : darksocialNodeBrush,
-            NodeType.State => light ? stateNodeBrush : darkstateNodeBrush,
-            NodeType.Value => light ? valueNodeBrush : darkvalueNodeBrush,
-            _ => defaultNodeBrush,
-        };
-    }
-
-    private void Main_Paint(object sender, PaintEventArgs e)
+    private void Graph_Paint(object sender, PaintEventArgs e)
     {
         var g = e.Graphics;
 
         if (oldGraph is null || (nodeToLinkFrom == Node.NullNode && !selecting))
         {
-            g.ToLowQuality();
-
-            //update canvas transforms
-            g.TranslateTransform(-OffsetX[SelectedCharacter] * Scaling[SelectedCharacter], -OffsetY[SelectedCharacter] * Scaling[SelectedCharacter]);
-            g.ScaleTransform(Scaling[SelectedCharacter], Scaling[SelectedCharacter]);
-            adjustedVisibleClipBounds = new(OffsetX[SelectedCharacter] - NodeSizeX,
-                                            OffsetY[SelectedCharacter] - NodeSizeY,
-                                            g.VisibleClipBounds.Width + NodeSizeX,
-                                            g.VisibleClipBounds.Height + NodeSizeY);
-            adjustedMouseClipBounds = new(OffsetX[SelectedCharacter],
-                                            OffsetY[SelectedCharacter],
-                                            g.VisibleClipBounds.Width,
-                                            g.VisibleClipBounds.Height);
-
-            if (Scaling[SelectedCharacter] < 0)
-            {
-                Debugger.Break();
-            }
-            scaledFont = GetScaledFont(new(DefaultFont.FontFamily, 8f), Scaling[SelectedCharacter]);
-
-            DrawAllNodes(g);
+            render.Paint(g, nodes[SelectedCharacter]);
         }
         else
         {
@@ -1764,81 +1498,7 @@ public partial class Main : Form
 
         screenPos += new SizeF(nodeToLinkFrom.Size.Width * Scaling[nodeToLinkFrom.FileName], (nodeToLinkFrom.Size.Height / 2) * Scaling[nodeToLinkFrom.FileName]);
 
-        DrawEdge(g, nodeToLinkFrom, Node.NullNode, nodeToLinkPen, start: screenPos, end: pos);
-    }
-
-    private void DrawAllNodes(Graphics g)
-    {
-        foreach (var node in nodes[SelectedCharacter].Nodes)
-        {
-            var list = nodes[SelectedCharacter].Childs(node);
-            if (list.Count > 0)
-            {
-                foreach (var item in list)
-                {
-                    DrawEdge(g, node, item, linePen);
-                }
-            }
-        }
-
-        if (SelectedNode != Node.NullNode)
-        {
-            var family = nodes[SelectedCharacter][SelectedNode];
-            if (family.Childs.Count > 0)
-            {
-                foreach (var item in family.Childs)
-                {
-                    DrawEdge(g, SelectedNode, item, clickedLinePen);
-                }
-            }
-            if (family.Parents.Count > 0)
-            {
-                foreach (var item in family.Parents)
-                {
-                    DrawEdge(g, item, SelectedNode, clickedLinePen);
-                }
-            }
-
-            foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
-            {
-                //c++;
-                bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || SelectedNode == node;
-                DrawNode(g, node, GetNodeColor(node.Type, light), light);
-            }
-        }
-        else
-        {
-            foreach (var node in nodes[SelectedCharacter].Positions[adjustedVisibleClipBounds])
-            {
-                //c++;
-                DrawNode(g, node, GetNodeColor(node.Type, false));
-            }
-        }
-
-        if (highlightNode != Node.NullNode)
-        {
-            var family = nodes[SelectedCharacter][highlightNode];
-            if (family.Childs.Count > 0)
-            {
-                foreach (var item in family.Childs)
-                {
-                    DrawEdge(g, highlightNode, item, highlightPen);
-                }
-            }
-            if (family.Parents.Count > 0)
-            {
-                foreach (var item in family.Parents)
-                {
-                    DrawEdge(g, item, highlightNode, highlightPen);
-                }
-            }
-            DrawNode(g, highlightNode, HighlightNodeBrush, true);
-        }
-
-        if (nodeToLinkFrom != Node.NullNode)
-        {
-            DrawNode(g, nodeToLinkFrom, NodeToLinkNextBrush, true);
-        }
+        DrawLinkTo(g, nodeToLinkFrom, Node.NullNode, nodeToLinkPen, start: screenPos, end: pos);
     }
 
     private void OpenButton_Click(object sender, EventArgs e)
@@ -2010,14 +1670,7 @@ public partial class Main : Form
             positions.Add(nodeStore, []);
             foreach (var node in nodes[nodeStore].Nodes)
             {
-                try
-                {
-                    positions[nodeStore].Add(new NodeID(nodeStore, node.Type, node.ID, node.Text), node.Position);
-                }
-                catch (Exception e)
-                { 
-                    Debugger.Break();
-                }
+                positions[nodeStore].Add(new NodeID(nodeStore, node.Type, node.ID, node.Text), node.Position);
             }
         }
 
@@ -2137,12 +1790,6 @@ public partial class Main : Form
         StoryTree.ExpandAll();
     }
 
-    private void SetPanOffset(Point location)
-    {
-        StartPanOffsetX = location.X;
-        StartPanOffsetY = location.Y;
-    }
-
     private void SetupStartPositions()
     {
         foreach (var store in nodes.Keys)
@@ -2176,7 +1823,7 @@ public partial class Main : Form
             maxYperX[i] = intY;
         }
 
-        nodeList.Sort(new NodeParentComparer(nodeStore));
+        nodeList.Sort(new NodeComparers(nodeStore));
         bool restarted = false;
         int skipCount = 0;
     Restart:
@@ -2238,7 +1885,7 @@ public partial class Main : Form
             var childs = nodeStore.Childs(node);
             childs.Sort(new NodeChildComparer(nodeStore));
             var parents = nodeStore.Parents(node);
-            parents.Sort(new NodeParentComparer(nodeStore));
+            parents.Sort(new NodeComparers(nodeStore));
 
             int newParentsX = intX - (parents.Count / 3) - 1;
             newParentsX = Math.Max(0, newParentsX);
@@ -5316,30 +4963,6 @@ public partial class Main : Form
         //update pan offset by the distance caused by zooming
         OffsetX[SelectedCharacter] += BeforeZoomNodeX - AfterZoomNodeX;
         OffsetY[SelectedCharacter] += BeforeZoomNodeY - AfterZoomNodeY;
-    }
-
-    private static Font GetScaledFont(Font f, float scale)
-    {//see https://stackoverflow.com/questions/8850528/how-to-apply-graphics-scale-and-translate-to-the-textrenderer
-
-        if (f.SizeInPoints * scale < 0)
-        {
-            Debugger.Break();
-        }
-
-        return new Font(f.FontFamily,
-                        f.SizeInPoints * scale,
-                        f.Style,
-                        GraphicsUnit.Point,
-                        f.GdiCharSet,
-                        f.GdiVerticalFont);
-    }
-
-    private static Rectangle GetScaledRect(Rectangle r, float scale)
-    {
-        return new Rectangle((int)Math.Ceiling(r.X * scale),
-                            (int)Math.Ceiling(r.Y * scale),
-                            (int)Math.Ceiling(r.Width * scale),
-                            (int)Math.Ceiling(r.Height * scale));
     }
 
     private void StoryTree_AfterSelect(object sender, TreeViewEventArgs e)

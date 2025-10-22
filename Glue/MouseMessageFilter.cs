@@ -1,4 +1,4 @@
-namespace CSC.Components
+namespace CSC.Glue
 {
     class MouseMessageFilter : IMessageFilter
     {
