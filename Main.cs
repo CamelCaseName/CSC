@@ -1424,7 +1424,7 @@ public partial class Main : Form
 
         if (oldGraph is null || (nodeToLinkFrom == Node.NullNode && !selecting))
         {
-            render.Paint(g, nodes[SelectedCharacter]);
+            render.Paint(g, nodes[SelectedCharacter], Graph.ClientRectangle);
         }
         else
         {

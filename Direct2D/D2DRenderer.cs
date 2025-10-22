@@ -350,16 +350,16 @@ namespace CSC.Direct2D
             }
         }
 
-        public void Paint(Graphics g, NodeStore nodes)
+        public void Paint(Graphics g, NodeStore nodes, RectangleF screenclip)
         {
             unsafe
             {
                 //g.ToLowQuality();
                 //Bind each frame...
                 //todo investigate what rect we need and if its enough to only bind on resize
-                Box2D<int> dcRect = g.ClipBounds.ToBox<int>();
-                return;
-                int res = target.BindDC(g.GetHdc(), ref dcRect);
+                Box2D<int> dcRect = screenclip.ToBox<int>();
+                nint hdc = g.GetHdc();
+                int res = target.BindDC(hdc, ref dcRect);
                 if (res != 0)
                 {
                     Debugger.Break();
@@ -393,6 +393,7 @@ namespace CSC.Direct2D
 
                 ulong tag1 = 0, tag2 = 0;
                 target.EndDraw(ref tag1, ref tag2);
+                g.ReleaseHdc(hdc);
             }
         }
 
