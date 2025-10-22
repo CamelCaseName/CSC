@@ -2731,13 +2731,22 @@ namespace CSC.Nodestuff
                         node.ID = 0.ToString();
                     }
 
-                    List<Node> result;
-                    if(node.Type == NodeType.EventTrigger && !GUIDRegex().IsMatch(node.ID))
+                    List<Node> result = [];
+                    if (node.Type == NodeType.EventTrigger && !GUIDRegex().IsMatch(node.ID))
                     {
-                        result =  templist2.FindAll(n => n.Type == node.Type && n.Text == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                        //special handling for referenced eventtriggers as the missingrefeence has the name as id and not a guid
+                        result = templist2.FindAll(n => n.Type == node.Type && n.Text == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
                     }
-
-                    result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                    else if (node.Type == NodeType.Criterion)
+                    {
+                        //never happens :D
+                        Debugger.Break();
+                    }
+                    else
+                    {
+                        //try and find similar nodes that arent missing reference
+                        result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                    }
                     foreach (var foundNode in result)
                     {
                         if (foundNode is not null)

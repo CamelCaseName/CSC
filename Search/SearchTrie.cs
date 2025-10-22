@@ -205,7 +205,7 @@ namespace CSC.Search
                 return [];
             }
 
-            HashSet<Node> results = [];
+           HashSet<Node> results = [];
 
             if (searchValue.Length > 0)
             {

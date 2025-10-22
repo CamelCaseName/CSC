@@ -7,13 +7,12 @@ using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
-    public readonly struct NodeID(string file, NodeType Type, string ID, string nodeOriginFilename, Type DataType)
+    public readonly ref struct NodeID(string file, NodeType Type, string ID, string text)
     {
         public NodeType Type { get; } = Type;
-        public string ID { get; } = ID;
-        public string Filename { get; } = nodeOriginFilename;
-        public string File { get; } = file;
-        public Type DataType { get; } = DataType;
+        public ReadOnlySpan<char> ID { get; } = ID.AsSpan();
+        public ReadOnlySpan<char> Text { get; } = text.AsSpan()[..(Math.Min(50, text.Length))];
+        public ReadOnlySpan<char> File { get; } = file.AsSpan();
 
         public static implicit operator long(NodeID n)
         {
@@ -23,13 +22,12 @@ namespace CSC.Nodestuff
                 hash = hash * 23 + (int)n.Type;
                 hash = hash * 23 + CalculateHash(n.ID);
                 hash = hash * 17 + CalculateHash(n.File);
-                hash = hash * 23 + CalculateHash(n.Filename);
-                hash = hash * 23 + CalculateHash(n.DataType.ToString());
+                hash = hash * 23 + CalculateHash(n.Text);
                 return hash;
             }
         }
 
-        static long CalculateHash(string read)
+        static long CalculateHash(ReadOnlySpan<char> read)
         {
             ulong hashedValue = 3074457345618258791ul;
             for (int i = 0; i < read.Length; i++)
@@ -40,7 +38,6 @@ namespace CSC.Nodestuff
             return (long)hashedValue;
         }
     }
-
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NodeType
@@ -260,756 +257,605 @@ namespace CSC.Nodestuff
                 {
                     return StaticText;
                 }
+                return GetText();
+            }
+        }
 
-                switch (Type)
+        private string GetText()
+        {
+            switch (Type)
+            {
+                case NodeType.Null:
                 {
-                    case NodeType.Null:
-                    {
-                        return "Null node!";
-                    }
-                    case NodeType.CharacterGroup:
-                    {
-                        return $"{Data<CharacterGroup>()?.Id}|{Data<CharacterGroup>()?.Name} -> {Data<CharacterGroup>()?.CharactersInGroup?.ListRepresentation()}";
-                    }
-                    case NodeType.Criterion:
-                    {
-                        var criterion = Data<Criterion>()!;
-                        switch (Data<Criterion>()?.CompareType)
-                        {
-                            case CompareTypes.Never:
-                            {
-                                return "Never";
-                            }
-                            case CompareTypes.CharacterFromCharacterGroup:
-                            {
-                                break;
-                            }
-                            case CompareTypes.Clothing:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {(ClothingSet)criterion.Option} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.CoinFlip:
-                            {
-                                return "Coinflip";
-                            }
-                            case CompareTypes.CompareValues:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.ValueFormula} {criterion.Character2} {criterion.Key2}";
-                            }
-                            case CompareTypes.CriteriaGroup:
-                            {
-                                return $"{criterion.CompareType} {criterion.Value} {criterion.Key2} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.CutScene:
-                            {
-                                return $"{criterion.CompareType}  {criterion.Value} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.Dialogue:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {criterion.DialogueStatus}";
-                            }
-                            case CompareTypes.Distance:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.Key2} {criterion.EquationValue} {criterion.Option}";
-                            }
-                            case CompareTypes.Door:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.DoorOptions}";
-                            }
-                            case CompareTypes.Gender:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {(Gender)criterion.Option}";
-                            }
-                            case CompareTypes.IntimacyPartner:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.EqualsValue} {criterion.Value}";
-                            }
-                            case CompareTypes.IntimacyState:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.EqualsValue} {criterion.Value}";
-                            }
-                            case CompareTypes.InZone:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.InVicinity:
-                            case CompareTypes.InVicinityAndVision:
-                            case CompareTypes.IsOnlyInVicinityOf:
-                            case CompareTypes.IsOnlyInVisionOf:
-                            case CompareTypes.IsOnlyInVicinityAndVisionOf:
-                            case CompareTypes.Vision:
-                            case CompareTypes.SameZoneAs:
-                            case CompareTypes.IsInFrontOf:
-                            {
-                                return $"{criterion.Character} {criterion.CompareType} {criterion.Character2} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.Item:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.ItemComparison}";
-                            }
-                            case CompareTypes.IsBeingSpokenTo:
-                            case CompareTypes.IsCharacterEnabled:
-                            case CompareTypes.IsInHouse:
-                            case CompareTypes.MetByPlayer:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.IsCurrentlyBeingUsed:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.IsCurrentlyUsing:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.IsExplicitGameVersion:
-                            case CompareTypes.IsGameUncensored:
-                            case CompareTypes.IsNewGame:
-                            case CompareTypes.ScreenFadeVisible:
-                            case CompareTypes.UseLegacyIntimacy:
-                            {
-                                return $"{criterion.CompareType} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.IsPackageInstalled:
-                            {
-                                return $"{criterion.CompareType} {criterion.Value}";
-                            }
-                            case CompareTypes.IsZoneEmpty:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.ItemFromItemGroup:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.ItemFromItemGroupComparison} {(criterion.ItemFromItemGroupComparison == ItemFromItemGroupComparisonTypes.IsVisibleTo ? criterion.Character : "")} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.Personality:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Key} {criterion.EquationValue} {criterion.Value}";
-                            }
-                            case CompareTypes.PlayerGender:
-                            {
-                                return $"{criterion.CompareType} {criterion.Value}";
-                            }
-                            case CompareTypes.PlayerInventory:
-                            {
-                                return $"{criterion.CompareType} {criterion.PlayerInventoryOption} {(criterion.PlayerInventoryOption == PlayerInventoryOptions.HasItem ? criterion.Key : "")} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.PlayerPrefs:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.EquationValue} {criterion.Value}";
-                            }
-                            case CompareTypes.Posing:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.PoseOption} {(criterion.PoseOption == PoseOptions.CurrentPose ? (criterion.EqualsValue.ToString() + criterion.Value) : criterion.BoolValue)}";
-                            }
-                            case CompareTypes.Property:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.Quest:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character}'s {criterion.Key2} {criterion.EqualsValue} {criterion.Value}";
-                            }
-                            case CompareTypes.Social:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.SocialStatus} {criterion.EquationValue} {criterion.Value}";
-                            }
-                            case CompareTypes.State:
-                            {
-                                return $"{criterion.CompareType} {criterion.Character} {criterion.Value} {criterion.BoolValue}";
-                            }
-                            case CompareTypes.Value:
-                            {
-                                return $"{criterion.CompareType} {criterion.Key} {criterion.EquationValue} {criterion.Value}";
-                            }
-                            case CompareTypes.None:
-                            default:
-                            {
-                                break;
-                            }
-                        }
-                        return $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
-                    }
-                    case NodeType.ItemAction:
-                    {
-                        return $"{Data<ItemAction>()?.ActionName}";
-                    }
-                    case NodeType.ItemGroupBehaviour:
-                    {
-                        return $"{Data<ItemGroupBehavior>()?.Name} -> {Data<ItemGroupBehavior>()?.Name}";
-                    }
-                    case NodeType.ItemGroupInteraction:
-                    {
-                        return $"{Data<ItemGroupInteraction>()?.Name} on {Data<ItemGroupBehavior>()?.GroupName} | {Data<ItemGroupBehavior>()?.Id}";
-                    }
-                    case NodeType.Achievement:
-                    {
-                        return $"{Data<Achievement>()?.Name} | {Data<Achievement>()?.Id}";
-                    }
-                    case NodeType.BGC:
-                    {
-                        return $"{Data<BackgroundChatter>()?.Text} | {Data<BackgroundChatter>()?.Id}";
-                    }
-                    case NodeType.BGCResponse:
-                    {
-                        return $"{Data<BackgroundChatterResponse>()?.Label} -> respondant: {Data<BackgroundChatterResponse>()?.CharacterName}|{Data<BackgroundChatterResponse>()?.ChatterId}";
-                    }
-                    case NodeType.CriteriaGroup:
-                    {
-                        return $"{Data<CriteriaGroup>()?.Name} on group: {Data<CriteriaGroup>()?.LinkedGroupName} | {Data<CriteriaGroup>()?.Id}";
-                    }
-                    case NodeType.Dialogue:
-                    {
-                        return $"{Data<Dialogue>()?.ID} | {Data<Dialogue>()?.Text}";
-                    }
-                    case NodeType.AlternateText:
-                    {
-                        return $"{Data<AlternateText>()?.Text}";
-                    }
-                    case NodeType.GameEvent:
-                    {
-                        GameEvent gevent = Data<GameEvent>()!;
-                        try
-                        {
-                            //todo
-                            switch (gevent.EventType)
-                            {
-                                case GameEvents.AddForce:
-                                {
-                                    break;
-                                }
-                                case GameEvents.AllowPlayerSave:
-                                {
-                                    break;
-                                }
-                                case GameEvents.ChangeBodyScale:
-                                {
-                                    break;
-                                }
-                                case GameEvents.CharacterFromCharacterGroup:
-                                {
-                                    break;
-                                }
-                                case GameEvents.CharacterFunction:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Clothing:
-                                {
-                                    return gevent.Character + "'s  " + (gevent.Option4 == 0 ? (((ClothingType)int.Parse(gevent.Value!)).ToString()) : gevent.Value) + " in set " + (gevent.Option3 == 0 ? "any" : (gevent.Option3 - 1).ToString());
-                                }
-                                case GameEvents.Combat:
-                                {
-                                    break;
-                                }
-                                case GameEvents.CombineValue:
-                                {
-                                    return "Add " + gevent.Character + ":" + gevent.Key + " to " + gevent.Character2 + ":" + gevent.Value;
-                                }
-                                case GameEvents.CutScene:
-                                {
-                                    return ((CutsceneAction)gevent.Option).ToString() + " " + gevent.Key + " with " + gevent.Character + ", " + gevent.Value + ", " + gevent.Value2 + ", " + gevent.Character2 + " (location: " + gevent.Option2 + ")";
-                                }
-                                case GameEvents.Dialogue:
-                                {
-                                    return ((DialogueAction)gevent.Option).ToString() + " " + gevent.Character + "'s Dialogue " + gevent.Value;
-                                }
-                                case GameEvents.DisableNPC:
-                                {
-                                    return "Disable NPC " + gevent.Character;
-                                }
-                                case GameEvents.DisplayGameMessage:
-                                {
-                                    return "Display Message: " + gevent.Value;
-                                }
-                                case GameEvents.Door:
-                                {
-                                    return ((DoorAction)gevent.Option).ToString() + " " + gevent.Key!.ToString();
-                                }
-                                case GameEvents.Emote:
-                                {
-                                    break;
-                                }
-                                case GameEvents.EnableNPC:
-                                {
-                                    return "Enable NPC " + gevent.Character;
-                                }
-                                case GameEvents.EventTriggers:
-                                {
-                                    return gevent.Character + (gevent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gevent.Option2 == 0 ? "(False) " : "(True) ") + gevent.Value;
-                                }
-                                case GameEvents.FadeIn:
-                                {
-                                    return "Fade in over " + gevent.Value + "s";
-                                }
-                                case GameEvents.FadeOut:
-                                {
-                                    return "Fade out over " + gevent.Value + "s";
-                                }
-                                case GameEvents.IKReach:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Intimacy:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Item:
-                                {
-                                    return gevent.Key!.ToString() + " " + ((ItemEventAction)gevent.Option).ToString() + " (" + gevent.Value + ") " + " (" + (gevent.Option2 == 1 ? "True" : "False") + ") ";
-                                }
-                                case GameEvents.ItemFromItemGroup:
-                                {
-                                    return gevent.Key!.ToString() + " " + ((ItemGroupAction)gevent.Option).ToString() + " (" + gevent.Value + ") " + " (" + (gevent.Option2 == 1 ? "True" : "False") + ") ";
-                                }
-                                case GameEvents.LookAt:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Personality:
-                                {
-                                    return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((Modification)gevent.Option2).ToString() + " " + gevent.Value;
-                                }
-                                case GameEvents.Property:
-                                {
-                                    return gevent.Character + " " + EEnum.StringParse<InteractiveProperties>(gevent.Value!).ToString() + " " + (gevent.Option2 == 1 ? "True" : "False");
-                                }
-                                case GameEvents.MatchValue:
-                                {
-                                    return "set " + gevent.Character + ":" + gevent.Key + " to " + gevent.Character2 + ":" + gevent.Value;
-                                }
-                                case GameEvents.ModifyValue:
-                                {
-                                    return (gevent.Option == 0 ? "Equals " : "Add ") + gevent.Character + ":" + gevent.Key + " to " + gevent.Value;
-                                }
-                                case GameEvents.Player:
-                                {
-                                    return ((PlayerActions)gevent.Option).ToString() + (gevent.Option == 0 ? gevent.Option2 == 0 ? " Add " : " Remove " : " ") + gevent.Value + "/" + gevent.Character;
-                                }
-                                case GameEvents.PlaySoundboardClip:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Pose:
-                                {
-                                    return "Set " + gevent.Character + " Pose no. " + gevent.Value + " " + (gevent.Option == 0 ? " False" : " True");
-                                }
-                                case GameEvents.Quest:
-                                {
-                                    return ((QuestActions)gevent.Option).ToString() + " the quest " + gevent.Value + " from " + gevent.Character;
-                                }
-                                case GameEvents.RandomizeIntValue:
-                                {
-                                    return "set " + gevent.Character + ":" + gevent.Key + " to a random value between " + gevent.Value + " and " + gevent.Value2;
-                                }
-                                case GameEvents.ResetReactionCooldown:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Roaming:
-                                {
-                                    break;
-                                }
-                                case GameEvents.SendEvent:
-                                {
-                                    return gevent.Character + " " + ((SendEvents)gevent.Option).ToString();
-                                }
-                                case GameEvents.SetPlayerPref:
-                                {
-                                    break;
-                                }
-                                case GameEvents.Social:
-                                {
-                                    return gevent.Character + " " + ((SocialStatuses)gevent.Option).ToString() + " " + gevent.Character2 + (gevent.Option2 == 0 ? " Equals " : " Add ") + gevent.Value;
-                                }
-                                case GameEvents.State:
-                                {
-                                    return (gevent.Option == 0 ? "Add " : "Remove ") + gevent.Character + " State " + ((InteractiveStates)int.Parse(gevent.Value!)).ToString();
-                                }
-                                case GameEvents.TriggerBGC:
-                                {
-                                    return "trigger " + gevent.Character + "'s BGC " + gevent.Value + " as " + ((ImportanceSpecified)gevent.Option).ToString();
-                                }
-                                case GameEvents.Turn:
-                                {
-                                    break;
-                                }
-                                case GameEvents.TurnInstantly:
-                                {
-                                    break;
-                                }
-                                case GameEvents.UnlockAchievement:
-                                {
-                                    break;
-                                }
-                                case GameEvents.WalkTo:
-                                {
-                                    break;
-                                }
-                                case GameEvents.WarpOverTime:
-                                {
-                                    break;
-                                }
-                                case GameEvents.WarpTo:
-                                {
-                                    break;
-                                }
-                                case GameEvents.None:
-                                {
-                                    return "None";
-                                }
-                                default:
-                                {
-                                    break;
-                                }
-                            }
-                            goto case default;
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                            gevent.Value = "0";
-                            gevent.Key = "";
-                            gevent.Value2 = "";
-                            return Text;
-                        }
-                    }
-                    case NodeType.EventTrigger:
+                    return "Null node!";
+                }
+                case NodeType.CharacterGroup:
+                {
+                    return $"{Data<CharacterGroup>()?.Id}|{Data<CharacterGroup>()?.Name} -> {Data<CharacterGroup>()?.CharactersInGroup?.ListRepresentation()}";
+                }
+                case NodeType.Criterion:
+                {
+                    return Data<Criterion>()!.ToString();
+                }
+                case NodeType.ItemAction:
+                {
+                    return $"{Data<ItemAction>()?.ActionName}";
+                }
+                case NodeType.ItemGroupBehaviour:
+                {
+                    return $"{Data<ItemGroupBehavior>()?.Name} -> {Data<ItemGroupBehavior>()?.Name}";
+                }
+                case NodeType.ItemGroupInteraction:
+                {
+                    return $"{Data<ItemGroupInteraction>()?.Name} on {Data<ItemGroupBehavior>()?.GroupName} | {Data<ItemGroupBehavior>()?.Id}";
+                }
+                case NodeType.Achievement:
+                {
+                    return $"{Data<Achievement>()?.Name} | {Data<Achievement>()?.Id}";
+                }
+                case NodeType.BGC:
+                {
+                    return $"{Data<BackgroundChatter>()?.Text} | {Data<BackgroundChatter>()?.Id}";
+                }
+                case NodeType.BGCResponse:
+                {
+                    return $"{Data<BackgroundChatterResponse>()?.Label} -> respondant: {Data<BackgroundChatterResponse>()?.CharacterName}|{Data<BackgroundChatterResponse>()?.ChatterId}";
+                }
+                case NodeType.CriteriaGroup:
+                {
+                    return $"{Data<CriteriaGroup>()?.Name} on group: {Data<CriteriaGroup>()?.LinkedGroupName} | {Data<CriteriaGroup>()?.Id}";
+                }
+                case NodeType.Dialogue:
+                {
+                    return $"{Data<Dialogue>()?.ID} | {Data<Dialogue>()?.Text}";
+                }
+                case NodeType.AlternateText:
+                {
+                    return $"{Data<AlternateText>()?.Text}";
+                }
+                case NodeType.GameEvent:
+                {
+                    GameEvent gevent = Data<GameEvent>()!;
+                    try
                     {
                         //todo
-                        switch (Data<EventTrigger>()?.Type)
+                        switch (gevent.EventType)
                         {
-                            case EventTypes.Never:
+                            case GameEvents.AddForce:
                             {
                                 break;
                             }
-                            case EventTypes.GameStarts:
+                            case GameEvents.AllowPlayerSave:
                             {
                                 break;
                             }
-                            case EventTypes.EntersVision:
+                            case GameEvents.ChangeBodyScale:
                             {
                                 break;
                             }
-                            case EventTypes.ExitsVision:
+                            case GameEvents.CharacterFromCharacterGroup:
                             {
                                 break;
                             }
-                            case EventTypes.EntersVicinity:
+                            case GameEvents.CharacterFunction:
                             {
                                 break;
                             }
-                            case EventTypes.EntersZone:
+                            case GameEvents.Clothing:
+                            {
+                                return gevent.Character + "'s  " + (gevent.Option4 == 0 ? (((ClothingType)int.Parse(gevent.Value!)).ToString()) : gevent.Value) + " in set " + (gevent.Option3 == 0 ? "any" : (gevent.Option3 - 1).ToString());
+                            }
+                            case GameEvents.Combat:
                             {
                                 break;
                             }
-                            case EventTypes.ReachesTarget:
+                            case GameEvents.CombineValue:
+                            {
+                                return "Add " + gevent.Character + ":" + gevent.Key + " to " + gevent.Character2 + ":" + gevent.Value;
+                            }
+                            case GameEvents.CutScene:
+                            {
+                                return ((CutsceneAction)gevent.Option).ToString() + " " + gevent.Key + " with " + gevent.Character + ", " + gevent.Value + ", " + gevent.Value2 + ", " + gevent.Character2 + " (location: " + gevent.Option2 + ")";
+                            }
+                            case GameEvents.Dialogue:
+                            {
+                                return ((DialogueAction)gevent.Option).ToString() + " " + gevent.Character + "'s Dialogue " + gevent.Value;
+                            }
+                            case GameEvents.DisableNPC:
+                            {
+                                return "Disable NPC " + gevent.Character;
+                            }
+                            case GameEvents.DisplayGameMessage:
+                            {
+                                return "Display Message: " + gevent.Value;
+                            }
+                            case GameEvents.Door:
+                            {
+                                return ((DoorAction)gevent.Option).ToString() + " " + gevent.Key!.ToString();
+                            }
+                            case GameEvents.Emote:
                             {
                                 break;
                             }
-                            case EventTypes.IsBlockedByLockedDoor:
+                            case GameEvents.EnableNPC:
+                            {
+                                return "Enable NPC " + gevent.Character;
+                            }
+                            case GameEvents.EventTriggers:
+                            {
+                                return gevent.Character + (gevent.Option == 0 ? " Perform Event " : " Set Enabled ") + (gevent.Option2 == 0 ? "(False) " : "(True) ") + gevent.Value;
+                            }
+                            case GameEvents.FadeIn:
+                            {
+                                return "Fade in over " + gevent.Value + "s";
+                            }
+                            case GameEvents.FadeOut:
+                            {
+                                return "Fade out over " + gevent.Value + "s";
+                            }
+                            case GameEvents.IKReach:
                             {
                                 break;
                             }
-                            case EventTypes.IsAttacked:
+                            case GameEvents.Intimacy:
                             {
                                 break;
                             }
-                            case EventTypes.GetsKnockedOut:
+                            case GameEvents.Item:
+                            {
+                                return gevent.Key!.ToString() + " " + ((ItemEventAction)gevent.Option).ToString() + " (" + gevent.Value + ") " + " (" + (gevent.Option2 == 1 ? "True" : "False") + ") ";
+                            }
+                            case GameEvents.ItemFromItemGroup:
+                            {
+                                return gevent.Key!.ToString() + " " + ((ItemGroupAction)gevent.Option).ToString() + " (" + gevent.Value + ") " + " (" + (gevent.Option2 == 1 ? "True" : "False") + ") ";
+                            }
+                            case GameEvents.LookAt:
                             {
                                 break;
                             }
-                            case EventTypes.Dies:
+                            case GameEvents.Personality:
+                            {
+                                return gevent.Character + " " + ((PersonalityTraits)gevent.Option).ToString() + " " + ((Modification)gevent.Option2).ToString() + " " + gevent.Value;
+                            }
+                            case GameEvents.Property:
+                            {
+                                return gevent.Character + " " + EEnum.StringParse<InteractiveProperties>(gevent.Value!).ToString() + " " + (gevent.Option2 == 1 ? "True" : "False");
+                            }
+                            case GameEvents.MatchValue:
+                            {
+                                return "set " + gevent.Character + ":" + gevent.Key + " to " + gevent.Character2 + ":" + gevent.Value;
+                            }
+                            case GameEvents.ModifyValue:
+                            {
+                                return (gevent.Option == 0 ? "Equals " : "Add ") + gevent.Character + ":" + gevent.Key + " to " + gevent.Value;
+                            }
+                            case GameEvents.Player:
+                            {
+                                return ((PlayerActions)gevent.Option).ToString() + (gevent.Option == 0 ? gevent.Option2 == 0 ? " Add " : " Remove " : " ") + gevent.Value + "/" + gevent.Character;
+                            }
+                            case GameEvents.PlaySoundboardClip:
                             {
                                 break;
                             }
-                            case EventTypes.GetsHitWithProjectile:
+                            case GameEvents.Pose:
+                            {
+                                return "Set " + gevent.Character + " Pose no. " + gevent.Value + " " + (gevent.Option == 0 ? " False" : " True");
+                            }
+                            case GameEvents.Quest:
+                            {
+                                return ((QuestActions)gevent.Option).ToString() + " the quest " + gevent.Value + " from " + gevent.Character;
+                            }
+                            case GameEvents.RandomizeIntValue:
+                            {
+                                return "set " + gevent.Character + ":" + gevent.Key + " to a random value between " + gevent.Value + " and " + gevent.Value2;
+                            }
+                            case GameEvents.ResetReactionCooldown:
                             {
                                 break;
                             }
-                            case EventTypes.FallsOver:
+                            case GameEvents.Roaming:
                             {
                                 break;
                             }
-                            case EventTypes.IsNaked:
+                            case GameEvents.SendEvent:
+                            {
+                                return gevent.Character + " " + ((SendEvents)gevent.Option).ToString();
+                            }
+                            case GameEvents.SetPlayerPref:
                             {
                                 break;
                             }
-                            case EventTypes.IsBottomless:
+                            case GameEvents.Social:
+                            {
+                                return gevent.Character + " " + ((SocialStatuses)gevent.Option).ToString() + " " + gevent.Character2 + (gevent.Option2 == 0 ? " Equals " : " Add ") + gevent.Value;
+                            }
+                            case GameEvents.State:
+                            {
+                                return (gevent.Option == 0 ? "Add " : "Remove ") + gevent.Character + " State " + ((InteractiveStates)int.Parse(gevent.Value!)).ToString();
+                            }
+                            case GameEvents.TriggerBGC:
+                            {
+                                return "trigger " + gevent.Character + "'s BGC " + gevent.Value + " as " + ((ImportanceSpecified)gevent.Option).ToString();
+                            }
+                            case GameEvents.Turn:
                             {
                                 break;
                             }
-                            case EventTypes.IsTopless:
+                            case GameEvents.TurnInstantly:
                             {
                                 break;
                             }
-                            case EventTypes.ExposesGenitals:
+                            case GameEvents.UnlockAchievement:
                             {
                                 break;
                             }
-                            case EventTypes.CaughtMasturbating:
+                            case GameEvents.WalkTo:
                             {
                                 break;
                             }
-                            case EventTypes.CaughtHavingSex:
+                            case GameEvents.WarpOverTime:
                             {
                                 break;
                             }
-                            case EventTypes.ExposesChest:
+                            case GameEvents.WarpTo:
                             {
                                 break;
                             }
-                            case EventTypes.StartedIntimacyAct:
+                            case GameEvents.None:
                             {
-                                break;
-                            }
-                            case EventTypes.Orgasms:
-                            {
-                                break;
-                            }
-                            case EventTypes.EjaculatesOnMe:
-                            {
-                                break;
-                            }
-                            case EventTypes.GropesMyBreast:
-                            {
-                                break;
-                            }
-                            case EventTypes.GropesMyAss:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerGrabsItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerReleasesItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.VapesOnMe:
-                            {
-                                break;
-                            }
-                            case EventTypes.PopperedMe:
-                            {
-                                break;
-                            }
-                            case EventTypes.PhoneBlindedMe:
-                            {
-                                break;
-                            }
-                            case EventTypes.Periodically:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnItemFunction:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnAnyItemAcceptFallback:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnAnyItemRefuseFallback:
-                            {
-                                break;
-                            }
-                            case EventTypes.CombatModeToggled:
-                            {
-                                break;
-                            }
-                            case EventTypes.PokedByVibrator:
-                            {
-                                break;
-                            }
-                            case EventTypes.ImpactsGround:
-                            {
-                                break;
-                            }
-                            case EventTypes.ImpactsWall:
-                            {
-                                break;
-                            }
-                            case EventTypes.ScoredBeerPongPoint:
-                            {
-                                break;
-                            }
-                            case EventTypes.PeesOnMe:
-                            {
-                                break;
-                            }
-                            case EventTypes.PeesOnItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.StartedPeeing:
-                            {
-                                break;
-                            }
-                            case EventTypes.StoppedPeeing:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerThrowsItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.StartedUsingActionItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.StoppedUsingActionItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnFriendshipIncreaseWith:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnRomanceIncreaseWith:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnFriendshipDecreaseWith:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnRomanceDecreaseWith:
-                            {
-                                break;
-                            }
-                            case EventTypes.IsDancing:
-                            {
-                                break;
-                            }
-                            case EventTypes.StartedLapDance:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerInventoryOpened:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerInventoryClosed:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerOpportunityWindowOpened:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerInteractsWithCharacter:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerInteractsWithItem:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnScreenFadeInComplete:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnScreenFadeOutComplete:
-                            {
-                                break;
-                            }
-                            case EventTypes.FinishedPopulatingMainDialogueText:
-                            {
-                                break;
-                            }
-                            case EventTypes.PlayerTookCameraPhoto:
-                            {
-                                break;
-                            }
-                            case EventTypes.OnAfterCutSceneEnds:
-                            {
-                                break;
-                            }
-                            case EventTypes.Ejaculates:
-                            {
-                                break;
-                            }
-                            case EventTypes.None:
-                            {
-                                break;
+                                return "None";
                             }
                             default:
                             {
                                 break;
                             }
                         }
-                        return Data<EventTrigger>()?.Name ?? "unnamed event trigger";
+                        goto case default;
                     }
-                    case NodeType.ItemGroup:
+                    catch (Exception ex)
                     {
-                        return $"{Data<ItemGroup>()?.Name} | {Data<ItemGroup>()?.Id} |  -> {Data<ItemGroup>()?.ItemsInGroup.ListRepresentation()}";
+                        Debug.WriteLine(ex.Message);
+                        gevent.Value = "0";
+                        gevent.Key = "";
+                        gevent.Value2 = "";
+                        return Text;
                     }
-                    case NodeType.Personality:
+                }
+                case NodeType.EventTrigger:
+                {
+                    //todo
+                    switch (Data<EventTrigger>()?.Type)
                     {
-                        if (dataType == typeof(Trait))
+                        case EventTypes.Never:
                         {
-                            return $"{Data<Trait>()?.Type} : {Data<Trait>()?.Value}";
+                            break;
                         }
-                        else
+                        case EventTypes.GameStarts:
                         {
-                            return StaticText;
+                            break;
+                        }
+                        case EventTypes.EntersVision:
+                        {
+                            break;
+                        }
+                        case EventTypes.ExitsVision:
+                        {
+                            break;
+                        }
+                        case EventTypes.EntersVicinity:
+                        {
+                            break;
+                        }
+                        case EventTypes.EntersZone:
+                        {
+                            break;
+                        }
+                        case EventTypes.ReachesTarget:
+                        {
+                            break;
+                        }
+                        case EventTypes.IsBlockedByLockedDoor:
+                        {
+                            break;
+                        }
+                        case EventTypes.IsAttacked:
+                        {
+                            break;
+                        }
+                        case EventTypes.GetsKnockedOut:
+                        {
+                            break;
+                        }
+                        case EventTypes.Dies:
+                        {
+                            break;
+                        }
+                        case EventTypes.GetsHitWithProjectile:
+                        {
+                            break;
+                        }
+                        case EventTypes.FallsOver:
+                        {
+                            break;
+                        }
+                        case EventTypes.IsNaked:
+                        {
+                            break;
+                        }
+                        case EventTypes.IsBottomless:
+                        {
+                            break;
+                        }
+                        case EventTypes.IsTopless:
+                        {
+                            break;
+                        }
+                        case EventTypes.ExposesGenitals:
+                        {
+                            break;
+                        }
+                        case EventTypes.CaughtMasturbating:
+                        {
+                            break;
+                        }
+                        case EventTypes.CaughtHavingSex:
+                        {
+                            break;
+                        }
+                        case EventTypes.ExposesChest:
+                        {
+                            break;
+                        }
+                        case EventTypes.StartedIntimacyAct:
+                        {
+                            break;
+                        }
+                        case EventTypes.Orgasms:
+                        {
+                            break;
+                        }
+                        case EventTypes.EjaculatesOnMe:
+                        {
+                            break;
+                        }
+                        case EventTypes.GropesMyBreast:
+                        {
+                            break;
+                        }
+                        case EventTypes.GropesMyAss:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerGrabsItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerReleasesItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.VapesOnMe:
+                        {
+                            break;
+                        }
+                        case EventTypes.PopperedMe:
+                        {
+                            break;
+                        }
+                        case EventTypes.PhoneBlindedMe:
+                        {
+                            break;
+                        }
+                        case EventTypes.Periodically:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnItemFunction:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnAnyItemAcceptFallback:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnAnyItemRefuseFallback:
+                        {
+                            break;
+                        }
+                        case EventTypes.CombatModeToggled:
+                        {
+                            break;
+                        }
+                        case EventTypes.PokedByVibrator:
+                        {
+                            break;
+                        }
+                        case EventTypes.ImpactsGround:
+                        {
+                            break;
+                        }
+                        case EventTypes.ImpactsWall:
+                        {
+                            break;
+                        }
+                        case EventTypes.ScoredBeerPongPoint:
+                        {
+                            break;
+                        }
+                        case EventTypes.PeesOnMe:
+                        {
+                            break;
+                        }
+                        case EventTypes.PeesOnItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.StartedPeeing:
+                        {
+                            break;
+                        }
+                        case EventTypes.StoppedPeeing:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerThrowsItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.StartedUsingActionItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.StoppedUsingActionItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnFriendshipIncreaseWith:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnRomanceIncreaseWith:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnFriendshipDecreaseWith:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnRomanceDecreaseWith:
+                        {
+                            break;
+                        }
+                        case EventTypes.IsDancing:
+                        {
+                            break;
+                        }
+                        case EventTypes.StartedLapDance:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerInventoryOpened:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerInventoryClosed:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerOpportunityWindowOpened:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerInteractsWithCharacter:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerInteractsWithItem:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnScreenFadeInComplete:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnScreenFadeOutComplete:
+                        {
+                            break;
+                        }
+                        case EventTypes.FinishedPopulatingMainDialogueText:
+                        {
+                            break;
+                        }
+                        case EventTypes.PlayerTookCameraPhoto:
+                        {
+                            break;
+                        }
+                        case EventTypes.OnAfterCutSceneEnds:
+                        {
+                            break;
+                        }
+                        case EventTypes.Ejaculates:
+                        {
+                            break;
+                        }
+                        case EventTypes.None:
+                        {
+                            break;
+                        }
+                        default:
+                        {
+                            break;
                         }
                     }
-                    case NodeType.Quest:
+                    return Data<EventTrigger>()?.Name ?? "unnamed event trigger" + (Data<EventTrigger>()?.Type ?? EventTypes.None);
+                }
+                case NodeType.ItemGroup:
+                {
+                    return $"{Data<ItemGroup>()?.Name} | {Data<ItemGroup>()?.Id} |  -> {Data<ItemGroup>()?.ItemsInGroup.ListRepresentation()}";
+                }
+                case NodeType.Personality:
+                {
+                    if (dataType == typeof(Trait))
                     {
-                        if (Data<Quest>() is null)
-                        {
-                            return StaticText;
-                        }
-                        else
-                        {
-                            return $"{Data<Quest>()?.Name ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
-                        }
+                        return $"{Data<Trait>()?.Type} : {Data<Trait>()?.Value}";
                     }
-                    case NodeType.Response:
+                    else
                     {
-                        return $"{Data<Response>()?.Id} -> {Data<Response>()?.Text} | leads to: {Data<Response>()?.Next}";
+                        return StaticText;
                     }
-                    case NodeType.Value:
+                }
+                case NodeType.Quest:
+                {
+                    if (Data<Quest>() is null)
                     {
-                        return $"{fileName}:{Data<string>()} \n{StaticText}";
+                        return StaticText;
                     }
-                    case NodeType.UseWith:
+                    else
                     {
-                        return $"{Data<UseWith>()?.ItemName} -> {Data<UseWith>()?.CustomCantDoThatMessage}";
+                        return $"{Data<Quest>()?.Name ?? ID} -> {Data<Quest>()?.CharacterName}|{Data<Quest>()?.Name} on completion: [{Data<Quest>()?.CompletedDetails}] on failure: [{Data<Quest>()?.FailedDetails}] ";
                     }
-                    case NodeType.Pose:
+                }
+                case NodeType.Response:
+                {
+                    return $"{Data<Response>()?.Id} -> {Data<Response>()?.Text} | leads to: {Data<Response>()?.Next}";
+                }
+                case NodeType.Value:
+                {
+                    return $"{fileName}:{Data<string>()} \n{StaticText}";
+                }
+                case NodeType.UseWith:
+                {
+                    return $"{Data<UseWith>()?.ItemName} -> {Data<UseWith>()?.CustomCantDoThatMessage}";
+                }
+                case NodeType.Pose:
+                {
+                    if (int.TryParse(ID, out int res))
                     {
-                        if (int.TryParse(ID, out int res))
-                        {
-                            return ((Poses)res).ToString();
-                        }
-                        else
-                        {
-                            return "Pose" + ID;
-                        }
+                        return ((Poses)res).ToString();
                     }
-                    case NodeType.Inventory:
-                    case NodeType.StoryItem:
-                    case NodeType.ItemInteraction:
-                    case NodeType.Property:
-                    case NodeType.Social:
-                    case NodeType.State:
-                    case NodeType.Door:
-                    case NodeType.Clothing:
-                    case NodeType.Cutscene:
-                    default:
+                    else
                     {
-                        if (string.IsNullOrEmpty(StaticText))
-                        {
-                            return $"{fileName} | {Type} | {ID}";
-                        }
-                        else
-                        {
-                            return StaticText;
-                        }
+                        return "Pose" + ID;
+                    }
+                }
+                case NodeType.Inventory:
+                case NodeType.StoryItem:
+                case NodeType.ItemInteraction:
+                case NodeType.Property:
+                case NodeType.Social:
+                case NodeType.State:
+                case NodeType.Door:
+                case NodeType.Clothing:
+                case NodeType.Cutscene:
+                default:
+                {
+                    if (string.IsNullOrEmpty(StaticText))
+                    {
+                        return $"{fileName} | {Type} | {ID}";
+                    }
+                    else
+                    {
+                        return StaticText;
                     }
                 }
             }
@@ -1020,20 +866,17 @@ namespace CSC.Nodestuff
         public static Node CreateCriteriaNode(Criterion criterion, string filename, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
-            //var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.Data<Criterion>()?.Character == criterion.Character && n.Data<Criterion>()?.Value == criterion.Value && n.Data<Criterion>()?.Key == criterion.Key && n.Data<Criterion>()?.CompareType== criterion.CompareType);
-            var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}");
+            var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == criterion.ToString());
             if (result is not null)
             {
                 return result;
             }
-            else
-            {
-                return new Node(
-                    $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}",
-                    NodeType.Criterion,
-                    $"{criterion.Character}|{criterion.CompareType}|{criterion.DialogueStatus}|{criterion.Key}|{criterion.Value}")
-                { FileName = filename, RawData = criterion };
-            }
+
+            return new Node(
+                criterion.ToString(),
+                NodeType.Criterion,
+                $"{criterion.Character}|{criterion.CompareType}|{criterion.Key}|{criterion.Value}")
+            { FileName = filename, RawData = criterion };
         }
 
         public void AddCriteria(List<Criterion> criteria, NodeStore nodes)

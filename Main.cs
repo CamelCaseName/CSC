@@ -173,9 +173,9 @@ public partial class Main : Form
     //todo original story linking is still wrong
     //todo filter/hide node types
     //todo switch rendering to direct2d
+
     //todo add story node cache on disk
     //todo add story search tree cache on disk
-
     //todo add info when trying to link incompatible notes
     //todo unify all node creation so its always the same
     //todo add grouping
@@ -1962,7 +1962,7 @@ public partial class Main : Form
             nodes[fileStore].Positions.Clear();
             foreach (var node in nodes[fileStore].Nodes)
             {
-                if (positions[fileStore].TryGetValue(new NodeID(fileStore, node.Type, node.ID, node.OrigFileName, node.DataType), out var point))
+                if (positions[fileStore].TryGetValue(new NodeID(fileStore, node.Type, node.ID, node.Text), out var point))
                 {
                     node.Position = point;
                 }
@@ -1975,7 +1975,7 @@ public partial class Main : Form
             {
                 foreach (var node in notSet)
                 {
-                    Debug.WriteLine(fileStore + "|" + node.FileName + ":" + node.ID);
+                    Debug.WriteLine(fileStore + "|" + node.FileName + "|" + node.Type + ":" + node.ID);
                 }
                 SetStartPositionsForNodesInList(10, 0, nodes[fileStore], notSet, false);
                 hadNodesNewlySet = true;
@@ -2010,7 +2010,14 @@ public partial class Main : Form
             positions.Add(nodeStore, []);
             foreach (var node in nodes[nodeStore].Nodes)
             {
-                positions[nodeStore].Add(new NodeID(nodeStore, node.Type, node.ID, node.OrigFileName, node.DataType), node.Position);
+                try
+                {
+                    positions[nodeStore].Add(new NodeID(nodeStore, node.Type, node.ID, node.Text), node.Position);
+                }
+                catch (Exception e)
+                { 
+                    Debugger.Break();
+                }
             }
         }
 
@@ -2621,7 +2628,6 @@ public partial class Main : Form
                         }
                         valueChar1.SelectedItem = criterion.Key!;
                         valueChar1.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = valueChar1.SelectedItem!.ToString()!);
-                        valueChar1.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(valueChar1);
 
                         ComboBox formula = GetComboBox();
@@ -2701,7 +2707,6 @@ public partial class Main : Form
                         }
                         dialogue.SelectedItem = criterion.Value!;
                         dialogue.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = dialogue.SelectedItem!.ToString()!);
-                        dialogue.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(dialogue);
 
                         ComboBox formula = GetComboBox();
@@ -2871,7 +2876,6 @@ public partial class Main : Form
                         }
                         box.SelectedItem = criterion.Key;
                         box.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = box.SelectedItem!.ToString()!);
-                        box.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(box);
 
                         box = GetComboBox();
@@ -2997,7 +3001,6 @@ public partial class Main : Form
                             criterion.Character = Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item1 ?? node.FileName;
                             criterion.Key = Quests.Find(n => n.Item2.Name == criterion.Key2)?.Item2.ID ?? "#";
                         });
-                        quest.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(quest);
                         PropertyInspector.SetColumnSpan(quest, 3);
 
@@ -3053,7 +3056,6 @@ public partial class Main : Form
                         }
                         value.SelectedItem = criterion.Key!;
                         value.AddComboBoxHandler(node, nodes[SelectedCharacter], (sender, values) => criterion.Key = value.SelectedItem!.ToString()!);
-                        value.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         PropertyInspector.Controls.Add(value);
 
                         PutEquation(node, criterion);
@@ -3065,7 +3067,6 @@ public partial class Main : Form
                             Text = criterion.Value
                         };
                         obj2.TextChanged += (_, args) => criterion.Value = obj2.Text;
-                        obj2.TextChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
                         obj2.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
                         PropertyInspector.Controls.Add(obj2);
 
@@ -4753,7 +4754,6 @@ public partial class Main : Form
         }
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Value)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
-        options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4767,7 +4767,6 @@ public partial class Main : Form
         }
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Key)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
-        options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4794,7 +4793,6 @@ public partial class Main : Form
         }
         options.SelectedItem = (Enum.GetName((E)(object)int.Parse(criterion.Key2)));
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key2 = ((int)(object)Enum.Parse<E>(options.SelectedItem!.ToString()!)).ToString());
-        options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4808,7 +4806,6 @@ public partial class Main : Form
         }
         options.SelectedItem = criterion.Value.Enumize();
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Value = options.SelectedItem!.ToString()!);
-        options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -4835,7 +4832,6 @@ public partial class Main : Form
         }
         options.SelectedItem = Enum.GetName(typeof(E), criterion.Option)!;
         options.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Option = (int)(object)Enum.Parse<E>(options.SelectedItem.ToString()!));
-        options.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(options, GeventPropertyCounter++, 1);
     }
 
@@ -5168,7 +5164,6 @@ public partial class Main : Form
             equ.SelectedItem = criterion.EquationValue!.ToString()!;
         }
         equ.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.EquationValue = Enum.Parse<ComparisonEquations>(equ.SelectedItem!.ToString()!));
-        equ.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(equ);
     }
 
@@ -5178,7 +5173,6 @@ public partial class Main : Form
         zone.Items.AddRange(Enum.GetNames<Zones>());
         zone.SelectedItem = criterion.Key;
         zone.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = (string)zone.SelectedItem!);
-        zone.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(zone);
     }
 
@@ -5188,7 +5182,6 @@ public partial class Main : Form
         compareType.Items.AddRange(Enum.GetNames<CompareTypes>());
         compareType.SelectedItem = criterion.CompareType.ToString();
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.CompareType = Enum.Parse<CompareTypes>((string)compareType.SelectedItem!));
-        compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(compareType);
     }
 
@@ -5198,7 +5191,6 @@ public partial class Main : Form
         compareType.Items.AddRange(Enum.GetNames<Characters>());
         compareType.SelectedItem = criterion.Character;
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Character = (string)compareType.SelectedItem!);
-        compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(compareType);
         return compareType;
     }
@@ -5209,7 +5201,6 @@ public partial class Main : Form
         compareType.Items.AddRange(Enum.GetNames<Characters>());
         compareType.SelectedItem = criterion.Character2;
         compareType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Character2 = (string)compareType.SelectedItem!);
-        compareType.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(compareType);
     }
 
@@ -5219,7 +5210,6 @@ public partial class Main : Form
         boolValue.Items.AddRange(Enum.GetNames<BoolCritera>());
         boolValue.SelectedItem = criterion.BoolValue!.ToString();
         boolValue.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.BoolValue = Enum.Parse<BoolCritera>(boolValue.SelectedItem!.ToString()!));
-        boolValue.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(boolValue);
     }
 
@@ -5229,7 +5219,6 @@ public partial class Main : Form
         item.Items.AddRange(Enum.GetNames<Items>());
         item.SelectedItem = criterion.Key!.Enumize();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.Key = item.SelectedItem!.ToString()!);
-        item.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(item);
     }
 
@@ -5239,7 +5228,6 @@ public partial class Main : Form
         equals.Items.AddRange(Enum.GetNames<EqualsValues>());
         equals.SelectedIndex = (int)criterion.EqualsValue!;
         equals.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => criterion.EqualsValue = (EqualsValues)equals.SelectedIndex);
-        equals.SelectedIndexChanged += (_, _) => node.ID = $"{criterion.Character}{criterion.CompareType}{criterion.Key}{criterion.Value}";
         PropertyInspector.Controls.Add(equals);
     }
 
