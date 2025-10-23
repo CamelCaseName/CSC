@@ -241,7 +241,6 @@ namespace CSC.Nodestuff
             var pos = node.Position;
             Main.ClearNodePos(node, fileName);
             Main.ClearNodePos(node, replacement.FileName);
-            Main.SetNodePos(replacement, fileName);
             replacement.Position = pos;
         }
 

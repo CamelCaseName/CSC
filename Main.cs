@@ -1865,6 +1865,7 @@ public partial class Main : Form
             }
             maxYperX.ExtendToIndex(intX, intY);
 
+            //selectedcharacter is set correctly here
             intX = SetStartPosForConnected(intX, nodeStore, key, inListOnly);
         }
         if (!restarted && skipCount == nodeList.Count)
@@ -4962,14 +4963,14 @@ public partial class Main : Form
         //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.mouseeventargs.delta?view=windowsdesktop-6.0
         if (e.Delta > 0)
         {
-            if (Scaling[SelectedCharacter] < 10)
+            if (Scaling[SelectedCharacter] < 5)
             {
                 Scaling[SelectedCharacter] *= 1.2f;
             }
         }
         else if (e.Delta < 0)
         {
-            if (Scaling[SelectedCharacter] > 0.1f)
+            if (Scaling[SelectedCharacter] > 0.01f)
             {
                 Scaling[SelectedCharacter] *= 0.8f;
             }
@@ -5517,6 +5518,7 @@ public partial class Main : Form
         {
             maxYperX[i] = intY;
         }
+        //selectedcharacter is set correctly here
         SetStartPosForConnected(intX, nodes[SelectedCharacter], SelectedNode);
 
         Graph.Invalidate();

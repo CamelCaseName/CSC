@@ -6,7 +6,6 @@ using Silk.NET.DirectWrite;
 using Silk.NET.DXGI;
 using Silk.NET.Maths;
 using System.Diagnostics;
-using System.Xml.Linq;
 using AlphaMode = Silk.NET.Direct2D.AlphaMode;
 using DashStyle = Silk.NET.Direct2D.DashStyle;
 using DWExtensions = Silk.NET.DirectWrite.DWriteFactoryVtblExtensions;
@@ -167,7 +166,7 @@ namespace CSC.Direct2D
                 D3Dcolorvalue bc = new(40 / 255f, 40 / 255f, 40 / 255f, 1f);
                 target.Clear(ref bc);
 
-                DrawAllNodes(g, nodes);
+                DrawAllNodes(nodes);
 
                 ulong tag1 = 0, tag2 = 0;
                 target.EndDraw(ref tag1, ref tag2);
@@ -187,17 +186,14 @@ namespace CSC.Direct2D
             ReleaseD2DResources();
         }
 
-        private void DrawAllNodes(Graphics g, NodeStore nodes)
+        private void DrawAllNodes(NodeStore nodes)
         {
-            //todo somehow draw nodes in order thats fastest/combine draws idk
             //cached
             DrawMainEdges(nodes);
 
             List<Node> visible = nodes.Positions[adjustedVisibleClipBounds];
-            foreach (var node in visible)
-            {
-                DrawNode(g, node, GetNodeColor(node.Type, false));
-            }
+
+            DrawNodes(visible);
 
             Node selected = Main.Selected;
             if (selected != Node.NullNode)
@@ -206,21 +202,21 @@ namespace CSC.Direct2D
                 if (family.Childs.Count > 0)
                 {
                     DrawEdges(selected, family.Childs, clickedLinePen.AsBrush(), clickedLinePenWidth);
+                    foreach (var node in family.Childs)
+                    {
+                        DrawNode(node, GetNodeColor(node.Type, true), true);
+                    }
                 }
                 if (family.Parents.Count > 0)
                 {
                     DrawEdges(selected, family.Parents, clickedLinePen.AsBrush(), clickedLinePenWidth, true);
+                    foreach (var node in family.Parents)
+                    {
+                        DrawNode(node, GetNodeColor(node.Type, true), true);
+                    }
                 }
 
-                foreach (var node in family.Childs)
-                {
-                    DrawNode(g, node, GetNodeColor(node.Type, true), true);
-                }
-                foreach (var node in family.Parents)
-                {
-                    DrawNode(g, node, GetNodeColor(node.Type, true), true);
-                }
-                DrawNode(g, selected, GetNodeColor(selected.Type, true), true);
+                DrawNode(selected, GetNodeColor(selected.Type, true), true, true);
             }
 
             Node highlight = Main.Highlight;
@@ -235,12 +231,21 @@ namespace CSC.Direct2D
                 {
                     DrawEdges(highlight, family.Parents, highlightPen.AsBrush(), highlightPenWidth, true);
                 }
-                DrawNode(g, highlight, HighlightNodeBrush.AsBrush(), true);
+                DrawNode(highlight, HighlightNodeBrush.AsBrush(), true);
             }
 
             if (Main.LinkFrom != Node.NullNode)
             {
-                DrawNode(g, Main.LinkFrom, NodeToLinkNextBrush.AsBrush(), true);
+                DrawNode(Main.LinkFrom, NodeToLinkNextBrush.AsBrush(), true);
+            }
+        }
+
+        private void DrawNodes(List<Node> visible)
+        {
+            //no measureable difference even for OS whether nodes are in order or not. Drawing all OS takes about 18ms for me
+            foreach (var node in visible)
+            {
+                DrawNode(node, GetNodeColor(node.Type, false));
             }
         }
 
@@ -429,7 +434,7 @@ namespace CSC.Direct2D
             }
         }
 
-        private void DrawNode(Graphics g, Node node, ID2D1Brush* brush, bool lighttext = false)
+        private void DrawNode(Node node, ID2D1Brush* brush, bool lighttext = false, bool isSelected = false)
         {
             if (node == Node.NullNode)
             {
@@ -445,7 +450,7 @@ namespace CSC.Direct2D
                 target.DrawEllipse(&left, circlePen.AsBrush(), circlePenWidth, defaultStyle);
                 target.DrawEllipse(&right, circlePen.AsBrush(), circlePenWidth, defaultStyle);
             }
-            if (node == Main.Selected)
+            if (isSelected)
             {
                 lighttext = true;
                 if (node.FileName != Main.SelectedCharacter)
@@ -463,7 +468,7 @@ namespace CSC.Direct2D
                 target.FillRoundedRectangle(ref interRect, InterlinkedNodeBrush);
             }
 
-            var rect = node.Rectangle.ToRoundedRect(10f);
+            var rect = node.RoundRectangle;
             target.FillRoundedRectangle(ref rect, brush);
 
             if (Main.selected.Contains(node))
@@ -575,7 +580,7 @@ namespace CSC.Direct2D
                         Format = Format.FormatB8G8R8A8Unorm
                     },
                     Usage = RenderTargetUsage.GdiCompatible,
-                    MinLevel = FeatureLevel.LevelDefault,
+                    MinLevel = FeatureLevel.Level10,
                 };
                 res = factory.CreateDCRenderTarget(&renderTargetProperties, ref target);
                 if (res != 0)
@@ -831,6 +836,11 @@ namespace CSC.Direct2D
             target.Release();
             d2d.Dispose();
         }
+    }
+
+    internal class NodeTypeComparer : IComparer<Node>
+    {
+        public int Compare(Node? x, Node? y) => x?.Type > y?.Type ? -1 : 1;
     }
 }
 

@@ -1,4 +1,5 @@
-﻿using CSC.Glue;
+﻿using CSC.Direct2D;
+using CSC.Glue;
 using CSC.StoryItems;
 using System.Data;
 using System.Diagnostics;
@@ -7,37 +8,6 @@ using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
 {
-    public readonly ref struct NodeID(string file, NodeType Type, string ID, string text)
-    {
-        public NodeType Type { get; } = Type;
-        public ReadOnlySpan<char> ID { get; } = ID.AsSpan();
-        public ReadOnlySpan<char> Text { get; } = text.AsSpan()[..(Math.Min(50, text.Length))];
-        public ReadOnlySpan<char> File { get; } = file.AsSpan();
-
-        public static implicit operator long(NodeID n)
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                long hash = 17;
-                hash = hash * 23 + (int)n.Type;
-                hash = hash * 23 + CalculateHash(n.ID);
-                hash = hash * 17 + CalculateHash(n.File);
-                hash = hash * 23 + CalculateHash(n.Text);
-                return hash;
-            }
-        }
-
-        static long CalculateHash(ReadOnlySpan<char> read)
-        {
-            ulong hashedValue = 3074457345618258791ul;
-            for (int i = 0; i < read.Length; i++)
-            {
-                hashedValue += read[i];
-                hashedValue *= 3074457345618258799ul;
-            }
-            return (long)hashedValue;
-        }
-    }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum NodeType
@@ -116,7 +86,7 @@ namespace CSC.Nodestuff
 
         public static readonly Node NullNode = new();
         public string ID;
-        public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
+        private SizeF size = new(Main.NodeSizeX, Main.NodeSizeY);
         public string StaticText;
         public string _text = string.Empty;
         public NodeType Type;
@@ -190,6 +160,11 @@ namespace CSC.Nodestuff
             {
                 if (Positions.TryGetValue(Main.SelectedCharacter, out var result))
                 {
+                    if (result.X != _rect.X || result.Y != _rect.Y)
+                    {
+                        _rect = new(result, Size);
+                        _roundedRect = _rect.ToRoundedRect(10f);
+                    }
                     return result;
                 }
                 else
@@ -204,6 +179,8 @@ namespace CSC.Nodestuff
                 Positions[Main.SelectedCharacter] = value;
                 Main.SetNodePos(this, Main.SelectedCharacter);
                 Main.NeedsSaving = true;
+                _rect = new(value, Size);
+                _roundedRect = _rect.ToRoundedRect(10f);
             }
         }
 
@@ -226,7 +203,7 @@ namespace CSC.Nodestuff
 
                 if (DataType == typeof(Dialogue) || DataType == typeof(ItemInteraction) || DataType == typeof(ItemGroupInteraction))
                 {
-                    Size.Height *= 2;
+                    size.Height *= 2;
                 }
 
                 if (data is IItem item2)
@@ -249,7 +226,11 @@ namespace CSC.Nodestuff
             CacheValid = false;
         }
 
-        public RectangleF Rectangle { get => new(Position, Size); }
+        private RectangleF _rect = default;
+        public RectangleF Rectangle { get => _rect; }
+
+        private Silk.NET.Direct2D.RoundedRect _roundedRect = default;
+        public Silk.NET.Direct2D.RoundedRect RoundRectangle { get => _roundedRect; }
 
         public string Text
         {
@@ -871,6 +852,16 @@ namespace CSC.Nodestuff
 
         public IEnumerable<string> DupedFileNames { get => dupedFileNames; }
 
+        public SizeF Size
+        {
+            get => size; set
+            {
+                size = value;
+                _rect = new(Position, value);
+                _roundedRect = _rect.ToRoundedRect(10f);
+            }
+        }
+
         public static Node CreateCriteriaNode(Criterion criterion, string filename, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
@@ -914,9 +905,6 @@ namespace CSC.Nodestuff
             }
         }
 
-        //todo we somehow have to keep track of the data here to update the search...
-        //SearchTrie.AddNode()
-        //SearchTrie.RemoveNode()
         public T? Data<T>() where T : class
         {
             if (typeof(T) == DataType && RawData is not null)
