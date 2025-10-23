@@ -1424,6 +1424,20 @@ public partial class Main : Form
 
         if (oldGraph is null || (nodeToLinkFrom == Node.NullNode && !selecting))
         {
+            //todo test if we need this still or if we can allow AA
+            //g.ToLowQuality();
+            //update canvas transforms
+            var offset = -Main.Offset * Main.Scalee;
+            g.TranslateTransform(offset.X, offset.Y);
+            g.ScaleTransform(Main.Scalee, Main.Scalee);
+            if (Main.Scalee < 0)
+            {
+                Debugger.Break();
+            }
+            adjustedMouseClipBounds = new(OffsetX[SelectedCharacter],
+                                          OffsetY[SelectedCharacter],
+                                          g.VisibleClipBounds.Width,
+                                          g.VisibleClipBounds.Height);
             render.Paint(g, nodes[SelectedCharacter], Graph.ClientRectangle);
         }
         else
