@@ -1822,10 +1822,9 @@ public partial class Main : Form
 
             NodeStore nodeStore = nodes[store];
             nodeStore.Positions.Clear();
-            var nodeList = nodeStore.Nodes;
 
             //no idea why we have to clear it or where the wrong ones come from....
-            SetStartPositionsForNodesInList(100, 1, nodeStore, nodeList);
+            SetStartPositionsForNodesInList(100, 1, nodeStore, [.. nodeStore.Nodes]);
 
             CenterAndSelectNode(nodes[store].Nodes.First(), 0.8f);
         }
@@ -4970,7 +4969,7 @@ public partial class Main : Form
         }
         else if (e.Delta < 0)
         {
-            if (Scaling[SelectedCharacter] > 0.01f)
+            if (Scaling[SelectedCharacter] > 0.1f)
             {
                 Scaling[SelectedCharacter] *= 0.8f;
             }
@@ -5351,7 +5350,7 @@ public partial class Main : Form
                 if (newNode.Data<Quest>() is not null)
                 {
                     Stories[character].Quests.Add(newNode.Data<Quest>()!);
-                    var questStore = nodes[character].Nodes.Find(n => n.ID == character + "'s Quests");
+                    var questStore = nodes[character].Nodes.FirstOrDefault(n => n.ID == character + "'s Quests");
                     if (questStore is null)
                     {
                         Debugger.Break();

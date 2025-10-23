@@ -111,12 +111,18 @@
             int scaledXRight = (int)((node.Position.X + node.Size.Width) / GridSize);
             int scaledYBottom = (int)((node.Position.Y + node.Size.Height) / GridSize);
 
-            TryFillListToSize(scaledXRight, scaledYBottom);
-
             for (int x = scaledXLeft; x <= scaledXRight; x++)
             {
                 for (int y = scaledYTop; y <= scaledYBottom; y++)
                 {
+                    if (x >= Sorting[GetQuadrant(x, y)].Count)
+                    {
+                        continue;
+                    }
+                    if (y >= Sorting[GetQuadrant(x, y)][Math.Abs(x)].Count)
+                    {
+                        continue;
+                    }
                     Sorting[GetQuadrant(x, y)][Math.Abs(x)][Math.Abs(y)].Remove(node);
                 }
             }

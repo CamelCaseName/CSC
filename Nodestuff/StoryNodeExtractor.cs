@@ -110,19 +110,6 @@ namespace CSC.Nodestuff
                 //add the starting events
                 nodeDialogue.AddEvents(dialogue.StartEvents ?? [], nodes);
             }
-
-            var list = nodes.KeyNodes().ToList();
-
-            //link up the dialogues and responses/next dialogues
-            foreach (Tuple<Node, int> next in responseDialogueLinks)
-            {
-                Node node = list.Find(n => n.ID == next.Item2.ToString()) ?? Node.NullNode;
-                if (node == Node.NullNode)
-                {
-                    continue;
-                }
-            }
-
             responseDialogueLinks.Clear();
         }
 

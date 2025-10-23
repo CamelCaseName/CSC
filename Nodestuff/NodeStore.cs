@@ -1,62 +1,32 @@
-﻿
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
+
 namespace CSC.Nodestuff
 {
-    public sealed class NodeStore
+    public sealed class NodeStore(string fileName)
     {
         public readonly NodePositionSorting Positions = new();
         private readonly Dictionary<Node, List<Node>> childs = [];
         private readonly Dictionary<Node, List<Node>> parents = [];
-        private readonly string fileName;
-
-        public NodeStore(string fileName)
-        {
-            this.fileName = fileName;
-        }
+        private readonly string fileName = fileName;
 
         public void Add(Node node)
         {
-            childs.TryAdd(node, []);
+            if (childs.TryAdd(node, []))
+            {
+                _nodes.Add(node);
+            }
             parents.TryAdd(node, []);
         }
 
         public int Count => childs.Count;
 
-        public List<Node> Nodes => [.. childs.Keys];
-
-        public void Add(Node node, IEnumerable<Node> childs_)
-        {
-            childs.TryAdd(node, [.. childs_]);
-            parents.TryAdd(node, []);
-            if (childs_.Any())
-            {
-                foreach (var child in childs_)
-                {
-                    parents[child].Add(node);
-                }
-            }
-        }
-
-        public void Add(Node node, IEnumerable<Node> parents_, object _)
-        {
-            childs.TryAdd(node, []);
-            parents.TryAdd(node, [.. parents_]);
-            if (parents_.Any())
-            {
-                foreach (var parent in parents_)
-                {
-                    childs[parent].Add(node);
-                }
-            }
-        }
-
-        public void Add(Node node, IEnumerable<Node> childs_, IEnumerable<Node> parents_)
-        {
-            Add(node, [.. childs_]);
-            Add(node, [.. parents_], new object());
-        }
+        private readonly List<Node> _nodes = [];
+        public ReadOnlyCollection<Node> Nodes => _nodes.AsReadOnly();
 
         public void Remove(Node node)
         {
+            _nodes.Remove(node);
             childs.Remove(node);
             parents.Remove(node);
             Positions.ClearNode(node);
@@ -76,6 +46,7 @@ namespace CSC.Nodestuff
 
         public void Clear()
         {
+            _nodes.Clear();
             childs.Clear();
             parents.Clear();
             Positions.Clear();
@@ -97,8 +68,7 @@ namespace CSC.Nodestuff
 
         public bool ContainsKey(Node node)
         {
-
-            bool contains = childs.ContainsKey(node);
+            bool contains = _nodes.Contains(node);
             return contains;
         }
 
@@ -123,29 +93,16 @@ namespace CSC.Nodestuff
 
         public void AddParent(Node node, Node parent)
         {
+            Add(node);
             Add(parent);
-            if (parents.TryGetValue(node, out _))
+            if (!parents[node].Contains(parent))
             {
-                if (!parents[node].Contains(parent))
-                {
-                    parents[node].Add(parent);
-                }
-            }
-            else
-            {
-                parents.Add(node, [parent]);
+                parents[node].Add(parent);
             }
 
-            if (childs.TryGetValue(parent, out _))
+            if (!childs[parent].Contains(node))
             {
-                if (!childs[parent].Contains(node))
-                {
-                    childs[parent].Add(node);
-                }
-            }
-            else
-            {
-                childs.Add(parent, [node]);
+                childs[parent].Add(node);
             }
         }
 
@@ -172,36 +129,23 @@ namespace CSC.Nodestuff
                     {
                         RemoveChild(list[i], node);
                     }
+                    list.Clear();
                 }
-                list.Clear();
             }
         }
 
         public void AddChild(Node node, Node child)
         {
+            Add(node);
             Add(child);
-            if (childs.TryGetValue(node, out _))
+            if (!childs[node].Contains(child))
             {
-                if (!childs[node].Contains(child))
-                {
-                    childs[node].Add(child);
-                }
-            }
-            else
-            {
-                childs.Add(node, [child]);
+                childs[node].Add(child);
             }
 
-            if (parents.TryGetValue(child, out _))
+            if (!parents[child].Contains(node))
             {
-                if (!parents[child].Contains(node))
-                {
-                    parents[child].Add(node);
-                }
-            }
-            else
-            {
-                parents.Add(child, [node]);
+                parents[child].Add(node);
             }
         }
 
@@ -228,8 +172,8 @@ namespace CSC.Nodestuff
                     {
                         RemoveParent(list[i], node);
                     }
+                    list.Clear();
                 }
-                list.Clear();
             }
         }
 
@@ -273,11 +217,6 @@ namespace CSC.Nodestuff
             }
         }
 
-        public Dictionary<Node, List<Node>>.KeyCollection KeyNodes()
-        {
-            return childs.Keys;
-        }
-
         public Family this[Node node]
         {
             get
@@ -293,15 +232,16 @@ namespace CSC.Nodestuff
 
             ClearChilds(node);
             ClearParents(node);
+            Remove(node);
 
+            Add(replacement);
             AddChilds(replacement, childs);
             AddParents(replacement, parents);
 
-            Remove(node);
             var pos = node.Position;
-            Main.ClearNodePos(node, node.FileName);
+            Main.ClearNodePos(node, fileName);
             Main.ClearNodePos(node, replacement.FileName);
-            Main.SetNodePos(replacement, node.FileName);
+            Main.SetNodePos(replacement, fileName);
             replacement.Position = pos;
         }
 

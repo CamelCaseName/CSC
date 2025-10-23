@@ -64,7 +64,7 @@ namespace CSC.Search
                         continue;
                     }
 
-                    List<Node> nodes = store.Value.Nodes;
+                    var nodes = store.Value.Nodes;
 
                     //todo somehow parallelize?
                     for (int ni = 0; ni < nodes.Count; ni++)
@@ -205,7 +205,7 @@ namespace CSC.Search
                 return [];
             }
 
-           HashSet<Node> results = [];
+            HashSet<Node> results = [];
 
             if (searchValue.Length > 0)
             {

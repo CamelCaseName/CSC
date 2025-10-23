@@ -118,6 +118,7 @@ namespace CSC.Nodestuff
         public string ID;
         public SizeF Size = new(Main.NodeSizeX, Main.NodeSizeY);
         public string StaticText;
+        public string _text = string.Empty;
         public NodeType Type;
         private readonly Dictionary<string, PointF> Positions = [];
         private readonly List<string> dupedFileNames = [];
@@ -127,6 +128,7 @@ namespace CSC.Nodestuff
         private string fileName = Main.NoCharacter;
         private string origfilename = Main.NoCharacter;
         private bool setOnce = false;
+        private bool CacheValid = false;
         public string OrigFileName => origfilename;
 
         public Node(string iD, NodeType type, string text)
@@ -232,6 +234,7 @@ namespace CSC.Nodestuff
                     item2.OnBeforeChange += PreUpdate;
                     item2.OnAfterChange += PostUpdate;
                 }
+                CacheValid = false;
             }
         }
 
@@ -243,11 +246,10 @@ namespace CSC.Nodestuff
         public void PostUpdate(object d)
         {
             Main.UpdateNode(this);
+            CacheValid = false;
         }
 
         public RectangleF Rectangle { get => new(Position, Size); }
-
-        public Rectangle RectangleNonF { get => new((int)Position.X, (int)Position.Y, (int)Size.Width, (int)Size.Height); }
 
         public string Text
         {
@@ -257,7 +259,13 @@ namespace CSC.Nodestuff
                 {
                     return StaticText;
                 }
-                return GetText();
+
+                if (!CacheValid)
+                {
+                    _text = GetText();
+                    CacheValid = true;
+                }
+                return _text;
             }
         }
 
@@ -866,7 +874,7 @@ namespace CSC.Nodestuff
         public static Node CreateCriteriaNode(Criterion criterion, string filename, NodeStore nodes)
         {
             //create all criteria nodes the same way so they can possibly be replaced by the actual text later
-            var result = nodes.Nodes.Find((n) => n.Type == NodeType.Criterion && n.ID == criterion.ToString());
+            var result = nodes.Nodes.FirstOrDefault((n) => n.Type == NodeType.Criterion && n.ID == criterion.ToString());
             if (result is not null)
             {
                 return result;
@@ -940,11 +948,6 @@ namespace CSC.Nodestuff
         {
             Positions.Remove(filename);
             Main.ClearNodePos(this, filename);
-        }
-
-        public string ToOutputFormat()
-        {
-            return $"{ID}|{Text}";
         }
 
         public override string ToString()

@@ -6,6 +6,7 @@ using Silk.NET.DirectWrite;
 using Silk.NET.DXGI;
 using Silk.NET.Maths;
 using System.Diagnostics;
+using System.Xml.Linq;
 using AlphaMode = Silk.NET.Direct2D.AlphaMode;
 using DashStyle = Silk.NET.Direct2D.DashStyle;
 using DWExtensions = Silk.NET.DirectWrite.DWriteFactoryVtblExtensions;
@@ -25,6 +26,7 @@ namespace CSC.Direct2D
         private readonly SizeF CircleSize = new(15, 15);
         private ComPtr<ID2D1SolidColorBrush> achievementNodeBrush;
         private RectangleF adjustedVisibleClipBounds = new();
+        private RectangleF oldBounds = new();
         private ComPtr<ID2D1SolidColorBrush> alternateTextNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> bgcNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> bgcResponseNodeBrush;
@@ -142,6 +144,7 @@ namespace CSC.Direct2D
             DateTime start = DateTime.UtcNow;
             unsafe
             {
+                oldBounds = adjustedVisibleClipBounds;
                 adjustedVisibleClipBounds = new(Main.Offset.X - Main.NodeSizeX,
                                                 Main.Offset.Y - Main.NodeSizeY,
                                                 g.VisibleClipBounds.Width + Main.NodeSizeX,
@@ -173,7 +176,7 @@ namespace CSC.Direct2D
 
             DateTime end = DateTime.UtcNow;
 
-            if ((end - start).TotalMilliseconds > 33)
+            if ((end - start).TotalMilliseconds > 20)
             {
                 Debug.WriteLine($"Node Render took {(end - start).TotalMilliseconds}ms");
             }
@@ -186,65 +189,53 @@ namespace CSC.Direct2D
 
         private void DrawAllNodes(Graphics g, NodeStore nodes)
         {
+            //todo somehow draw nodes in order thats fastest/combine draws idk
             //cached
             DrawMainEdges(nodes);
 
-            if (Main.Selected != Node.NullNode)
+            List<Node> visible = nodes.Positions[adjustedVisibleClipBounds];
+            foreach (var node in visible)
             {
-                var family = nodes[Main.Selected];
+                DrawNode(g, node, GetNodeColor(node.Type, false));
+            }
+
+            Node selected = Main.Selected;
+            if (selected != Node.NullNode)
+            {
+                var family = nodes[selected];
                 if (family.Childs.Count > 0)
                 {
-                    DrawEdges(Main.Selected, family.Childs, clickedLinePen.AsBrush(), clickedLinePenWidth);
-                    //foreach (var item in family.Childs)
-                    //{
-                    //    DrawEdge(Main.Selected, item, clickedLinePen.AsBrush(), clickedLinePenWidth);
-                    //}
+                    DrawEdges(selected, family.Childs, clickedLinePen.AsBrush(), clickedLinePenWidth);
                 }
                 if (family.Parents.Count > 0)
                 {
-                    DrawEdges(Main.Selected, family.Parents, clickedLinePen.AsBrush(), clickedLinePenWidth, true);
-                    //foreach (var item in family.Parents)
-                    //{
-                    //    DrawEdge(item, Main.Selected, clickedLinePen.AsBrush(), clickedLinePenWidth);
-                    //}
+                    DrawEdges(selected, family.Parents, clickedLinePen.AsBrush(), clickedLinePenWidth, true);
                 }
 
-                foreach (var node in nodes.Positions[adjustedVisibleClipBounds])
+                foreach (var node in family.Childs)
                 {
-                    //c++;
-                    bool light = family.Childs.Contains(node) || family.Parents.Contains(node) || Main.Selected == node;
-                    DrawNode(g, node, GetNodeColor(node.Type, light), light);
+                    DrawNode(g, node, GetNodeColor(node.Type, true), true);
                 }
-            }
-            else
-            {
-                foreach (var node in nodes.Positions[adjustedVisibleClipBounds])
+                foreach (var node in family.Parents)
                 {
-                    //c++;
-                    DrawNode(g, node, GetNodeColor(node.Type, false));
+                    DrawNode(g, node, GetNodeColor(node.Type, true), true);
                 }
+                DrawNode(g, selected, GetNodeColor(selected.Type, true), true);
             }
 
-            if (Main.Highlight != Node.NullNode)
+            Node highlight = Main.Highlight;
+            if (highlight != Node.NullNode)
             {
-                var family = nodes[Main.Highlight];
+                var family = nodes[highlight];
                 if (family.Childs.Count > 0)
                 {
-                    DrawEdges(Main.Highlight, family.Childs, highlightPen.AsBrush(), highlightPenWidth);
-                    //foreach (var item in family.Childs)
-                    //{
-                    //    DrawEdge(Main.Highlight, item, highlightPen.AsBrush(), highlightPenWidth);
-                    //}
+                    DrawEdges(highlight, family.Childs, highlightPen.AsBrush(), highlightPenWidth);
                 }
                 if (family.Parents.Count > 0)
                 {
-                    DrawEdges(Main.Highlight, family.Parents, highlightPen.AsBrush(), highlightPenWidth, true);
-                    //foreach (var item in family.Parents)
-                    //{
-                    //    DrawEdge(item, Main.Highlight, highlightPen.AsBrush(), highlightPenWidth);
-                    //}
+                    DrawEdges(highlight, family.Parents, highlightPen.AsBrush(), highlightPenWidth, true);
                 }
-                DrawNode(g, Main.Highlight, HighlightNodeBrush.AsBrush(), true);
+                DrawNode(g, highlight, HighlightNodeBrush.AsBrush(), true);
             }
 
             if (Main.LinkFrom != Node.NullNode)
@@ -300,7 +291,7 @@ namespace CSC.Direct2D
 
         private void DrawMainEdges(NodeStore nodes)
         {
-            if (Main.PositionsChanged)
+            if (Main.PositionsChanged || oldBounds != adjustedVisibleClipBounds)
             {
                 if (isNewPositions)
                 {
@@ -329,6 +320,22 @@ namespace CSC.Direct2D
                     {
                         foreach (var item in list)
                         {
+                            if (node.Position.X < adjustedVisibleClipBounds.X && item.Position.X < adjustedVisibleClipBounds.X)
+                            {
+                                continue;
+                            }
+                            if (node.Position.X > adjustedVisibleClipBounds.Right && item.Position.X > adjustedVisibleClipBounds.Right)
+                            {
+                                continue;
+                            }
+                            if (node.Position.Y < adjustedVisibleClipBounds.Y && item.Position.Y < adjustedVisibleClipBounds.Y)
+                            {
+                                continue;
+                            }
+                            if (node.Position.Y > adjustedVisibleClipBounds.Bottom && item.Position.Y > adjustedVisibleClipBounds.Bottom)
+                            {
+                                continue;
+                            }
                             GetBezierForEdge(node, item, out var lineStart, out var lineEnd, out var controlStart, out var controlEnd);
 
                             mainEdgeGeometrySink.BeginFigure(lineStart, FigureBegin.Hollow);
@@ -483,6 +490,7 @@ namespace CSC.Direct2D
                 {
                     text = [' '];
                 }
+                //todo replace drawtext calls by drawtextlayout calls with cached layout per node thats visible
                 var textRect = scaledRect.ToBox<float>();
                 fixed (char* t = text)
                 {

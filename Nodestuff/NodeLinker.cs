@@ -1,5 +1,6 @@
 ﻿using CSC.Glue;
 using CSC.StoryItems;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using static CSC.StoryItems.StoryEnums;
@@ -1130,7 +1131,7 @@ namespace CSC.Nodestuff
             try
             {
                 int count = store.Count;
-                var nodes = store.KeyNodes().ToList();
+                var nodes = new List<Node>(store.Nodes);
                 List<string> links = [];
                 //link up different stories and dialogues
                 //doesnt matter that we add some in here, we only care about the ones added so far
@@ -1138,15 +1139,15 @@ namespace CSC.Nodestuff
                 {
                     if (nodes[i].Type == NodeType.GameEvent && !links.Contains(nodes[i].ID) && (nodes[i].Data<GameEvent>() is not null))
                     {
-                        var dupeEvents = nodes.FindAll((n) => n.ID == nodes[i].ID && (n.Data<GameEvent>()?.Equals(nodes[i].Data<GameEvent>()) ?? false));
+                        var dupeEvents = nodes.Where((n) => n.ID == nodes[i].ID && (n.Data<GameEvent>()?.Equals(nodes[i].Data<GameEvent>()) ?? false));
 
-                        if (dupeEvents.Count > 1)
+                        if (dupeEvents.Count() > 1)
                         {
                             links.Add(nodes[i].ID);
-                            for (int j = 1; j < dupeEvents.Count; j++)
+                            for (int j = 1; j < dupeEvents.Count(); j++)
                             {
-                                nodes[i].DupeToOtherSorting(dupeEvents[j].FileName);
-                                store.Replace(dupeEvents[j], nodes[i]);
+                                nodes[i].DupeToOtherSorting(dupeEvents.ElementAt(j).FileName);
+                                store.Replace(dupeEvents.ElementAt(j), nodes[i]);
                             }
                         }
                     }
@@ -1160,7 +1161,7 @@ namespace CSC.Nodestuff
             try
             {
                 int count = store.Count;
-                var nodes = store.KeyNodes().ToList();
+                var nodes = new List<Node>(store.Nodes);
                 //link up different stories and dialogues
                 //doesnt matter that we add some in here, we only care about the ones added so far
                 for (int i = 0; i < count; i++)
@@ -1198,7 +1199,7 @@ namespace CSC.Nodestuff
             {
                 store.RemoveParent(node, parent);
             }
-            var nodes = store.KeyNodes().ToList();
+            var nodes = new List<Node>(store.Nodes);
 
             AnalyzeAndConnectNode(store, node, nodes, false);
             foreach (var child in childs)
@@ -2655,7 +2656,7 @@ namespace CSC.Nodestuff
 
         private static void HandleCriterion(NodeStore nodes, Node node, List<Node> newList, Criterion _criterion, bool dupeTo = false)
         {
-            Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.ID == $"{_criterion.Character}{_criterion.CompareType}{_criterion.Key}{_criterion.Value}");
+            Node? result = newList.Find((n) => n.Type == NodeType.Criterion && n.Text == _criterion.ToString());
             if (result is not null)
             {
                 if (dupeTo)
@@ -2708,7 +2709,7 @@ namespace CSC.Nodestuff
 
                 Main.SelectedCharacter = store;
 
-                var tempList = stores[store].Nodes;
+                List<Node> tempList = [.. stores[store].Nodes];
 
                 for (int i = 0; i < tempList.Count; i++)
                 {
@@ -2724,8 +2725,6 @@ namespace CSC.Nodestuff
                         continue;
                     }
 
-                    var templist2 = nodeStore.Nodes;
-
                     if (node.Type == NodeType.Dialogue && node.ID == string.Empty)
                     {
                         node.ID = 0.ToString();
@@ -2735,7 +2734,7 @@ namespace CSC.Nodestuff
                     if (node.Type == NodeType.EventTrigger && !GUIDRegex().IsMatch(node.ID))
                     {
                         //special handling for referenced eventtriggers as the missingrefeence has the name as id and not a guid
-                        result = templist2.FindAll(n => n.Type == node.Type && n.Text == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                        result = [.. nodeStore.Nodes.Where(n => n.Type == node.Type && n.Text == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo))];
                     }
                     else if (node.Type == NodeType.Criterion)
                     {
@@ -2745,14 +2744,18 @@ namespace CSC.Nodestuff
                     else
                     {
                         //try and find similar nodes that arent missing reference
-                        result = templist2.FindAll(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo));
+                        result = [.. nodeStore.Nodes.Where(n => n.Type == node.Type && n.ID == node.ID && n.FileName == node.FileName && n.DataType != typeof(MissingReferenceInfo))];
                     }
+                    if(result.Count > 1)
+                    {
+                        Debugger.Break();
+                    }
+
                     foreach (var foundNode in result)
                     {
                         if (foundNode is not null)
                         {
                             foundNode.DupeToOtherSorting(store);
-                            stores[store].Add(foundNode);
                             stores[store].Replace(node, foundNode);
                             Main.ClearAllNodePos(node);
                         }
@@ -2763,6 +2766,15 @@ namespace CSC.Nodestuff
                 {
                     RemoveDuplicateGUIDs(stores[store]);
                 }
+
+                //foreach (var item in stores[store].Nodes)
+                //{
+                //    if (item.DataType == typeof(MissingReferenceInfo))
+                //    {
+                //        var t = tempList.Count;
+                //        Debugger.Break();
+                //    }
+                //}
             }
 
             Main.SelectedCharacter = lastSelected;
@@ -2770,8 +2782,8 @@ namespace CSC.Nodestuff
 
         private static void RemoveDuplicateGUIDs(NodeStore store)
         {
-            var tempList = store.Nodes;
-
+            var tempList = new List<Node>(store.Nodes);
+            
             for (int i = 0; i < tempList.Count; i++)
             {
                 Node? node = tempList[i];
@@ -2853,10 +2865,10 @@ namespace CSC.Nodestuff
         private static void MergeDoors(NodeStore nodes, bool dupeTo = false)
         {
             Node? result;
-            var newlist = nodes.KeyNodes().ToList();
+            var newlist = new List<Node>(nodes.Nodes);
             foreach (Node node in Doors.ToArray())
             {
-                result = newlist.Find((n) => n.ID == node.ID);
+                result = newlist.First((n) => n.ID == node.ID);
                 if (result is not null)
                 {
                     if (dupeTo)
