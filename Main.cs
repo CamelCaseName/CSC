@@ -65,12 +65,14 @@ public partial class Main : Form
     private static readonly Dictionary<string, float> OffsetY = [];
     private static readonly Dictionary<string, float> Scaling = [];
     //do all node related rendering in direct2d but keep the simple stuff in gdi+ because why change
-    private D2DRenderer render;
+    private readonly D2DRenderer render;
     //gdi+ resources
     private readonly SolidBrush SelectionFill;
     private readonly Pen SelectionEdge;
     private readonly Pen nodeToLinkPen;
     private CachedBitmap? oldGraph;
+    private static bool positionsChanged = false;
+    public static bool PositionsChanged => positionsChanged;
 
     internal static float Scalee => Scaling[SelectedCharacter];
     internal static Vector2 Offset => new(OffsetX[SelectedCharacter], OffsetY[SelectedCharacter]);
@@ -104,6 +106,7 @@ public partial class Main : Form
             {
                 _selectedCharacter = value;
             }
+            positionsChanged = true;
         }
     }
 
@@ -120,7 +123,6 @@ public partial class Main : Form
 
     //todo we need to pause updating the search during a typing streak and cumulatively update after its done
     //todo filter/hide node types
-    //todo switch rendering to direct2d
 
     //todo add story node cache on disk
     //todo add story search tree cache on disk
@@ -906,11 +908,13 @@ public partial class Main : Form
     public static void SetNodePos(Node node)
     {
         nodes[SelectedCharacter].Positions.SetNode(node);
+        positionsChanged = true;
     }
 
     public static void ClearNodePos(Node node, string file)
     {
         nodes[file].Positions.ClearNode(node);
+        positionsChanged = true;
     }
 
     public static void ClearAllNodePos(Node node)
@@ -1424,8 +1428,7 @@ public partial class Main : Form
 
         if (oldGraph is null || (nodeToLinkFrom == Node.NullNode && !selecting))
         {
-            //todo test if we need this still or if we can allow AA
-            //g.ToLowQuality();
+            g.ToLowQuality();
             //update canvas transforms
             var offset = -Main.Offset * Main.Scalee;
             g.TranslateTransform(offset.X, offset.Y);
@@ -1452,6 +1455,8 @@ public partial class Main : Form
                 DrawLinkToNextEdge(g);
             }
         }
+        //teh renderer has already made new objects by now, so we no longer need to update
+        positionsChanged = false;
     }
 
     private void DrawSelectionSquare(Graphics g)

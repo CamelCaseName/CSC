@@ -34,9 +34,16 @@ namespace CSC.StoryItems
         private int option = 0;
         private CompareTypes groupSubCompareType = CompareTypes.Never;
         private string version = "1.0";
+        private bool TextNeedsUpdate = true;
+        private string _text = string.Empty;
 
         public event Action<object>? OnBeforeChange;
-        public event Action<object>? OnAfterChange;
+        public event Action<object>? OnAfterChange = (o) => {
+            if (o is Criterion c)
+            {
+                c.TextNeedsUpdate = true;
+            }
+        };
 
         public BoolCritera BoolValue { get => boolValue; set { OnBeforeChange?.Invoke(this); boolValue = value; OnAfterChange?.Invoke(this); } }
         public string Character { get => character; set { OnBeforeChange?.Invoke(this); if (string.IsNullOrWhiteSpace(value)) { character = IItem.hash; } else { character = value; } OnAfterChange?.Invoke(this); } }
@@ -113,161 +120,172 @@ namespace CSC.StoryItems
 
         public override int GetHashCode() => base.GetHashCode();
 
-        public override string ToString() {
-
-            switch (CompareType)
+        public override string ToString()
+        {
+            if (TextNeedsUpdate)
             {
-                case CompareTypes.Never:
+                _text = ToS();
+                TextNeedsUpdate = false;
+            }
+
+            return _text;
+
+            string ToS()
+            {
+                switch (CompareType)
                 {
-                    return "Never";
-                }
-                case CompareTypes.CharacterFromCharacterGroup:
-                {
-                    //todo (charactergroup) once character groups are in
-                    return "None";
-                }
-                case CompareTypes.Clothing:
-                {
-                    return $"{CompareType} {Character} {Value} {(ClothingSet)Option} {BoolValue}";
-                }
-                case CompareTypes.CoinFlip:
-                {
-                    return "Coinflip";
-                }
-                case CompareTypes.CompareValues:
-                {
-                    return $"{CompareType} {Character} {Key} {ValueFormula} {Character2} {Key2}";
-                }
-                case CompareTypes.CriteriaGroup:
-                {
-                    return $"{CompareType} {Value} {Key2} {BoolValue}";
-                }
-                case CompareTypes.CutScene:
-                {
-                    return $"{CompareType}  {Value} {BoolValue}";
-                }
-                case CompareTypes.Dialogue:
-                {
-                    return $"{CompareType} {Character} {Value} {DialogueStatus}";
-                }
-                case CompareTypes.Distance:
-                {
-                    return $"{CompareType} {Key} {Key2} {EquationValue} {Option}";
-                }
-                case CompareTypes.Door:
-                {
-                    return $"{CompareType} {Key} {DoorOptions}";
-                }
-                case CompareTypes.Gender:
-                {
-                    return $"{CompareType} {Character} {(Gender)Option}";
-                }
-                case CompareTypes.IntimacyPartner:
-                {
-                    return $"{CompareType} {Character} {EqualsValue} {Value}";
-                }
-                case CompareTypes.IntimacyState:
-                {
-                    return $"{CompareType} {Character} {EqualsValue} {Value}";
-                }
-                case CompareTypes.InZone:
-                {
-                    return $"{CompareType} {Character} {Key} {BoolValue}";
-                }
-                case CompareTypes.InVicinity:
-                case CompareTypes.InVicinityAndVision:
-                case CompareTypes.IsOnlyInVicinityOf:
-                case CompareTypes.IsOnlyInVisionOf:
-                case CompareTypes.IsOnlyInVicinityAndVisionOf:
-                case CompareTypes.Vision:
-                case CompareTypes.SameZoneAs:
-                case CompareTypes.IsInFrontOf:
-                {
-                    return $"{Character} {CompareType} {Character2} {BoolValue}";
-                }
-                case CompareTypes.Item:
-                {
-                    return $"{CompareType} {Key} {ItemComparison}";
-                }
-                case CompareTypes.IsBeingSpokenTo:
-                case CompareTypes.IsCharacterEnabled:
-                case CompareTypes.IsInHouse:
-                case CompareTypes.MetByPlayer:
-                {
-                    return $"{CompareType} {Character} {BoolValue}";
-                }
-                case CompareTypes.IsCurrentlyBeingUsed:
-                {
-                    return $"{CompareType} {Key} {BoolValue}";
-                }
-                case CompareTypes.IsCurrentlyUsing:
-                {
-                    return $"{CompareType} {Character} {Key} {BoolValue}";
-                }
-                case CompareTypes.IsExplicitGameVersion:
-                case CompareTypes.IsGameUncensored:
-                case CompareTypes.IsNewGame:
-                case CompareTypes.ScreenFadeVisible:
-                case CompareTypes.UseLegacyIntimacy:
-                {
-                    return $"{CompareType} {BoolValue}";
-                }
-                case CompareTypes.IsPackageInstalled:
-                {
-                    return $"{CompareType} {Value}";
-                }
-                case CompareTypes.IsZoneEmpty:
-                {
-                    return $"{CompareType} {Key} {BoolValue}";
-                }
-                case CompareTypes.ItemFromItemGroup:
-                {
-                    return $"{CompareType} {Key} {ItemFromItemGroupComparison} {(ItemFromItemGroupComparison == ItemFromItemGroupComparisonTypes.IsVisibleTo ? Character : "")} {BoolValue}";
-                }
-                case CompareTypes.Personality:
-                {
-                    return $"{CompareType} {Character} {Key} {EquationValue} {Value}";
-                }
-                case CompareTypes.PlayerGender:
-                {
-                    return $"{CompareType} {Value}";
-                }
-                case CompareTypes.PlayerInventory:
-                {
-                    return $"{CompareType} {PlayerInventoryOption} {(PlayerInventoryOption == PlayerInventoryOptions.HasItem ? Key : "")} {BoolValue}";
-                }
-                case CompareTypes.PlayerPrefs:
-                {
-                    return $"{CompareType} {Key} {EquationValue} {Value}";
-                }
-                case CompareTypes.Posing:
-                {
-                    return $"{CompareType} {Character} {PoseOption} {(PoseOption == PoseOptions.CurrentPose ? (EqualsValue.ToString() + Value) : BoolValue)}";
-                }
-                case CompareTypes.Property:
-                {
-                    return $"{CompareType} {Character} {Value} {BoolValue}";
-                }
-                case CompareTypes.Quest:
-                {
-                    return $"{CompareType} {Character}'s {Key2} {EqualsValue} {Value}";
-                }
-                case CompareTypes.Social:
-                {
-                    return $"{CompareType} {Character} {SocialStatus} {EquationValue} {Value}";
-                }
-                case CompareTypes.State:
-                {
-                    return $"{CompareType} {Character} {Value} {BoolValue}";
-                }
-                case CompareTypes.Value:
-                {
-                    return $"{CompareType} {Key} {EquationValue} {Value}";
-                }
-                case CompareTypes.None:
-                default:
-                {
-                    return "None";
+                    case CompareTypes.Never:
+                    {
+                        return "Never";
+                    }
+                    case CompareTypes.CharacterFromCharacterGroup:
+                    {
+                        //todo (charactergroup) once character groups are in
+                        return "None";
+                    }
+                    case CompareTypes.Clothing:
+                    {
+                        return $"{CompareType} {Character} {Value} {(ClothingSet)Option} {BoolValue}";
+                    }
+                    case CompareTypes.CoinFlip:
+                    {
+                        return "Coinflip";
+                    }
+                    case CompareTypes.CompareValues:
+                    {
+                        return $"{CompareType} {Character} {Key} {ValueFormula} {Character2} {Key2}";
+                    }
+                    case CompareTypes.CriteriaGroup:
+                    {
+                        return $"{CompareType} {Value} {Key2} {BoolValue}";
+                    }
+                    case CompareTypes.CutScene:
+                    {
+                        return $"{CompareType}  {Value} {BoolValue}";
+                    }
+                    case CompareTypes.Dialogue:
+                    {
+                        return $"{CompareType} {Character} {Value} {DialogueStatus}";
+                    }
+                    case CompareTypes.Distance:
+                    {
+                        return $"{CompareType} {Key} {Key2} {EquationValue} {Option}";
+                    }
+                    case CompareTypes.Door:
+                    {
+                        return $"{CompareType} {Key} {DoorOptions}";
+                    }
+                    case CompareTypes.Gender:
+                    {
+                        return $"{CompareType} {Character} {(Gender)Option}";
+                    }
+                    case CompareTypes.IntimacyPartner:
+                    {
+                        return $"{CompareType} {Character} {EqualsValue} {Value}";
+                    }
+                    case CompareTypes.IntimacyState:
+                    {
+                        return $"{CompareType} {Character} {EqualsValue} {Value}";
+                    }
+                    case CompareTypes.InZone:
+                    {
+                        return $"{CompareType} {Character} {Key} {BoolValue}";
+                    }
+                    case CompareTypes.InVicinity:
+                    case CompareTypes.InVicinityAndVision:
+                    case CompareTypes.IsOnlyInVicinityOf:
+                    case CompareTypes.IsOnlyInVisionOf:
+                    case CompareTypes.IsOnlyInVicinityAndVisionOf:
+                    case CompareTypes.Vision:
+                    case CompareTypes.SameZoneAs:
+                    case CompareTypes.IsInFrontOf:
+                    {
+                        return $"{Character} {CompareType} {Character2} {BoolValue}";
+                    }
+                    case CompareTypes.Item:
+                    {
+                        return $"{CompareType} {Key} {ItemComparison}";
+                    }
+                    case CompareTypes.IsBeingSpokenTo:
+                    case CompareTypes.IsCharacterEnabled:
+                    case CompareTypes.IsInHouse:
+                    case CompareTypes.MetByPlayer:
+                    {
+                        return $"{CompareType} {Character} {BoolValue}";
+                    }
+                    case CompareTypes.IsCurrentlyBeingUsed:
+                    {
+                        return $"{CompareType} {Key} {BoolValue}";
+                    }
+                    case CompareTypes.IsCurrentlyUsing:
+                    {
+                        return $"{CompareType} {Character} {Key} {BoolValue}";
+                    }
+                    case CompareTypes.IsExplicitGameVersion:
+                    case CompareTypes.IsGameUncensored:
+                    case CompareTypes.IsNewGame:
+                    case CompareTypes.ScreenFadeVisible:
+                    case CompareTypes.UseLegacyIntimacy:
+                    {
+                        return $"{CompareType} {BoolValue}";
+                    }
+                    case CompareTypes.IsPackageInstalled:
+                    {
+                        return $"{CompareType} {Value}";
+                    }
+                    case CompareTypes.IsZoneEmpty:
+                    {
+                        return $"{CompareType} {Key} {BoolValue}";
+                    }
+                    case CompareTypes.ItemFromItemGroup:
+                    {
+                        return $"{CompareType} {Key} {ItemFromItemGroupComparison} {(ItemFromItemGroupComparison == ItemFromItemGroupComparisonTypes.IsVisibleTo ? Character : "")} {BoolValue}";
+                    }
+                    case CompareTypes.Personality:
+                    {
+                        return $"{CompareType} {Character} {Key} {EquationValue} {Value}";
+                    }
+                    case CompareTypes.PlayerGender:
+                    {
+                        return $"{CompareType} {Value}";
+                    }
+                    case CompareTypes.PlayerInventory:
+                    {
+                        return $"{CompareType} {PlayerInventoryOption} {(PlayerInventoryOption == PlayerInventoryOptions.HasItem ? Key : "")} {BoolValue}";
+                    }
+                    case CompareTypes.PlayerPrefs:
+                    {
+                        return $"{CompareType} {Key} {EquationValue} {Value}";
+                    }
+                    case CompareTypes.Posing:
+                    {
+                        return $"{CompareType} {Character} {PoseOption} {(PoseOption == PoseOptions.CurrentPose ? (EqualsValue.ToString() + Value) : BoolValue)}";
+                    }
+                    case CompareTypes.Property:
+                    {
+                        return $"{CompareType} {Character} {Value} {BoolValue}";
+                    }
+                    case CompareTypes.Quest:
+                    {
+                        return $"{CompareType} {Character}'s {Key2} {EqualsValue} {Value}";
+                    }
+                    case CompareTypes.Social:
+                    {
+                        return $"{CompareType} {Character} {SocialStatus} {EquationValue} {Value}";
+                    }
+                    case CompareTypes.State:
+                    {
+                        return $"{CompareType} {Character} {Value} {BoolValue}";
+                    }
+                    case CompareTypes.Value:
+                    {
+                        return $"{CompareType} {Key} {EquationValue} {Value}";
+                    }
+                    case CompareTypes.None:
+                    default:
+                    {
+                        return "None";
+                    }
                 }
             }
         }

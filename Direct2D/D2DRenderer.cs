@@ -2,19 +2,19 @@
 using CSC.Nodestuff;
 using Silk.NET.Core.Native;
 using Silk.NET.Direct2D;
+using Silk.NET.DirectWrite;
 using Silk.NET.DXGI;
 using Silk.NET.Maths;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using AlphaMode = Silk.NET.Direct2D.AlphaMode;
 using DashStyle = Silk.NET.Direct2D.DashStyle;
-using LineJoin = Silk.NET.Direct2D.LineJoin;
+using DWExtensions = Silk.NET.DirectWrite.DWriteFactoryVtblExtensions;
+using DWFactoryType = Silk.NET.DirectWrite.FactoryType;
+using DWrite = Silk.NET.DirectWrite.DWrite;
+using FactoryType = Silk.NET.Direct2D.FactoryType;
 using IDWriteFactory = Silk.NET.DirectWrite.IDWriteFactory;
 using IDWriteTextFormat = Silk.NET.DirectWrite.IDWriteTextFormat;
-using DWFactoryType = Silk.NET.DirectWrite.FactoryType;
-using Rectangle = System.Drawing.Rectangle;
-using DWrite = Silk.NET.DirectWrite.DWrite;
-using DWExtensions = Silk.NET.DirectWrite.DWriteFactoryVtblExtensions;
+using LineJoin = Silk.NET.Direct2D.LineJoin;
 
 namespace CSC.Direct2D
 {
@@ -105,12 +105,16 @@ namespace CSC.Direct2D
         private ComPtr<ID2D1StrokeStyle> defaultStyle;
         private ComPtr<ID2D1StrokeStyle> interlinkedStyle;
         private ComPtr<IDWriteTextFormat> defaultFormat;
-        private const float linePenWidth = 0.2f;
+        private ComPtr<ID2D1PathGeometry> edgeGeometry;
+        private ComPtr<ID2D1GeometrySink> edgeGeometrySink;
+        private ComPtr<ID2D1PathGeometry> mainEdgeGeometry;
+        private ComPtr<ID2D1GeometrySink> mainEdgeGeometrySink;
+        private const float linePenWidth = 2f;
         private const float circlePenWidth = 0.8f;
-        private const float clickedLinePenWidth = 3f;
-        private const float highlightPenWidth = 3f;
-        private const float selectionEdgeWidth = 1f;
-        private float oldScale = 0.3f;
+        private const float clickedLinePenWidth = 4f;
+        private const float highlightPenWidth = 5f;
+        private const float selectionEdgeWidth = 1.5f;
+        private bool isNewPositions = false;
 
         public D2DRenderer()
         {
@@ -135,6 +139,7 @@ namespace CSC.Direct2D
 
         public void Paint(Graphics g, NodeStore nodes, RectangleF screenclip)
         {
+            DateTime start = DateTime.UtcNow;
             unsafe
             {
                 adjustedVisibleClipBounds = new(Main.Offset.X - Main.NodeSizeX,
@@ -165,6 +170,13 @@ namespace CSC.Direct2D
                 target.EndDraw(ref tag1, ref tag2);
                 g.ReleaseHdc(hdc);
             }
+
+            DateTime end = DateTime.UtcNow;
+
+            if ((end - start).TotalMilliseconds > 33)
+            {
+                Debug.WriteLine($"Node Render took {(end - start).TotalMilliseconds}ms");
+            }
         }
 
         public void Release()
@@ -174,34 +186,27 @@ namespace CSC.Direct2D
 
         private void DrawAllNodes(Graphics g, NodeStore nodes)
         {
-            foreach (var node in nodes.Nodes)
-            {
-                var list = nodes.Childs(node);
-                if (list.Count > 0)
-                {
-                    foreach (var item in list)
-                    {
-                        DrawEdge(g, node, item, linePen.AsBrush());
-                    }
-                }
-            }
+            //cached
+            DrawMainEdges(nodes);
 
             if (Main.Selected != Node.NullNode)
             {
                 var family = nodes[Main.Selected];
                 if (family.Childs.Count > 0)
                 {
-                    foreach (var item in family.Childs)
-                    {
-                        DrawEdge(g, Main.Selected, item, clickedLinePen.AsBrush());
-                    }
+                    DrawEdges(Main.Selected, family.Childs, clickedLinePen.AsBrush(), clickedLinePenWidth);
+                    //foreach (var item in family.Childs)
+                    //{
+                    //    DrawEdge(Main.Selected, item, clickedLinePen.AsBrush(), clickedLinePenWidth);
+                    //}
                 }
                 if (family.Parents.Count > 0)
                 {
-                    foreach (var item in family.Parents)
-                    {
-                        DrawEdge(g, item, Main.Selected, clickedLinePen.AsBrush());
-                    }
+                    DrawEdges(Main.Selected, family.Parents, clickedLinePen.AsBrush(), clickedLinePenWidth, true);
+                    //foreach (var item in family.Parents)
+                    //{
+                    //    DrawEdge(item, Main.Selected, clickedLinePen.AsBrush(), clickedLinePenWidth);
+                    //}
                 }
 
                 foreach (var node in nodes.Positions[adjustedVisibleClipBounds])
@@ -225,17 +230,19 @@ namespace CSC.Direct2D
                 var family = nodes[Main.Highlight];
                 if (family.Childs.Count > 0)
                 {
-                    foreach (var item in family.Childs)
-                    {
-                        DrawEdge(g, Main.Highlight, item, highlightPen.AsBrush());
-                    }
+                    DrawEdges(Main.Highlight, family.Childs, highlightPen.AsBrush(), highlightPenWidth);
+                    //foreach (var item in family.Childs)
+                    //{
+                    //    DrawEdge(Main.Highlight, item, highlightPen.AsBrush(), highlightPenWidth);
+                    //}
                 }
                 if (family.Parents.Count > 0)
                 {
-                    foreach (var item in family.Parents)
-                    {
-                        DrawEdge(g, item, Main.Highlight, highlightPen.AsBrush());
-                    }
+                    DrawEdges(Main.Highlight, family.Parents, highlightPen.AsBrush(), highlightPenWidth, true);
+                    //foreach (var item in family.Parents)
+                    //{
+                    //    DrawEdge(item, Main.Highlight, highlightPen.AsBrush(), highlightPenWidth);
+                    //}
                 }
                 DrawNode(g, Main.Highlight, HighlightNodeBrush.AsBrush(), true);
             }
@@ -246,7 +253,138 @@ namespace CSC.Direct2D
             }
         }
 
-        private static void DrawEdge(Graphics g, Node parent, Node child, ID2D1Brush* pen, PointF start = default, PointF end = default)
+        private void DrawEdges(Node node, List<Node> list, ID2D1Brush* brush, float width, bool invert = false)
+        {
+            int res = factory.CreatePathGeometry(ref edgeGeometry);
+            if (res != 0)
+            {
+                Debugger.Break();
+            }
+
+            res = edgeGeometry.Open(ref edgeGeometrySink);
+            if (res != 0)
+            {
+                Debugger.Break();
+            }
+
+            edgeGeometrySink.SetFillMode(FillMode.Alternate);
+
+            foreach (var item in list)
+            {
+                Vector2D<float> lineStart, lineEnd, controlStart, controlEnd;
+                if (invert)
+                {
+                    GetBezierForEdge(item, node, out lineStart, out lineEnd, out controlStart, out controlEnd);
+                }
+                else
+                {
+                    GetBezierForEdge(node, item, out lineStart, out lineEnd, out controlStart, out controlEnd);
+                }
+                edgeGeometrySink.BeginFigure(lineStart, FigureBegin.Hollow);
+                BezierSegment segment = new()
+                {
+                    Point1 = controlStart,
+                    Point2 = controlEnd,
+                    Point3 = lineEnd
+                };
+                edgeGeometrySink.AddBezier(&segment);
+                edgeGeometrySink.EndFigure(FigureEnd.Open);
+            }
+            edgeGeometrySink.Close();
+
+            target.DrawGeometry((ID2D1Geometry*)edgeGeometry.Handle, brush, width, defaultStyle.Handle);
+
+            edgeGeometrySink.Release();
+            edgeGeometry.Release();
+        }
+
+        private void DrawMainEdges(NodeStore nodes)
+        {
+            if (Main.PositionsChanged)
+            {
+                if (isNewPositions)
+                {
+                    mainEdgeGeometrySink.Release();
+                    mainEdgeGeometry.Release();
+                    isNewPositions = false;
+                }
+                int res = factory.CreatePathGeometry(ref mainEdgeGeometry);
+                if (res != 0)
+                {
+                    Debugger.Break();
+                }
+
+                res = mainEdgeGeometry.Open(ref mainEdgeGeometrySink);
+                if (res != 0)
+                {
+                    Debugger.Break();
+                }
+
+                mainEdgeGeometrySink.SetFillMode(FillMode.Alternate);
+
+                foreach (var node in nodes.Nodes)
+                {
+                    var list = nodes.Childs(node);
+                    if (list.Count > 0)
+                    {
+                        foreach (var item in list)
+                        {
+                            GetBezierForEdge(node, item, out var lineStart, out var lineEnd, out var controlStart, out var controlEnd);
+
+                            mainEdgeGeometrySink.BeginFigure(lineStart, FigureBegin.Hollow);
+                            BezierSegment segment = new()
+                            {
+                                Point1 = controlStart,
+                                Point2 = controlEnd,
+                                Point3 = lineEnd
+                            };
+                            mainEdgeGeometrySink.AddBezier(&segment);
+                            mainEdgeGeometrySink.EndFigure(FigureEnd.Open);
+                        }
+                    }
+                }
+                mainEdgeGeometrySink.Close();
+                isNewPositions = true;
+            }
+
+            target.DrawGeometry((ID2D1Geometry*)mainEdgeGeometry.Handle, linePen.AsBrush(), linePenWidth, defaultStyle.Handle);
+        }
+
+        private void DrawEdge(Node parent, Node child, ID2D1Brush* pen, float width)
+        {
+            GetBezierForEdge(parent, child, out Vector2D<float> lineStart, out Vector2D<float> lineEnd, out Vector2D<float> controlStart, out Vector2D<float> controlEnd);
+
+            int res = factory.CreatePathGeometry(ref edgeGeometry);
+            if (res != 0)
+            {
+                Debugger.Break();
+            }
+
+            res = edgeGeometry.Open(ref edgeGeometrySink);
+            if (res != 0)
+            {
+                Debugger.Break();
+            }
+
+            edgeGeometrySink.SetFillMode(FillMode.Alternate);
+            edgeGeometrySink.BeginFigure(lineStart, FigureBegin.Hollow);
+            BezierSegment segment = new()
+            {
+                Point1 = controlStart,
+                Point2 = controlEnd,
+                Point3 = lineEnd
+            };
+            edgeGeometrySink.AddBezier(&segment);
+            edgeGeometrySink.EndFigure(FigureEnd.Open);
+            edgeGeometrySink.Close();
+
+            target.DrawGeometry((ID2D1Geometry*)edgeGeometry.Handle, pen, width, defaultStyle.Handle);
+
+            edgeGeometrySink.Release();
+            edgeGeometry.Release();
+        }
+
+        private static void GetBezierForEdge(Node parent, Node child, out Vector2D<float> start, out Vector2D<float> end, out Vector2D<float> controlStart, out Vector2D<float> controlEnd)
         {
             int third = 0;
 
@@ -255,24 +393,16 @@ namespace CSC.Direct2D
             {
                 third = Main.GetEdgeStartHeight(child, parent, third);
             }
-            if (start == default)
-            {
-                start = Main.GetStartHeightFromThird(parent, parent.Position, third);
-            }
-            if (end == default)
-            {
-                end = child.Position + new SizeF(0, child.Size.Height / 2);
-            }
+            start = Main.GetStartHeightFromThird(parent, parent.Position, third).ToVec2D();
+            end = (child.Position + new SizeF(0, child.Size.Height / 2)).ToVec2D();
 
-            PointF controlStart;
-            PointF controlEnd;
             float controlEndY, controlStartY;
 
             float distanceX = MathF.Abs(end.X - start.X);
             if (start.X < end.X)
             {
-                controlStart = new PointF((distanceX / 2) + start.X, start.Y);
-                controlEnd = new PointF(((end.X - start.X) / 2) + start.X, end.Y);
+                controlStart = new((distanceX / 2) + start.X, start.Y);
+                controlEnd = new(((end.X - start.X) / 2) + start.X, end.Y);
             }
             else
             {
@@ -287,14 +417,9 @@ namespace CSC.Direct2D
                     controlStartY = start.Y + distanceY / 2;
                     controlEndY = end.Y - distanceY / 2;
                 }
-                controlStart = new PointF((start.X + distanceX / 2), controlStartY);
-                controlEnd = new PointF((end.X - distanceX / 2), controlEndY);
+                controlStart = new((start.X + distanceX / 2), controlStartY);
+                controlEnd = new((end.X - distanceX / 2), controlEndY);
             }
-
-            //todo convert to direct2d
-            //g.DrawBezier(pen, start, controlStart, controlEnd, end);
-            //e.Graphics.DrawEllipse(Pens.Green, new Rectangle(controlStart, new Size(4, 4)));
-            //e.Graphics.DrawEllipse(Pens.Red, new Rectangle(controlEnd, new Size(4, 4)));
         }
 
         private void DrawNode(Graphics g, Node node, ID2D1Brush* brush, bool lighttext = false)
@@ -583,13 +708,24 @@ namespace CSC.Direct2D
 
                 res = DWExtensions.CreateTextFormat(dwfactory,
                                                     fontFamilyName,
-                                                    (Silk.NET.DirectWrite.IDWriteFontCollection*)0,
-                                                    Silk.NET.DirectWrite.FontWeight.Normal,
+                                                    (IDWriteFontCollection*)0,
+                                                    FontWeight.Normal,
                                                     Silk.NET.DirectWrite.FontStyle.Normal,
-                                                    Silk.NET.DirectWrite.FontStretch.Normal,
+                                                    FontStretch.Normal,
                                                     fontSize * Main.Scalee,
                                                     locale,
                                                     defaultFormat.GetAddressOf());
+                if (res != 0)
+                {
+                    Debugger.Break();
+                }
+
+                res = defaultFormat.SetTextAlignment(TextAlignment.Center);
+                if (res != 0)
+                {
+                    Debugger.Break();
+                }
+                res = defaultFormat.SetParagraphAlignment(ParagraphAlignment.Near);
                 if (res != 0)
                 {
                     Debugger.Break();
@@ -677,6 +813,12 @@ namespace CSC.Direct2D
             LightTextBrush.Release();
             DarkTextBrush.Release();
             BlackTextBrush.Release();
+
+            if (isNewPositions)
+            {
+                mainEdgeGeometrySink.Release();
+                mainEdgeGeometry.Release();
+            }
 
             target.Release();
             d2d.Dispose();
