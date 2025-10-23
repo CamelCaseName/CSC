@@ -2599,7 +2599,7 @@ namespace CSC.Nodestuff
                 && node.FileName != Main.SelectedCharacter)
             {
                 nodes.Remove(node);
-                node.RemoveFromSorting(Main.SelectedCharacter);
+                node.RemoveFromSorting(Main.SelectedFile);
             }
         }
 
@@ -2903,6 +2903,11 @@ namespace CSC.Nodestuff
                     {
                         foreach (var store in stores)
                         {
+                            if(store.Key == Main.NoCharacter)
+                            {
+                                continue;
+                            }
+
                             var last = Main.SelectedCharacter;
                             Main.SelectedCharacter = store.Key;
 

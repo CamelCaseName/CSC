@@ -4,6 +4,7 @@ using CSC.Glue;
 using CSC.Nodestuff;
 using CSC.Search;
 using CSC.StoryItems;
+using Silk.NET.Core.Win32Extras;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
@@ -72,6 +73,7 @@ public partial class Main : Form
     private readonly Pen nodeToLinkPen;
     private CachedBitmap? oldGraph;
     private static bool positionsChanged = false;
+    private static readonly List<string> Files = [Player];
     public static bool PositionsChanged => positionsChanged;
 
     internal static float Scalee => Scaling[SelectedCharacter];
@@ -106,9 +108,23 @@ public partial class Main : Form
             {
                 _selectedCharacter = value;
             }
+            if (value == StoryName)
+            {
+                SelectedFile = 0;
+            }
+            else
+            {
+                SelectedFile = Files.IndexOf(_selectedCharacter);
+            }
+            if (SelectedFile == -1)
+            {
+                Debugger.Break();
+            }
             positionsChanged = true;
         }
     }
+
+    public static int SelectedFile;
 
     public int RightClickFrameCounter { get; private set; } = 0;
 
@@ -284,6 +300,11 @@ public partial class Main : Form
         searchWindow.Show();
     }
 
+    public static int FileIndex(string file)
+    {
+        return Files.IndexOf(file);
+    }
+
     private void TryDeleteNode()
     {
         Node removedNode = Node.NullNode;
@@ -342,7 +363,7 @@ public partial class Main : Form
                 NodeLinker.Unlink(nodes[SelectedCharacter], parent, removedNode);
             }
             nodes[SelectedCharacter].Remove(removedNode);
-            removedNode.RemoveFromSorting(SelectedCharacter);
+            removedNode.RemoveFromSorting(SelectedFile);
 
             foreach (var child in childs)
             {
@@ -917,6 +938,12 @@ public partial class Main : Form
         positionsChanged = true;
     }
 
+    public static void ClearNodePos(Node node, int file)
+    {
+        nodes[Files[file]].Positions.ClearNode(node);
+        positionsChanged = true;
+    }
+
     public static void ClearAllNodePos(Node node)
     {
         foreach (var pos in nodes.Values)
@@ -925,9 +952,9 @@ public partial class Main : Form
         }
     }
 
-    public static void SetNodePos(Node node, string file)
+    public static void SetNodePos(Node node, int file)
     {
-        nodes[file].Positions.SetNode(node);
+        nodes[Files[file]].Positions.SetNode(node);
     }
 
     private void UpdateDoubleClickTransition(PointF ScreenPos)
@@ -1154,6 +1181,7 @@ public partial class Main : Form
                 return;
             }
 
+            Files.Add(Player);
             AddStory(newStoryName);
             SetupStartPositions();
         }
@@ -1161,6 +1189,7 @@ public partial class Main : Form
 
     private void AddCharacterStory(string newCharacterName)
     {
+        Files.Add(newCharacterName);
         CharacterStory story = new(newCharacterName);
         Stories[newCharacterName] = story;
         SelectedCharacter = newCharacterName;
@@ -1258,6 +1287,7 @@ public partial class Main : Form
     private void Reset()
     {
         Story = null!;
+        Files.Clear();
         Stories.Clear();
         NodeLinker.ClearLinkCache();
         SearchTrie.Reset();
@@ -1555,6 +1585,19 @@ public partial class Main : Form
         StoryFolder = Path.GetDirectoryName(FilePath)!;
         List<string> fileList = [.. Directory.GetFiles(StoryFolder)];
         fileList.Sort();
+
+        Files.Add(Player);
+        foreach (var file in fileList)
+        {
+            if (Path.GetExtension(file) == ".story")
+            {
+                continue;
+            }
+
+            //story is supposed to be 0 hence its already in
+            Files.Add(Path.GetFileNameWithoutExtension(file));
+        }
+
         foreach (var file in fileList)
         {
             if (Path.GetExtension(file) == ".story")

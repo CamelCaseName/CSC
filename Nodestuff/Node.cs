@@ -90,7 +90,7 @@ namespace CSC.Nodestuff
         public string StaticText;
         public string _text = string.Empty;
         public NodeType Type;
-        private readonly Dictionary<string, PointF> Positions = [];
+        private readonly Dictionary<int, PointF> Positions = [];
         private readonly List<string> dupedFileNames = [];
         private object? data = null;
         private Type dataType = typeof(MissingReferenceInfo);
@@ -158,7 +158,7 @@ namespace CSC.Nodestuff
         {
             get
             {
-                if (Positions.TryGetValue(Main.SelectedCharacter, out var result))
+                if (Positions.TryGetValue(Main.SelectedFile, out var result))
                 {
                     if (result.X != _rect.X || result.Y != _rect.Y)
                     {
@@ -175,9 +175,9 @@ namespace CSC.Nodestuff
 
             set
             {
-                Main.ClearNodePos(this, Main.SelectedCharacter);
-                Positions[Main.SelectedCharacter] = value;
-                Main.SetNodePos(this, Main.SelectedCharacter);
+                Main.ClearNodePos(this, Main.SelectedFile);
+                Positions[Main.SelectedFile] = value;
+                Main.SetNodePos(this, Main.SelectedFile);
                 Main.NeedsSaving = true;
                 _rect = new(value, Size);
                 _roundedRect = _rect.ToRoundedRect(10f);
@@ -919,20 +919,19 @@ namespace CSC.Nodestuff
 
         public void DupeToOtherSorting(string filename)
         {
-            if (!Positions.ContainsKey(filename))
+            int i = Main.FileIndex(filename);
+            if (Positions.TryAdd(i, default))
             {
-                Positions[filename] = new();
-
                 if (origfilename != filename)
                 {
                     dupedFileNames.Add(filename);
                 }
 
-                Main.SetNodePos(this, filename);
+                Main.SetNodePos(this, i);
             }
         }
 
-        public void RemoveFromSorting(string filename)
+        public void RemoveFromSorting(int filename)
         {
             Positions.Remove(filename);
             Main.ClearNodePos(this, filename);

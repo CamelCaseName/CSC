@@ -20,15 +20,22 @@ namespace CSC.Direct2D
 {
     internal unsafe class D2DRenderer
     {
-        //misc
+        //direct2d stuffs
         private const TextFormatFlags TextFlags = TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak | TextFormatFlags.LeftAndRightPadding;
         private readonly SizeF CircleSize = new(15, 15);
+        private ComPtr<ID2D1DCRenderTarget> target = default;
+        private ComPtr<ID2D1Factory> factory;
+        private ComPtr<ID2D1GeometrySink> edgeGeometrySink;
+        private ComPtr<ID2D1GeometrySink> mainEdgeGeometrySink;
+        private ComPtr<ID2D1GradientStopCollection> interlinkedGradientstops;
+        private ComPtr<ID2D1LinearGradientBrush> InterlinkedNodeBrush;
+        private ComPtr<ID2D1PathGeometry> edgeGeometry;
+        private ComPtr<ID2D1PathGeometry> mainEdgeGeometry;
         private ComPtr<ID2D1SolidColorBrush> achievementNodeBrush;
-        private RectangleF adjustedVisibleClipBounds = new();
-        private RectangleF oldBounds = new();
         private ComPtr<ID2D1SolidColorBrush> alternateTextNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> bgcNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> bgcResponseNodeBrush;
+        private ComPtr<ID2D1SolidColorBrush> BlackTextBrush;
         private ComPtr<ID2D1SolidColorBrush> characterGroupNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> circlePen;
         private ComPtr<ID2D1SolidColorBrush> clickedLinePen;
@@ -37,9 +44,6 @@ namespace CSC.Direct2D
         private ComPtr<ID2D1SolidColorBrush> criteriaGroupNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> criterionNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> cutsceneNodeBrush;
-
-        //direct2d stuffs
-        private D2D d2d = null!;
         private ComPtr<ID2D1SolidColorBrush> darkachievementNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> darkalternateTextNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> darkbgcNodeBrush;
@@ -67,24 +71,22 @@ namespace CSC.Direct2D
         private ComPtr<ID2D1SolidColorBrush> darkresponseNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> darksocialNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> darkstateNodeBrush;
+        private ComPtr<ID2D1SolidColorBrush> DarkTextBrush;
         private ComPtr<ID2D1SolidColorBrush> darkvalueNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> defaultNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> dialogueNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> doorNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> eventNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> eventTriggerNodeBrush;
-        private ComPtr<ID2D1Factory> factory;
-        private ComPtr<IDWriteFactory> dwfactory;
         private ComPtr<ID2D1SolidColorBrush> HighlightNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> highlightPen;
-        private ComPtr<ID2D1GradientStopCollection> interlinkedGradientstops;
-        private ComPtr<ID2D1LinearGradientBrush> InterlinkedNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> inventoryNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> itemActionNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> itemGroupBehaviourNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> itemGroupInteractionNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> itemGroupNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> itemNodeBrush;
+        private ComPtr<ID2D1SolidColorBrush> LightTextBrush;
         private ComPtr<ID2D1SolidColorBrush> linePen;
         private ComPtr<ID2D1SolidColorBrush> NodeToLinkNextBrush;
         private ComPtr<ID2D1SolidColorBrush> personalityNodeBrush;
@@ -92,24 +94,20 @@ namespace CSC.Direct2D
         private ComPtr<ID2D1SolidColorBrush> propertyNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> questNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> responseNodeBrush;
-        private ComPtr<ID2D1SolidColorBrush> LightTextBrush;
-        private ComPtr<ID2D1SolidColorBrush> DarkTextBrush;
-        private ComPtr<ID2D1SolidColorBrush> BlackTextBrush;
-        private static readonly float fontSize = 40f;
-        private readonly char[] fontFamilyName = [.. "Consolas"];
-        private readonly char[] locale = [.. "en-us"];
         private ComPtr<ID2D1SolidColorBrush> SelectionEdge;
         private ComPtr<ID2D1SolidColorBrush> socialNodeBrush;
         private ComPtr<ID2D1SolidColorBrush> stateNodeBrush;
-        private ComPtr<ID2D1DCRenderTarget> target = default;
         private ComPtr<ID2D1SolidColorBrush> valueNodeBrush;
         private ComPtr<ID2D1StrokeStyle> defaultStyle;
         private ComPtr<ID2D1StrokeStyle> interlinkedStyle;
+        private ComPtr<IDWriteFactory> dwfactory;
         private ComPtr<IDWriteTextFormat> defaultFormat;
-        private ComPtr<ID2D1PathGeometry> edgeGeometry;
-        private ComPtr<ID2D1GeometrySink> edgeGeometrySink;
-        private ComPtr<ID2D1PathGeometry> mainEdgeGeometry;
-        private ComPtr<ID2D1GeometrySink> mainEdgeGeometrySink;
+        private D2D d2d = null!;
+        private readonly char[] fontFamilyName = [.. "Consolas"];
+        private readonly char[] locale = [.. "en-us"];
+        private RectangleF adjustedVisibleClipBounds = new();
+        private RectangleF oldBounds = new();
+        private static readonly float fontSize = 40f;
         private const float linePenWidth = 2f;
         private const float circlePenWidth = 0.8f;
         private const float clickedLinePenWidth = 4f;
@@ -196,7 +194,7 @@ namespace CSC.Direct2D
             DrawNodes(visible);
 
             Node selected = Main.Selected;
-            if (selected != Node.NullNode)
+            if (selected != Node.NullNode && (selected.FileName == Main.SelectedCharacter || selected.DupedFileNames.Contains(Main.SelectedCharacter)))
             {
                 var family = nodes[selected];
                 if (family.Childs.Count > 0)
@@ -217,6 +215,7 @@ namespace CSC.Direct2D
                 }
 
                 DrawNode(selected, GetNodeColor(selected.Type, true), true, true);
+
             }
 
             Node highlight = Main.Highlight;
