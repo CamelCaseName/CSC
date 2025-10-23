@@ -106,7 +106,7 @@ namespace CSC.Direct2D
         private ComPtr<ID2D1StrokeStyle> interlinkedStyle;
         private ComPtr<IDWriteTextFormat> defaultFormat;
         private const float linePenWidth = 0.2f;
-        private const float circlePenWidth = 0.5f;
+        private const float circlePenWidth = 0.8f;
         private const float clickedLinePenWidth = 3f;
         private const float highlightPenWidth = 3f;
         private const float selectionEdgeWidth = 1f;
@@ -354,6 +354,10 @@ namespace CSC.Direct2D
                 }
 
                 var text = node.Text.AsSpan()[..Math.Min(node.Text.Length, 100)].ToArray();
+                if (text.Length == 0)
+                {
+                    text = [' '];
+                }
                 var textRect = scaledRect.ToBox<float>();
                 fixed (char* t = text)
                 {

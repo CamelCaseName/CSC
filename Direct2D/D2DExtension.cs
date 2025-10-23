@@ -49,7 +49,7 @@ namespace CSC.Direct2D
         {
             return new()
             {
-                Point = new(rect.Right - rect.Left, rect.Bottom - rect.Top),
+                Point = new(rect.Left + (rect.Width / 2), rect.Top + (rect.Height / 2)),
                 RadiusX = rect.Width / 2,
                 RadiusY = rect.Height / 2
             };
@@ -59,7 +59,7 @@ namespace CSC.Direct2D
         {
             return new()
             {
-                Point = new(rect.Right - rect.Left, rect.Bottom - rect.Top),
+                Point = new(rect.Left + (rect.Width / 2), rect.Top + (rect.Height / 2)),
                 RadiusX = rect.Width / 2,
                 RadiusY = rect.Height / 2
             };

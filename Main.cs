@@ -45,7 +45,7 @@ public partial class Main : Form
     private readonly List<Node> visited = [];
     private readonly List<SizeF> SelectedNodeOffsets = [];
     private static readonly SizeF NodeCenter = new(NodeSizeX / 2, NodeSizeY / 2);
-    private static readonly SizeF CircleSize = new(15, 15);
+    private static readonly SizeF CircleSize = new(17, 17);
     private RectangleF adjustedMouseClipBounds;
     private SearchDialog searchWindow = null!;
     private SizeF OffsetFromDragClick = SizeF.Empty;
