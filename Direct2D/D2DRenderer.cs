@@ -6,6 +6,7 @@ using Silk.NET.DirectWrite;
 using Silk.NET.DXGI;
 using Silk.NET.Maths;
 using System.Diagnostics;
+using System.Xml.Linq;
 using AlphaMode = Silk.NET.Direct2D.AlphaMode;
 using DashStyle = Silk.NET.Direct2D.DashStyle;
 using DWExtensions = Silk.NET.DirectWrite.DWriteFactoryVtblExtensions;
@@ -14,6 +15,7 @@ using DWrite = Silk.NET.DirectWrite.DWrite;
 using FactoryType = Silk.NET.Direct2D.FactoryType;
 using IDWriteFactory = Silk.NET.DirectWrite.IDWriteFactory;
 using IDWriteTextFormat = Silk.NET.DirectWrite.IDWriteTextFormat;
+using IDWriteTextLayout = Silk.NET.DirectWrite.IDWriteTextLayout;
 using LineJoin = Silk.NET.Direct2D.LineJoin;
 
 namespace CSC.Direct2D
@@ -102,18 +104,20 @@ namespace CSC.Direct2D
         private ComPtr<ID2D1StrokeStyle> interlinkedStyle;
         private ComPtr<IDWriteFactory> dwfactory;
         private ComPtr<IDWriteTextFormat> defaultFormat;
+        private readonly Dictionary<Node, ComPtr<IDWriteTextLayout>> layouts = [];
         private D2D d2d = null!;
         private readonly char[] fontFamilyName = [.. "Consolas"];
         private readonly char[] locale = [.. "en-us"];
         private RectangleF adjustedVisibleClipBounds = new();
         private RectangleF oldBounds = new();
-        private static readonly float fontSize = 40f;
+        private const float fontSize = 12f;
         private const float linePenWidth = 2f;
         private const float circlePenWidth = 0.8f;
         private const float clickedLinePenWidth = 4f;
         private const float highlightPenWidth = 5f;
         private const float selectionEdgeWidth = 1.5f;
-        private bool isNewPositions = false;
+        private bool mustFreeOldCache = false;
+        private float currentScale = 0f;
 
         public D2DRenderer()
         {
@@ -141,7 +145,8 @@ namespace CSC.Direct2D
             DateTime start = DateTime.UtcNow;
             unsafe
             {
-                oldBounds = adjustedVisibleClipBounds;
+                currentScale = Main.Scalee;
+                //oldbounds is 3x so we dont have to regenerate a often, even when panning around but also doesnt encompass ALL nodes
                 adjustedVisibleClipBounds = new(Main.Offset.X - Main.NodeSizeX,
                                                 Main.Offset.Y - Main.NodeSizeY,
                                                 g.VisibleClipBounds.Width + Main.NodeSizeX,
@@ -164,7 +169,32 @@ namespace CSC.Direct2D
                 D3Dcolorvalue bc = new(40 / 255f, 40 / 255f, 40 / 255f, 1f);
                 target.Clear(ref bc);
 
-                DrawAllNodes(nodes);
+                TryGenerateCache(nodes);
+                //cached
+                target.DrawGeometry((ID2D1Geometry*)mainEdgeGeometry.Handle, linePen.AsBrush(), linePenWidth, defaultStyle.Handle);
+
+                List<Node> visible = nodes.Positions[adjustedVisibleClipBounds];
+
+                DrawNodes(visible);
+
+                Node selected = Main.Selected;
+                if (visible.Contains(selected))
+                {
+                    DrawSelectdNode(nodes, selected, visible);
+                }
+
+                Node highlight = Main.Highlight;
+                if (visible.Contains(highlight))
+                {
+                    DrawHighlightedNode(nodes, highlight);
+                }
+
+                Node linkFrom = Main.LinkFrom;
+                if (visible.Contains(linkFrom))
+                {
+                    linkFrom.TextColor = 2;
+                    DrawNode(linkFrom, NodeToLinkNextBrush.AsBrush());
+                }
 
                 ulong tag1 = 0, tag2 = 0;
                 target.EndDraw(ref tag1, ref tag2);
@@ -184,16 +214,23 @@ namespace CSC.Direct2D
             ReleaseD2DResources();
         }
 
-        private void DrawAllNodes(NodeStore nodes)
+        private void DrawHighlightedNode(NodeStore nodes, Node highlight)
         {
-            //cached
-            DrawMainEdges(nodes);
+            var family = nodes[highlight];
+            if (family.Childs.Count > 0)
+            {
+                DrawEdges(highlight, family.Childs, highlightPen.AsBrush(), highlightPenWidth);
+            }
+            if (family.Parents.Count > 0)
+            {
+                DrawEdges(highlight, family.Parents, highlightPen.AsBrush(), highlightPenWidth, true);
+            }
+            highlight.TextColor = 2;
+            DrawNode(highlight, HighlightNodeBrush.AsBrush());
+        }
 
-            List<Node> visible = nodes.Positions[adjustedVisibleClipBounds];
-
-            DrawNodes(visible);
-
-            Node selected = Main.Selected;
+        private void DrawSelectdNode(NodeStore nodes, Node selected, List<Node> visible)
+        {
             if (selected != Node.NullNode && (selected.FileName == Main.SelectedCharacter || selected.DupedFileNames.Contains(Main.SelectedCharacter)))
             {
                 var family = nodes[selected];
@@ -202,7 +239,11 @@ namespace CSC.Direct2D
                     DrawEdges(selected, family.Childs, clickedLinePen.AsBrush(), clickedLinePenWidth);
                     foreach (var node in family.Childs)
                     {
-                        DrawNode(node, GetNodeColor(node.Type, true), true);
+                        if (visible.Contains(node))
+                        {
+                            node.TextColor = 2;
+                            DrawNode(node, GetNodeColor(node.Type, true));
+                        }
                     }
                 }
                 if (family.Parents.Count > 0)
@@ -210,32 +251,25 @@ namespace CSC.Direct2D
                     DrawEdges(selected, family.Parents, clickedLinePen.AsBrush(), clickedLinePenWidth, true);
                     foreach (var node in family.Parents)
                     {
-                        DrawNode(node, GetNodeColor(node.Type, true), true);
+                        if (visible.Contains(node))
+                        {
+                            node.TextColor = 2;
+                            DrawNode(node, GetNodeColor(node.Type, true));
+                        }
                     }
                 }
 
-                DrawNode(selected, GetNodeColor(selected.Type, true), true, true);
-
-            }
-
-            Node highlight = Main.Highlight;
-            if (highlight != Node.NullNode)
-            {
-                var family = nodes[highlight];
-                if (family.Childs.Count > 0)
+                if (selected.FileName != Main.SelectedCharacter)
                 {
-                    DrawEdges(highlight, family.Childs, highlightPen.AsBrush(), highlightPenWidth);
+                    var interRect = ScaleRect(selected.Rectangle, 25).ToRoundedRect(18f);
+                    DrawNodeRectImpl(ref interRect, InterlinkedNodeBrush.AsBrush());
                 }
-                if (family.Parents.Count > 0)
-                {
-                    DrawEdges(highlight, family.Parents, highlightPen.AsBrush(), highlightPenWidth, true);
-                }
-                DrawNode(highlight, HighlightNodeBrush.AsBrush(), true);
-            }
+                var clickRect = ScaleRect(selected.Rectangle, 15).ToRoundedRect(15f);
+                DrawNodeRectImpl(ref clickRect, ClickedNodeBrush.AsBrush());
 
-            if (Main.LinkFrom != Node.NullNode)
-            {
-                DrawNode(Main.LinkFrom, NodeToLinkNextBrush.AsBrush(), true);
+                selected.TextColor = 2;
+                DrawNode(selected, GetNodeColor(selected.Type, true));
+
             }
         }
 
@@ -244,6 +278,8 @@ namespace CSC.Direct2D
             //no measureable difference even for OS whether nodes are in order or not. Drawing all OS takes about 18ms for me
             foreach (var node in visible)
             {
+                //default
+                node.TextColor = 1;
                 DrawNode(node, GetNodeColor(node.Type, false));
             }
         }
@@ -293,16 +329,25 @@ namespace CSC.Direct2D
             edgeGeometry.Release();
         }
 
-        private void DrawMainEdges(NodeStore nodes)
+        private void TryGenerateCache(NodeStore nodes)
         {
-            if (Main.PositionsChanged || oldBounds != adjustedVisibleClipBounds)
+            if (Main.PositionsChanged || !oldBounds.Contains(adjustedVisibleClipBounds) || (oldBounds.Width - (adjustedVisibleClipBounds.Width * 5) > 0))
             {
-                if (isNewPositions)
+                oldBounds = new(adjustedVisibleClipBounds.X - adjustedVisibleClipBounds.Width, adjustedVisibleClipBounds.Y - adjustedVisibleClipBounds.Height, adjustedVisibleClipBounds.Width * 3, adjustedVisibleClipBounds.Height * 3);
+
+                if (mustFreeOldCache)
                 {
+                    foreach (var layout in layouts.Values)
+                    {
+                        layout.Release();
+                    }
+                    layouts.Clear();
                     mainEdgeGeometrySink.Release();
                     mainEdgeGeometry.Release();
-                    isNewPositions = false;
+                    mustFreeOldCache = false;
                 }
+
+                //edge cache
                 int res = factory.CreatePathGeometry(ref mainEdgeGeometry);
                 if (res != 0)
                 {
@@ -324,22 +369,25 @@ namespace CSC.Direct2D
                     {
                         foreach (var item in list)
                         {
-                            if (node.Position.X < adjustedVisibleClipBounds.X && item.Position.X < adjustedVisibleClipBounds.X)
+                            //skip edges which lie completeley out of bounds
+                            if (node.Position.X < oldBounds.X && item.Position.X < oldBounds.X)
                             {
                                 continue;
                             }
-                            if (node.Position.X > adjustedVisibleClipBounds.Right && item.Position.X > adjustedVisibleClipBounds.Right)
+                            if (node.Position.X > oldBounds.Right && item.Position.X > oldBounds.Right)
                             {
                                 continue;
                             }
-                            if (node.Position.Y < adjustedVisibleClipBounds.Y && item.Position.Y < adjustedVisibleClipBounds.Y)
+                            if (node.Position.Y < oldBounds.Y && item.Position.Y < oldBounds.Y)
                             {
                                 continue;
                             }
-                            if (node.Position.Y > adjustedVisibleClipBounds.Bottom && item.Position.Y > adjustedVisibleClipBounds.Bottom)
+                            if (node.Position.Y > oldBounds.Bottom && item.Position.Y > oldBounds.Bottom)
                             {
                                 continue;
                             }
+
+                            //create the positions for the rest of nodes and addto cached geometry
                             GetBezierForEdge(node, item, out var lineStart, out var lineEnd, out var controlStart, out var controlEnd);
 
                             mainEdgeGeometrySink.BeginFigure(lineStart, FigureBegin.Hollow);
@@ -355,10 +403,36 @@ namespace CSC.Direct2D
                     }
                 }
                 mainEdgeGeometrySink.Close();
-                isNewPositions = true;
-            }
 
-            target.DrawGeometry((ID2D1Geometry*)mainEdgeGeometry.Handle, linePen.AsBrush(), linePenWidth, defaultStyle.Handle);
+                //text cache
+                foreach (var node in nodes.Positions[oldBounds])
+                {
+                    if (layouts.ContainsKey(node))
+                    {
+                        continue;
+                    }
+
+                    ComPtr<IDWriteTextLayout> layout = default;
+
+                    var textRectSize = node.Size;
+                    textRectSize -= new Size(6, 6);
+
+                    var text = node.Text.AsSpan()[..Math.Min(node.Text.Length, 100)].ToArray();
+                    if (text.Length == 0)
+                    {
+                        text = [' '];
+                    }
+
+                    fixed (char* t = text)
+                    {
+                        res = dwfactory.CreateTextLayout(t, (uint)text.Length, defaultFormat.Handle, textRectSize.Width, textRectSize.Height, layout.GetAddressOf());
+                    }
+
+                    layouts.Add(node, layout);
+                }
+
+                mustFreeOldCache = true;
+            }
         }
 
         private void DrawEdge(Node parent, Node child, ID2D1Brush* pen, float width)
@@ -433,42 +507,32 @@ namespace CSC.Direct2D
             }
         }
 
-        private void DrawNode(Node node, ID2D1Brush* brush, bool lighttext = false, bool isSelected = false)
+        private void DrawNode(Node node, ID2D1Brush* brush)
         {
             if (node == Node.NullNode)
             {
                 return;
             }
-            if (Main.Scalee > 0.28f)
-            {
-                Main.GetLinkCircleRects(node, out RectangleF leftRect, out RectangleF rightRect);
 
-                Ellipse left = leftRect.ToEllipse();
+            //draw circles?
+            if (currentScale > 0.28f)
+            {
+                Main.GetLinkCircleRects(node, out RectangleF rightRect);
+
                 Ellipse right = rightRect.ToEllipse();
 
-                target.DrawEllipse(&left, circlePen.AsBrush(), circlePenWidth, defaultStyle);
                 target.DrawEllipse(&right, circlePen.AsBrush(), circlePenWidth, defaultStyle);
             }
-            if (isSelected)
-            {
-                lighttext = true;
-                if (node.FileName != Main.SelectedCharacter)
-                {
-                    lighttext = true;
-                    var interRect = ScaleRect(node.Rectangle, 25).ToRoundedRect(18f);
-                    target.FillRoundedRectangle(ref interRect, ClickedNodeBrush);
-                }
-                var clickRect = ScaleRect(node.Rectangle, 15).ToRoundedRect(15f);
-                target.FillRoundedRectangle(ref clickRect, ClickedNodeBrush);
-            }
-            else if (node.FileName != Main.SelectedCharacter)
+
+            //Draw interlinked frame
+            if (node.FileName != Main.SelectedCharacter)
             {
                 var interRect = ScaleRect(node.Rectangle, 15).ToRoundedRect(15f);
-                target.FillRoundedRectangle(ref interRect, InterlinkedNodeBrush);
+                DrawNodeRectImpl(ref interRect, InterlinkedNodeBrush.AsBrush());
             }
 
             var rect = node.RoundRectangle;
-            target.FillRoundedRectangle(ref rect, brush);
+            DrawNodeRectImpl(ref rect, brush);
 
             if (Main.selected.Contains(node))
             {
@@ -476,41 +540,50 @@ namespace CSC.Direct2D
                 target.DrawRectangle(ref selectRect, SelectionEdge.AsBrush(), selectionEdgeWidth, defaultStyle);
             }
 
-            if (Main.Scalee > 0.28f)
+            if (currentScale > 0.28f)
             {
-                var scaledRect = node.Rectangle;
-                scaledRect.Location += new Size(3, 3);
-                scaledRect.Size -= new Size(6, 6);
-
-                bool useBlack = false;
                 var brushColor = (*(ID2D1SolidColorBrush*)brush).GetColor();
                 if ((brushColor.R * 0.299 + brushColor.G * 0.587 + brushColor.B * 0.114) > 0.6f)
                 {
-                    useBlack = true;
+                    node.TextColor = 0;
                 }
 
-                var text = node.Text.AsSpan()[..Math.Min(node.Text.Length, 100)].ToArray();
-                if (text.Length == 0)
+
+                //draw text
+                Vector2D<float> scaledLocation = node.Position.ToVec2D();
+                scaledLocation.X += 3;
+                scaledLocation.Y += 3;
+
+                switch (node.TextColor)
                 {
-                    text = [' '];
+                    //black
+                    case 0:
+                        D2D1DCRenderTargetVtblExtensions.DrawTextLayout(target, scaledLocation, (Silk.NET.Direct2D.IDWriteTextLayout*)layouts[node].Handle, BlackTextBrush.AsBrush(), DrawTextOptions.Clip);
+                        break;
+                    //dark
+                    case 1:
+                        D2D1DCRenderTargetVtblExtensions.DrawTextLayout(target, scaledLocation, (Silk.NET.Direct2D.IDWriteTextLayout*)layouts[node].Handle, DarkTextBrush.AsBrush(), DrawTextOptions.Clip);
+                        break;
+                    //light
+                    case 2:
+                        D2D1DCRenderTargetVtblExtensions.DrawTextLayout(target, scaledLocation, (Silk.NET.Direct2D.IDWriteTextLayout*)layouts[node].Handle, LightTextBrush.AsBrush(), DrawTextOptions.Clip);
+                        break;
+                    default:
+                        break;
                 }
-                //todo replace drawtext calls by drawtextlayout calls with cached layout per node thats visible
-                var textRect = scaledRect.ToBox<float>();
-                fixed (char* t = text)
-                {
-                    if (useBlack)
-                    {
-                        D2D1DCRenderTargetVtblExtensions.DrawTextA(target, t, (uint)text.Length, (Silk.NET.Direct2D.IDWriteTextFormat*)defaultFormat.Handle, &textRect, BlackTextBrush.AsBrush(), DrawTextOptions.Clip, DwriteMeasuringMode.Natural);
-                    }
-                    else if (lighttext)
-                    {
-                        D2D1DCRenderTargetVtblExtensions.DrawTextA(target, t, (uint)text.Length, (Silk.NET.Direct2D.IDWriteTextFormat*)defaultFormat.Handle, &textRect, LightTextBrush.AsBrush(), DrawTextOptions.Clip, DwriteMeasuringMode.Natural);
-                    }
-                    else
-                    {
-                        D2D1DCRenderTargetVtblExtensions.DrawTextA(target, t, (uint)text.Length, (Silk.NET.Direct2D.IDWriteTextFormat*)defaultFormat.Handle, &textRect, DarkTextBrush.AsBrush(), DrawTextOptions.Clip, DwriteMeasuringMode.Natural);
-                    }
-                }
+            }
+        }
+
+        private void DrawNodeRectImpl(ref RoundedRect rect, ID2D1Brush* brush)
+        {
+            if (currentScale < 0.13f)
+            {
+                var nonRoundRect = rect.Rect;
+                target.FillRectangle(ref nonRoundRect, brush);
+            }
+            else
+            {
+                target.FillRoundedRectangle(ref rect, brush);
             }
         }
 
@@ -721,10 +794,10 @@ namespace CSC.Direct2D
                 res = DWExtensions.CreateTextFormat(dwfactory,
                                                     fontFamilyName,
                                                     (IDWriteFontCollection*)0,
-                                                    FontWeight.Normal,
+                                                    FontWeight.ExtraLight,
                                                     Silk.NET.DirectWrite.FontStyle.Normal,
                                                     FontStretch.Normal,
-                                                    fontSize * Main.Scalee,
+                                                    fontSize,
                                                     locale,
                                                     defaultFormat.GetAddressOf());
                 if (res != 0)
@@ -826,7 +899,7 @@ namespace CSC.Direct2D
             DarkTextBrush.Release();
             BlackTextBrush.Release();
 
-            if (isNewPositions)
+            if (mustFreeOldCache)
             {
                 mainEdgeGeometrySink.Release();
                 mainEdgeGeometry.Release();
@@ -835,11 +908,6 @@ namespace CSC.Direct2D
             target.Release();
             d2d.Dispose();
         }
-    }
-
-    internal class NodeTypeComparer : IComparer<Node>
-    {
-        public int Compare(Node? x, Node? y) => x?.Type > y?.Type ? -1 : 1;
     }
 }
 

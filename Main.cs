@@ -139,9 +139,6 @@ public partial class Main : Form
 
     //todo we need to pause updating the search during a typing streak and cumulatively update after its done
     //todo filter/hide node types
-    //todo fix issue where borrowed nodes arent made anymore when you create/edit nodes
-
-    //todo criterion linking in OS links some to player that should be in other files
 
     //todo add story node cache on disk
     //todo add story search tree cache on disk
@@ -1105,18 +1102,12 @@ public partial class Main : Form
         {
             foreach (var node in nodes[SelectedCharacter].Positions[mouseGraphLocation])
             {
-                GetLinkCircleRects(node, out RectangleF leftRect, out RectangleF rightRect);
-                float circleCenterX = leftRect.X + leftRect.Width / 2;
+                GetLinkCircleRects(node, out RectangleF rightRect);
                 float circleCenterRightX = rightRect.X + rightRect.Width / 2;
-                float circleCenterY = leftRect.Y + leftRect.Height / 2;
-                float DistanceLeft = MathF.Sqrt(MathF.Pow(mouseGraphLocation.X - circleCenterX, 2) + MathF.Pow(mouseGraphLocation.Y - circleCenterY, 2));
+                float circleCenterY = rightRect.Y + rightRect.Height / 2;
                 float DistanceRight = MathF.Sqrt(MathF.Pow(mouseGraphLocation.X - (circleCenterRightX), 2) + MathF.Pow(mouseGraphLocation.Y - circleCenterY, 2));
 
-                if (DistanceLeft < CircleSize.Width / 2)
-                {
-                    return node;
-                }
-                else if (DistanceRight < CircleSize.Width / 2)
+                if (DistanceRight < CircleSize.Width / 2)
                 {
                     return node;
                 }
@@ -1421,26 +1412,23 @@ public partial class Main : Form
         return third;
     }
 
-    public static void GetLinkCircleRects(Node node, out RectangleF leftRect, out RectangleF rightRect)
+    public static void GetLinkCircleRects(Node node, out RectangleF rightRect)
     {
-        leftRect = new RectangleF(node.Position + new SizeF(-CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
+        //todo this can for sure be optimized...
         rightRect = new RectangleF(node.Position + new SizeF(node.Size.Width - CircleSize.Width / 2, (node.Size.Height / 2) - CircleSize.Width / 2), CircleSize);
         if (node.FileName != SelectedCharacter)
         {
             if (node == Instance.SelectedNode)
             {
-                leftRect.Location -= new SizeF(25 / 2, 0);
                 rightRect.Location += new SizeF(25 / 2, 0);
             }
             else
             {
-                leftRect.Location -= new SizeF(15 / 2, 0);
                 rightRect.Location += new SizeF(15 / 2, 0);
             }
         }
         else if (node == Instance.SelectedNode)
         {
-            leftRect.Location -= new SizeF(15 / 2, 0);
             rightRect.Location += new SizeF(15 / 2, 0);
         }
     }

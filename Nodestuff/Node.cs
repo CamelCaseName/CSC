@@ -232,6 +232,10 @@ namespace CSC.Nodestuff
         public RectangleF Rectangle { get => _rect; }
 
         private Silk.NET.Direct2D.RoundedRect _roundedRect = default;
+        
+        // 1 = dark default, 0 = black and 2 = light
+        internal int TextColor = 1; 
+
         public Silk.NET.Direct2D.RoundedRect RoundRectangle { get => _roundedRect; }
 
         public string Text
