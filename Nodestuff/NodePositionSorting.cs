@@ -2,7 +2,7 @@
 {
     public class NodePositionSorting
     {
-        private const int GridSize = 500;
+        private const int GridSize = 200;
         public int ID = counter++;
         private static int counter = 0;
         //4 lists for each quadrant so we can deal with negative coordinates

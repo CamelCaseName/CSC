@@ -4998,7 +4998,7 @@ public partial class Main : Form
         //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.mouseeventargs.delta?view=windowsdesktop-6.0
         if (e.Delta > 0)
         {
-            if (Scaling[SelectedCharacter] < 5)
+            if (Scaling[SelectedCharacter] < 2.2f)
             {
                 Scaling[SelectedCharacter] *= 1.2f;
             }

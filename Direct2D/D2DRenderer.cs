@@ -170,10 +170,14 @@ namespace CSC.Direct2D
                 target.Clear(ref bc);
 
                 TryGenerateCache(nodes);
+
                 //cached
                 target.DrawGeometry((ID2D1Geometry*)mainEdgeGeometry.Handle, linePen.AsBrush(), linePenWidth, defaultStyle.Handle);
 
                 List<Node> visible = nodes.Positions[adjustedVisibleClipBounds];
+
+                //target.SetAntialiasMode(AntialiasMode.Aliased);
+                //target.SetTextAntialiasMode(Silk.NET.Direct2D.TextAntialiasMode.Default);
 
                 DrawNodes(visible);
 
@@ -195,6 +199,8 @@ namespace CSC.Direct2D
                     linkFrom.TextColor = 2;
                     DrawNode(linkFrom, NodeToLinkNextBrush.AsBrush());
                 }
+
+                //target.SetAntialiasMode(AntialiasMode.PerPrimitive);
 
                 ulong tag1 = 0, tag2 = 0;
                 target.EndDraw(ref tag1, ref tag2);
@@ -576,7 +582,7 @@ namespace CSC.Direct2D
 
         private void DrawNodeRectImpl(ref RoundedRect rect, ID2D1Brush* brush)
         {
-            if (currentScale < 0.13f)
+            if (currentScale < 0.28f)
             {
                 var nonRoundRect = rect.Rect;
                 target.FillRectangle(ref nonRoundRect, brush);
@@ -648,7 +654,7 @@ namespace CSC.Direct2D
                     DpiX = 0,
                     PixelFormat = new()
                     {
-                        AlphaMode = AlphaMode.Premultiplied,
+                        AlphaMode = AlphaMode.Ignore,
                         Format = Format.FormatB8G8R8A8Unorm
                     },
                     Usage = RenderTargetUsage.GdiCompatible,
