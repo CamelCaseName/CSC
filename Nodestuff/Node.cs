@@ -96,21 +96,23 @@ namespace CSC.Nodestuff
         private Type dataType = typeof(MissingReferenceInfo);
 
         private string fileName = Main.NoCharacter;
-        private string origfilename = Main.NoCharacter;
-        private bool setOnce = false;
+        private readonly string origfilename = Main.NoCharacter;
         private bool CacheValid = false;
         public string OrigFileName => origfilename;
 
-        public Node(string iD, NodeType type, string text)
+        public Node(string iD, NodeType type, string text, string file)
         {
             ID = iD;
             StaticText = text;
             Type = type;
             Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
             Main.SetNodePos(this);
+            FileName = file;
+            origfilename = file;
+            Positions.Add(Main.FileIndex(file), default);
         }
 
-        public Node(string iD, NodeType type, string text, object data)
+        public Node(string iD, NodeType type, string text, object data, string file)
         {
             ID = iD;
             StaticText = text;
@@ -119,6 +121,9 @@ namespace CSC.Nodestuff
             DataType = data.GetType();
             Size = new SizeF(Main.NodeSizeX, Main.NodeSizeY);
             Main.SetNodePos(this);
+            FileName = file;
+            origfilename = file;
+            Positions.Add(Main.FileIndex(file), default);
         }
 
         public Node()
@@ -127,6 +132,8 @@ namespace CSC.Nodestuff
             StaticText = string.Empty;
             Type = NodeType.Null;
             Main.SetNodePos(this);
+            fileName = Main.NoCharacter;
+            origfilename = Main.NoCharacter;
         }
 
         public Type DataType { get => dataType; private set => dataType = value; }
@@ -144,11 +151,6 @@ namespace CSC.Nodestuff
                 {
                     //todo remove once charactergroups are in
                     value = Main.Player;
-                }
-                if (!setOnce)
-                {
-                    origfilename = value;
-                    setOnce = true;
                 }
                 fileName = value;
             }
@@ -874,8 +876,10 @@ namespace CSC.Nodestuff
             return new Node(
                 criterion.ToString(),
                 NodeType.Criterion,
-                $"{criterion.Character}|{criterion.CompareType}|{criterion.Key}|{criterion.Value}")
-            { FileName = filename, RawData = criterion };
+                $"{criterion.Character}|{criterion.CompareType}|{criterion.Key}|{criterion.Value}",
+                filename)
+            { RawData = criterion }
+            ;
         }
 
         public void AddCriteria(List<Criterion> criteria, NodeStore nodes)
@@ -892,11 +896,10 @@ namespace CSC.Nodestuff
         {
             foreach (GameEvent _event in events)
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", this)
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", this, this.FileName)
                 {
                     RawData = _event,
                     DataType = typeof(GameEvent),
-                    FileName = this.FileName
                 };
 
                 nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);

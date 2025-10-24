@@ -13,21 +13,16 @@ namespace CSC.Nodestuff
             foreach (Achievement achievement in story.Achievements ?? [])
             {
                 //node to add the description as child to, needs reference to parent, hence can't be anonymous
-                var node = new Node(achievement.Id ?? string.Empty, NodeType.Achievement, achievement.Name ?? string.Empty) { RawData = achievement };
+                var node = new Node(achievement.Id ?? string.Empty, NodeType.Achievement, achievement.Name ?? string.Empty, Main.Player) { RawData = achievement };
                 nodes.Add(node);
-                nodes.AddChild(node, new Node(achievement.Id + "Description", NodeType.Achievement, achievement.Description ?? string.Empty, node));
-                nodes.AddChild(node, new Node(achievement.Id + "SteamName", NodeType.Achievement, achievement.SteamName ?? string.Empty, node));
-                //add achievement with description child 
             }
-
-            //return list of achievements
         }
 
         public static void GetBackGroundChatter(CharacterStory story, NodeStore nodes)
         {
             foreach (BackgroundChatter backgroundChatter in story.BackgroundChatter ?? [])
             {
-                var bgcNode = new Node($"BGC{backgroundChatter.Id}", NodeType.BGC, backgroundChatter.Text ?? string.Empty) { RawData = backgroundChatter };
+                var bgcNode = new Node($"BGC{backgroundChatter.Id}", NodeType.BGC, backgroundChatter.Text ?? string.Empty, story.CharacterName!) { RawData = backgroundChatter };
 
                 nodes.Add(bgcNode);
                 //criteria
@@ -39,7 +34,7 @@ namespace CSC.Nodestuff
                 //responses
                 foreach (BackgroundChatterResponse response in backgroundChatter.Responses ?? [])
                 {
-                    var nodeResponse = new Node($"{response.Label}", NodeType.BGCResponse, $"{response.CharacterName} - BGC{response.ChatterId}", bgcNode) { RawData = response };
+                    var nodeResponse = new Node($"{response.Label}", NodeType.BGCResponse, $"{response.CharacterName} - BGC{response.ChatterId}", bgcNode, story.CharacterName!) { RawData = response };
 
                     nodes.AddChild(bgcNode, nodeResponse);
                 }
@@ -51,7 +46,7 @@ namespace CSC.Nodestuff
             foreach (CriteriaGroup group in story.CriteriaGroups ?? [])
             {
                 //add items to list
-                var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition) { RawData = group };
+                var nodeCriteriaGroup = new Node(group.Id!, NodeType.CriteriaGroup, group.Name + " True if " + group.PassCondition, Main.Player) { RawData = group };
 
                 nodes.Add(nodeCriteriaGroup);
                 foreach (CriteriaListWrapper criteriaList in group.CriteriaList ?? [])
@@ -67,7 +62,7 @@ namespace CSC.Nodestuff
 
             foreach (Dialogue dialogue in story.Dialogues ?? [])
             {
-                var nodeDialogue = new Node(dialogue.ID.ToString(), NodeType.Dialogue, dialogue.Text ?? string.Empty) { RawData = dialogue, FileName = story.CharacterName! };
+                var nodeDialogue = new Node(dialogue.ID.ToString(), NodeType.Dialogue, dialogue.Text ?? string.Empty, story.CharacterName!) { RawData = dialogue };
                 int alternateTextCounter = 1;
                 //finally add node
                 nodes.Add(nodeDialogue);
@@ -75,7 +70,7 @@ namespace CSC.Nodestuff
                 //add all alternate texts to teh dialogue
                 foreach (AlternateText alternateText in dialogue.AlternateTexts ?? [])
                 {
-                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue) { RawData = alternateText, FileName = story.CharacterName! };
+                    var nodeAlternateText = new Node($"{dialogue.ID}.{alternateTextCounter}", NodeType.AlternateText, alternateText.Text ?? string.Empty, nodeDialogue, story.CharacterName!) { RawData = alternateText };
 
                     //increasse counter to ensure valid id
                     alternateTextCounter++;
@@ -92,7 +87,7 @@ namespace CSC.Nodestuff
                 //add all responses as childs to this dialogue
                 foreach (Response response in dialogue.Responses ?? [])
                 {
-                    var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty, nodeDialogue) { RawData = response, FileName = story.CharacterName! };
+                    var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty, nodeDialogue, story.CharacterName!) { RawData = response };
 
                     nodeResponse.AddCriteria(response.ResponseCriteria ?? [], nodes);
 
@@ -115,11 +110,11 @@ namespace CSC.Nodestuff
 
         public static void GetGameStartEvents(MainStory story, NodeStore nodes)
         {
-            var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents") { RawData = story.GameStartEvents };
+            var nodeEvents = new Node("GameStartEvents"!, NodeType.EventTrigger, "GameStartEvents", Main.Player) { RawData = story.GameStartEvents };
             nodes.Add(nodeEvents);
             foreach (GameEvent _event in story.GameStartEvents ?? [])
             {
-                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none") { RawData = _event, FileName = Main.Player };
+                var nodeEvent = new Node(_event.Id ?? "none", NodeType.GameEvent, _event.Value ?? "none", Main.Player) { RawData = _event, FileName = Main.Player };
 
                 nodeEvent.AddCriteria(_event.Criteria ?? [], nodes);
 
@@ -132,7 +127,7 @@ namespace CSC.Nodestuff
             //add all responses as childs to this dialogue
             foreach (Response response in story.GlobalGoodbyeResponses ?? [])
             {
-                var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty) { RawData = response };
+                var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty, story.CharacterName!) { RawData = response };
 
                 nodeResponse.AddCriteria(response.ResponseCriteria ?? [], nodes);
 
@@ -147,7 +142,7 @@ namespace CSC.Nodestuff
         {
             foreach (Response response in story.GlobalResponses ?? [])
             {
-                var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty) { RawData = response };
+                var nodeResponse = new Node(response.Id ?? string.Empty, NodeType.Response, response.Text ?? string.Empty, story.CharacterName!) { RawData = response };
 
                 nodeResponse.AddCriteria(response.ResponseCriteria ?? [], nodes);
 
@@ -168,7 +163,7 @@ namespace CSC.Nodestuff
                     continue;
                 }
                 //create item group node to add events/criteria to
-                var nodeGroup = new Node(itemGroupBehaviour.Id ?? string.Empty, NodeType.ItemGroupBehaviour, itemGroupBehaviour.Name ?? string.Empty) { RawData = itemGroupBehaviour };
+                var nodeGroup = new Node(itemGroupBehaviour.Id ?? string.Empty, NodeType.ItemGroupBehaviour, itemGroupBehaviour.Name ?? string.Empty, Main.Player) { RawData = itemGroupBehaviour };
 
                 //add item gruop with everything to collecting list
                 nodes.Add(nodeGroup);
@@ -176,7 +171,7 @@ namespace CSC.Nodestuff
                 foreach (ItemAction itemAction in itemGroupBehaviour.ItemActions ?? [])
                 {
                     //node to addevents to
-                    var nodeAction = new Node(itemGroupBehaviour.Name + " " + itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeGroup) { RawData = itemAction };
+                    var nodeAction = new Node(itemGroupBehaviour.Name + " " + itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeGroup, Main.Player) { RawData = itemAction };
 
                     //add text that is shown when item is taken
                     nodeAction.AddEvents(itemAction.OnTakeActionEvents ?? [], nodes);
@@ -200,7 +195,7 @@ namespace CSC.Nodestuff
                     continue;
                 }
                 //create item group node to add events/criteria to
-                var nodeGroup = new Node(itemGroup.Id ?? string.Empty, NodeType.ItemGroup, itemGroup.Name ?? string.Empty) { RawData = itemGroup };
+                var nodeGroup = new Node(itemGroup.Id ?? string.Empty, NodeType.ItemGroup, itemGroup.Name ?? string.Empty, Main.Player) { RawData = itemGroup };
                 //add item gruop with everything to collecting list
                 nodes.Add(nodeGroup);
 
@@ -208,7 +203,7 @@ namespace CSC.Nodestuff
                 foreach (string item in itemGroup.ItemsInGroup ?? [])
                 {
                     //node to addevents to
-                    var nodeItem = new Node(item ?? string.Empty, NodeType.StoryItem, item ?? string.Empty) { RawData = item };
+                    var nodeItem = new Node(item ?? string.Empty, NodeType.StoryItem, item ?? string.Empty, Main.Player) { RawData = item };
 
                     //add item to item group
                     nodes.AddChild(nodeGroup, nodeItem);
@@ -222,7 +217,7 @@ namespace CSC.Nodestuff
             foreach (InteractiveitemBehaviour itemOverride in story.ItemOverrides ?? [])
             {
                 //add items to list
-                var nodeItem = new Node(itemOverride.Id ?? string.Empty, NodeType.StoryItem, itemOverride.DisplayName ?? string.Empty) { RawData = itemOverride };
+                var nodeItem = new Node(itemOverride.Id ?? string.Empty, NodeType.StoryItem, itemOverride.DisplayName ?? string.Empty, Main.Player) { RawData = itemOverride };
 
                 //add item with all child Main.nodes to collector list
                 nodes.Add(nodeItem);
@@ -230,7 +225,7 @@ namespace CSC.Nodestuff
                 foreach (ItemAction itemAction in itemOverride.ItemActions ?? [])
                 {
                     //create action node to add criteria and events to
-                    var nodeAction = new Node(itemOverride.ItemName + " " + itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem) { RawData = itemAction };
+                    var nodeAction = new Node(itemOverride.ItemName + " " + itemAction.ActionName ?? string.Empty, NodeType.ItemAction, itemAction.ActionName ?? string.Empty, nodeItem, Main.Player) { RawData = itemAction };
 
                     //add text that is shown when item is taken
                     nodeAction.AddEvents(itemAction.OnTakeActionEvents ?? [], nodes);
@@ -249,7 +244,7 @@ namespace CSC.Nodestuff
                 foreach (UseWith use in itemOverride.UseWiths ?? [])
                 {
                     //node to add all references to
-                    var useNode = new Node(itemOverride.ItemName + " " + use.ItemName ?? string.Empty, NodeType.UseWith, use.CustomCantDoThatMessage ?? string.Empty, nodeItem) { RawData = use };
+                    var useNode = new Node(itemOverride.ItemName + " " + use.ItemName ?? string.Empty, NodeType.UseWith, use.CustomCantDoThatMessage ?? string.Empty, nodeItem, Main.Player) { RawData = use };
 
                     //add criteria that influence this item
                     useNode.AddCriteria(use.Criteria ?? [], nodes);
@@ -268,10 +263,10 @@ namespace CSC.Nodestuff
             foreach (ItemInteraction item in story.StoryItems ?? [])
             {
                 //add items to list
-                var nodeItem = new Node(item.ItemName!, NodeType.ItemInteraction, item.ItemName!)
+                var nodeItem = new Node(item.ItemName!, NodeType.ItemInteraction, item.ItemName!, story.CharacterName!)
                 {
                     RawData = item,
-                    FileName = story.CharacterName!
+                    
                 };
                 nodeItem.AddCriteria(item.Critera ?? [], nodes);
                 nodeItem.AddEvents(item.OnRefuseEvents ?? [], nodes);
@@ -282,12 +277,12 @@ namespace CSC.Nodestuff
 
         public static void GetPersonality(CharacterStory story, NodeStore nodes)
         {
-            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", story.Personality!) { FileName = story.CharacterName!, RawData = story.Personality };
+            var traitRoot = new Node(story.CharacterName + "'s Traits", NodeType.Personality, story.CharacterName + "'s Traits", story.Personality!, story.CharacterName!) {RawData = story.Personality };
             nodes.Add(traitRoot);
             foreach (Trait valuee in story.Personality?.Values ?? [])
             {
                 //add items to list
-                var nodeValue = new Node(valuee.Type.ToString()!, NodeType.Personality, valuee.Type + " " + valuee.Value) { RawData = valuee, FileName = story.CharacterName! };
+                var nodeValue = new Node(valuee.Type.ToString()!, NodeType.Personality, valuee.Type + " " + valuee.Value, story.CharacterName!) { RawData = valuee };
                 nodes.AddChild(traitRoot, nodeValue);
             }
         }
@@ -297,7 +292,7 @@ namespace CSC.Nodestuff
             foreach (EventTrigger playerReaction in story.PlayerReactions ?? [])
             {
                 //add items to list
-                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty) { RawData = playerReaction, FileName = Main.Player };
+                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty, Main.Player) { RawData = playerReaction, FileName = Main.Player };
 
                 //get actions for item
                 nodeReaction.AddEvents(playerReaction.Events ?? [], nodes);
@@ -310,34 +305,34 @@ namespace CSC.Nodestuff
 
         public static void GetQuests(CharacterStory story, NodeStore nodes)
         {
-            var questRoot = new Node(story.CharacterName + "'s Quests", NodeType.Quest, story.CharacterName + "'s Quests") { FileName = story.CharacterName! };
+            var questRoot = new Node(story.CharacterName + "'s Quests", NodeType.Quest, story.CharacterName + "'s Quests", story.CharacterName!) {  };
             nodes.Add(questRoot);
             foreach (Quest quest in story.Quests ?? [])
             {
-                var nodeQuest = new Node(quest.ID ?? string.Empty, NodeType.Quest, quest.Name ?? string.Empty) { RawData = quest, FileName = story.CharacterName! };
+                var nodeQuest = new Node(quest.ID ?? string.Empty, NodeType.Quest, quest.Name ?? string.Empty, story.CharacterName!) { RawData = quest };
 
                 nodes.AddChild(questRoot, nodeQuest);
                 //Add details
                 if (quest.Details?.Length > 0)
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description", NodeType.Quest, quest.Details) { FileName = story.CharacterName! });
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description", NodeType.Quest, quest.Details, story.CharacterName!) {  });
                 }
                 //Add completed details
                 if (quest.CompletedDetails?.Length > 0)
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}CompletedDetails", NodeType.Quest, quest.CompletedDetails) { FileName = story.CharacterName! });
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}CompletedDetails", NodeType.Quest, quest.CompletedDetails, story.CharacterName!) {  });
                 }
                 //Add failed details
                 if (quest.FailedDetails?.Length > 0)
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}FailedDetails", NodeType.Quest, quest.FailedDetails) { FileName = story.CharacterName! });
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}FailedDetails", NodeType.Quest, quest.FailedDetails, story.CharacterName!) {  });
                 }
 
                 //Add extended details
 
                 foreach (ExtendedDetail detail in quest.ExtendedDetails ?? [])
                 {
-                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description{detail.Value}", NodeType.Quest, detail.Details ?? string.Empty) { RawData = detail, FileName = story.CharacterName! });
+                    nodes.AddChild(nodeQuest, new Node($"{quest.ID}Description{detail.Value}", NodeType.Quest, detail.Details ?? string.Empty, story.CharacterName!) { RawData = detail });
                 }
             }
         }
@@ -347,7 +342,7 @@ namespace CSC.Nodestuff
             foreach (EventTrigger playerReaction in story.Reactions ?? [])
             {
                 //add items to list
-                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty) { RawData = playerReaction, FileName = story.CharacterName! };
+                var nodeReaction = new Node(playerReaction.Id ?? string.Empty, NodeType.EventTrigger, playerReaction.Name ?? string.Empty, story.CharacterName!) { RawData = playerReaction };
                 //get actions for item
                 nodeReaction.AddEvents(playerReaction.Events ?? [], nodes);
 
@@ -359,9 +354,8 @@ namespace CSC.Nodestuff
 
         public static void GetValues(CharacterStory story, NodeStore nodes)
         {
-            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values")
+            var ValueStore = new Node(story.CharacterName + "'s Values", NodeType.Value, story.CharacterName + "'s Values", story.CharacterName!)
             {
-                FileName = story.CharacterName!,
                 RawData = story.StoryValues
             };
             nodes.Add(ValueStore);
@@ -372,19 +366,19 @@ namespace CSC.Nodestuff
                     continue;
                 }
                 //add items to list
-                var nodeValue = new Node(value!, NodeType.Value, ", referenced values: ") { RawData = value, FileName = story.CharacterName! };
+                var nodeValue = new Node(value!, NodeType.Value, ", referenced values: ", story.CharacterName!) { RawData = value };
                 nodes.AddChild(ValueStore, nodeValue);
             }
         }
 
         public static void GetValues(MainStory story, NodeStore nodes)
         {
-            var ValueStore = new Node("Player Values", NodeType.Value, "Player Values") { FileName = Main.Player, RawData = story.PlayerValues };
+            var ValueStore = new Node("Player Values", NodeType.Value, "Player Values", Main.Player) { RawData = story.PlayerValues };
             nodes.Add(ValueStore);
             foreach (string value in story.PlayerValues ?? [])
             {
                 //add items to list
-                var nodeValue = new Node(value, NodeType.Value, ", referenced values: ") { RawData = value };
+                var nodeValue = new Node(value, NodeType.Value, ", referenced values: ", Main.Player) { RawData = value };
                 nodes.AddChild(ValueStore, nodeValue);
             }
         }

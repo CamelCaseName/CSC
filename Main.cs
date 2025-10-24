@@ -139,6 +139,9 @@ public partial class Main : Form
 
     //todo we need to pause updating the search during a typing streak and cumulatively update after its done
     //todo filter/hide node types
+    //todo fix issue where borrowed nodes arent made anymore when you create/edit nodes
+
+    //todo criterion linking in OS links some to player that should be in other files
 
     //todo add story node cache on disk
     //todo add story search tree cache on disk
@@ -708,7 +711,7 @@ public partial class Main : Form
         UpdateLeftRightClickStates(graphPos);
         EndPan();
 
-        bool doHighlight = true;
+        bool doHighlight = !NodeContext.Visible;
         foreach (var dropdown in PropertyInspector.Controls)
         {
             if (dropdown is ComboBox box)
@@ -4380,6 +4383,8 @@ public partial class Main : Form
 
         UpdatePropertyColoumnWidths();
 
+        PropertyInspector.ColumnCount += 1;
+        PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
         for (int i = 0; i < PropertyInspector.Controls.Count; i++)
         {
             PropertyInspector.Controls[i].ForeColor = Color.LightGray;
@@ -4394,8 +4399,6 @@ public partial class Main : Form
                 }
             }
         }
-        PropertyInspector.ColumnCount += 1;
-        PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
         NeedsSaving = false;
 
         PropertyInspector.ResumeLayout();
@@ -4842,7 +4845,8 @@ public partial class Main : Form
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
             Location = new(0, PropertyInspector.Size.Height / 2),
             Dock = DockStyle.Left,
-            Width = 50
+            Width = 50,
+            Minimum = -100,
         };
         if (int.TryParse(criterion.Value!, out int res))
         {
@@ -5145,10 +5149,9 @@ public partial class Main : Form
             case SpawnableNodeType.ItemAction:
             {
                 string id = "action";
-                newNode = new Node(id, NodeType.ItemAction, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.ItemAction, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new ItemAction() { ActionName = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5161,10 +5164,9 @@ public partial class Main : Form
             case SpawnableNodeType.Achievement:
             {
                 var guid = Guid.NewGuid().ToString();
-                newNode = new Node(guid, NodeType.Achievement, string.Empty, nodes[character].Positions)
+                newNode = new Node(guid, NodeType.Achievement, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new Achievement() { Id = guid },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5176,10 +5178,9 @@ public partial class Main : Form
             }
             case SpawnableNodeType.BGC:
             {
-                newNode = new Node("BGC" + (Stories[character].BackgroundChatter!.Count + 1).ToString(), NodeType.BGC, string.Empty, nodes[character].Positions)
+                newNode = new Node("BGC" + (Stories[character].BackgroundChatter!.Count + 1).ToString(), NodeType.BGC, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new BackgroundChatter() { Id = Stories[character].BackgroundChatter!.Count + 1 },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5191,10 +5192,9 @@ public partial class Main : Form
             }
             case SpawnableNodeType.BGCResponse:
             {
-                newNode = new Node(Guid.NewGuid().ToString(), NodeType.BGCResponse, string.Empty, nodes[character].Positions)
+                newNode = new Node(Guid.NewGuid().ToString(), NodeType.BGCResponse, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new BackgroundChatterResponse() { Label = "response:" },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5207,10 +5207,9 @@ public partial class Main : Form
             case SpawnableNodeType.CriteriaGroup:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.CriteriaGroup, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.CriteriaGroup, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new CriteriaGroup() { Name = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5223,10 +5222,9 @@ public partial class Main : Form
             case SpawnableNodeType.Dialogue:
             {
                 int id = (Stories[character].Dialogues!.Count);
-                newNode = new Node(id.ToString(), NodeType.Dialogue, string.Empty, nodes[character].Positions)
+                newNode = new Node(id.ToString(), NodeType.Dialogue, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new Dialogue() { ID = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
                 Stories[character].Dialogues!.Add(newNode.Data<Dialogue>()!);
@@ -5241,10 +5239,9 @@ public partial class Main : Form
             case SpawnableNodeType.AlternateText:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.AlternateText, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.AlternateText, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new AlternateText() { },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5257,10 +5254,9 @@ public partial class Main : Form
             case SpawnableNodeType.GameEvent:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.GameEvent, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.GameEvent, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new GameEvent() { Character = character, Id = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5273,10 +5269,9 @@ public partial class Main : Form
             case SpawnableNodeType.EventTrigger:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.EventTrigger, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.EventTrigger, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new EventTrigger() { Id = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5289,10 +5284,9 @@ public partial class Main : Form
             case SpawnableNodeType.StoryItem:
             {
                 string id = "item name";
-                newNode = new Node(id, NodeType.StoryItem, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.StoryItem, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new InteractiveitemBehaviour() { ItemName = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5305,10 +5299,9 @@ public partial class Main : Form
             case SpawnableNodeType.ItemInteraction:
             {
                 string id = "interaction name";
-                newNode = new Node(id, NodeType.ItemInteraction, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.ItemInteraction, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new ItemInteraction() { ItemName = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5321,10 +5314,9 @@ public partial class Main : Form
             case SpawnableNodeType.ItemGroupInteraction:
             {
                 string id = "interaction name";
-                newNode = new Node(id, NodeType.ItemGroupInteraction, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.ItemGroupInteraction, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new ItemGroupInteraction() { Name = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5337,10 +5329,9 @@ public partial class Main : Form
             case SpawnableNodeType.ItemGroup:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.ItemGroup, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.ItemGroup, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new ItemGroup() { Id = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5358,18 +5349,16 @@ public partial class Main : Form
                 {
                     if (SelectedNode.Type == NodeType.Quest && SelectedNode.DataType == typeof(MissingReferenceInfo))
                     {
-                        newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
+                        newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions, character)
                         {
                             RawData = new Quest() { CharacterName = character, ID = id },
-                            FileName = character,
                         };
                     }
                     else if (SelectedNode.Type == NodeType.Quest && SelectedNode.DataType == typeof(Quest))
                     {
-                        newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
+                        newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions, character)
                         {
                             RawData = new ExtendedDetail() { Value = SelectedNode.Data<Quest>()!.ExtendedDetails!.Count },
-                            FileName = character,
                         };
 
                         SelectedNode.Data<Quest>()!.ExtendedDetails.Add(newNode.Data<ExtendedDetail>()!);
@@ -5377,10 +5366,9 @@ public partial class Main : Form
                 }
                 else
                 {
-                    newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions)
+                    newNode = new Node(id, NodeType.Quest, string.Empty, nodes[character].Positions, character)
                     {
                         RawData = new Quest() { CharacterName = character, ID = id },
-                        FileName = character,
                     };
                 }
 
@@ -5407,10 +5395,9 @@ public partial class Main : Form
             case SpawnableNodeType.Response:
             {
                 string id = Guid.NewGuid().ToString();
-                newNode = new Node(id, NodeType.Response, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.Response, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new Response() { Id = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5423,10 +5410,9 @@ public partial class Main : Form
             case SpawnableNodeType.Value:
             {
                 string id = "ValueName";
-                newNode = new Node(id, NodeType.Value, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.Value, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = id,
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 
@@ -5448,10 +5434,9 @@ public partial class Main : Form
             {
                 string id = "use on item:";
                 //todo add auto linking to item name in ID
-                newNode = new Node(id, NodeType.UseWith, string.Empty, nodes[character].Positions)
+                newNode = new Node(id, NodeType.UseWith, string.Empty, nodes[character].Positions, character)
                 {
                     RawData = new UseWith() { ItemName = id },
-                    FileName = character,
                 };
                 nodes[character].Add(newNode);
 

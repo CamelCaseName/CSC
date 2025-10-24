@@ -267,7 +267,7 @@ namespace CSC.StoryItems
                     }
                     case CompareTypes.Quest:
                     {
-                        return $"{CompareType} {Character}'s {Key2} {EqualsValue} {Value}";
+                        return $"{CompareType} {Key2} {EqualsValue} {Value}";
                     }
                     case CompareTypes.Social:
                     {
