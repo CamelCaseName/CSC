@@ -5,6 +5,7 @@ using Silk.NET.Direct2D;
 using Silk.NET.DirectWrite;
 using Silk.NET.DXGI;
 using Silk.NET.Maths;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Xml.Linq;
 using AlphaMode = Silk.NET.Direct2D.AlphaMode;
@@ -179,6 +180,8 @@ namespace CSC.Direct2D
                 //target.SetAntialiasMode(AntialiasMode.Aliased);
                 //target.SetTextAntialiasMode(Silk.NET.Direct2D.TextAntialiasMode.Default);
 
+                RemoveFilteredNodes(ref visible);
+
                 DrawNodes(visible);
 
                 Node selected = Main.Selected;
@@ -212,6 +215,19 @@ namespace CSC.Direct2D
             if ((end - start).TotalMilliseconds > 20)
             {
                 Debug.WriteLine($"Node Render took {(end - start).TotalMilliseconds}ms");
+            }
+        }
+
+        private static void RemoveFilteredNodes(ref List<Node> visible)
+        {
+            for (int i = 0; i < visible.Count; i++)
+            {
+                Node node = visible[i];
+                if (Main.HiddenTypes.Contains(node.Type))
+                {
+                    visible.Remove(node);
+                    i--;
+                }
             }
         }
 
@@ -308,6 +324,11 @@ namespace CSC.Direct2D
 
             foreach (var item in list)
             {
+                if (Main.HiddenTypes.Contains(item.Type))
+                {
+                    continue;
+                }
+
                 Vector2D<float> lineStart, lineEnd, controlStart, controlEnd;
                 if (invert)
                 {
@@ -370,11 +391,21 @@ namespace CSC.Direct2D
 
                 foreach (var node in nodes.Nodes)
                 {
+                    if (Main.HiddenTypes.Contains(node.Type))
+                    {
+                        continue;
+                    }
                     var list = nodes.Childs(node);
                     if (list.Count > 0)
                     {
                         foreach (var item in list)
                         {
+
+                            if (Main.HiddenTypes.Contains(item.Type))
+                            {
+                                continue;
+                            }
+
                             //skip edges which lie completeley out of bounds
                             if (node.Position.X < oldBounds.X && item.Position.X < oldBounds.X)
                             {

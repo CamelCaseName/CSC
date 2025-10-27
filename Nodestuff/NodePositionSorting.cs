@@ -40,9 +40,6 @@
                 {
                     for (int y = scaledYTop; y <= scaledYBottom; y++)
                     {
-                        //int quadrant = GetQuadrant(x, y);
-                        //Debug.WriteLine(quadrant + " x -> " + Sorting[quadrant].Count + "[" + Math.Abs(x) + "] | " + Math.Abs(y));
-                        //Debug.WriteLine(quadrant + " y -> " + Sorting[quadrant][Math.Abs(x)].Count + "[" + Math.Abs(y) + "]");
                         list.AddRange(Sorting[GetQuadrant(x, y)][Math.Abs(x)][Math.Abs(y)]);
                     }
                 }

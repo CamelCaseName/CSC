@@ -74,6 +74,7 @@ public partial class Main : Form
     private CachedBitmap? oldGraph;
     private static bool positionsChanged = false;
     private static readonly List<string> Files = [Player];
+    public static readonly List<NodeType> HiddenTypes = [];
     public static bool PositionsChanged => positionsChanged;
 
     internal static float Scalee => Scaling[SelectedCharacter];
@@ -124,7 +125,7 @@ public partial class Main : Form
         }
     }
 
-    public static int SelectedFile;
+    public static int SelectedFile { get; private set; }
 
     public int RightClickFrameCounter { get; private set; } = 0;
 
@@ -137,15 +138,25 @@ public partial class Main : Form
     public static Node Highlight => Instance.highlightNode;
     public static Node LinkFrom => Instance.nodeToLinkFrom;
 
+    //############ TODOS before first release:
     //todo we need to pause updating the search during a typing streak and cumulatively update after its done
     //todo filter/hide node types
+    //fix all missing node.texts
+    //########################################################
 
+    //############ stuff to do after release
     //todo add story node cache on disk
     //todo add story search tree cache on disk
     //todo add info when trying to link incompatible notes
+    //########################################################
+
+    //############ whatever
     //todo unify all node creation so its always the same
     //todo add grouping
     //todo add comments
+    //add charactergroups
+    //handle criteriagroups correctly
+    //########################################################
 
     public Main()
     {
@@ -918,7 +929,14 @@ public partial class Main : Form
 
     public static void RedrawGraph()
     {
-        ((Main?)(ActiveForm))?.Graph.Invalidate();
+        Main.Instance.Graph.Invalidate();
+    }
+
+    public static void ForceRedrawGraph()
+    {
+        Instance.SelectedNode = Node.NullNode;
+        positionsChanged = true;
+        Instance.Graph.Invalidate();
     }
 
     public static void ClearNodePos(Node node)
@@ -5565,5 +5583,11 @@ public partial class Main : Form
     private void SearchButton_Click(object sender, EventArgs e)
     {
         StartSearch();
+    }
+
+    private void FilterButton_Click(object sender, EventArgs e)
+    {
+        //instance is always there anyways
+        NodeGraphFilter.Instance.Visible = !NodeGraphFilter.Instance.Visible;
     }
 }

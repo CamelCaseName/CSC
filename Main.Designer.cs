@@ -32,14 +32,15 @@ namespace CSC
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            TreeNode treeNode1 = new TreeNode("Characters");
-            TreeNode treeNode2 = new TreeNode("Story Root", new TreeNode[] { treeNode1 });
+            TreeNode treeNode5 = new TreeNode("Characters");
+            TreeNode treeNode6 = new TreeNode("Story Root", new TreeNode[] { treeNode5 });
             Menu = new ToolStrip();
             OpenButton = new ToolStripButton();
             SaveButton = new ToolStripButton();
             NewStory = new ToolStripButton();
             Add = new ToolStripButton();
             cursorPos = new ToolStripLabel();
+            toolStripButton1 = new ToolStripButton();
             StoryTree = new TreeView();
             HierarchyAndRest = new SplitContainer();
             GraphAndProperties = new SplitContainer();
@@ -55,7 +56,7 @@ namespace CSC
             Seperator1 = new ToolStripSeparator();
             Seperator2 = new ToolStripSeparator();
             Seperator3 = new ToolStripSeparator();
-            toolStripButton1 = new ToolStripButton();
+            FilterButton = new ToolStripButton();
             Menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)HierarchyAndRest).BeginInit();
             HierarchyAndRest.Panel1.SuspendLayout();
@@ -71,10 +72,10 @@ namespace CSC
             // Menu
             // 
             Menu.BackColor = Color.FromArgb(50, 50, 50);
-            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add, cursorPos, toolStripButton1 });
+            Menu.Items.AddRange(new ToolStripItem[] { OpenButton, SaveButton, NewStory, Add, cursorPos, toolStripButton1, FilterButton });
             Menu.Location = new Point(0, 0);
             Menu.Name = "Menu";
-            Menu.Size = new Size(1431, 25);
+            Menu.Size = new Size(1079, 25);
             Menu.TabIndex = 0;
             Menu.Text = "toolStrip1";
             // 
@@ -130,6 +131,17 @@ namespace CSC
             cursorPos.Size = new Size(59, 22);
             cursorPos.Text = "cursorPos";
             // 
+            // toolStripButton1
+            // 
+            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButton1.ForeColor = Color.FromArgb(224, 224, 224);
+            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new Size(46, 22);
+            toolStripButton1.Text = "Search";
+            toolStripButton1.Click += SearchButton_Click;
+            // 
             // StoryTree
             // 
             StoryTree.BackColor = Color.FromArgb(50, 50, 50);
@@ -139,16 +151,16 @@ namespace CSC
             StoryTree.HideSelection = false;
             StoryTree.Location = new Point(0, 0);
             StoryTree.Name = "StoryTree";
-            treeNode1.Name = "Characters";
-            treeNode1.Text = "Characters";
-            treeNode1.ToolTipText = "You'll find all your Characters here";
-            treeNode2.Checked = true;
-            treeNode2.Name = "Story Name";
-            treeNode2.Text = "Story Root";
-            treeNode2.ToolTipText = "The Story itself and the Characters are in here";
-            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode2 });
+            treeNode5.Name = "Characters";
+            treeNode5.Text = "Characters";
+            treeNode5.ToolTipText = "You'll find all your Characters here";
+            treeNode6.Checked = true;
+            treeNode6.Name = "Story Name";
+            treeNode6.Text = "Story Root";
+            treeNode6.ToolTipText = "The Story itself and the Characters are in here";
+            StoryTree.Nodes.AddRange(new TreeNode[] { treeNode6 });
             StoryTree.ShowNodeToolTips = true;
-            StoryTree.Size = new Size(186, 537);
+            StoryTree.Size = new Size(140, 423);
             StoryTree.TabIndex = 1;
             StoryTree.AfterSelect += StoryTree_AfterSelect;
             // 
@@ -165,8 +177,8 @@ namespace CSC
             // HierarchyAndRest.Panel2
             // 
             HierarchyAndRest.Panel2.Controls.Add(GraphAndProperties);
-            HierarchyAndRest.Size = new Size(1431, 537);
-            HierarchyAndRest.SplitterDistance = 186;
+            HierarchyAndRest.Size = new Size(1079, 423);
+            HierarchyAndRest.SplitterDistance = 140;
             HierarchyAndRest.TabIndex = 2;
             // 
             // GraphAndProperties
@@ -183,8 +195,8 @@ namespace CSC
             // GraphAndProperties.Panel2
             // 
             GraphAndProperties.Panel2.Controls.Add(PropertyInspector);
-            GraphAndProperties.Size = new Size(1241, 537);
-            GraphAndProperties.SplitterDistance = 417;
+            GraphAndProperties.Size = new Size(935, 423);
+            GraphAndProperties.SplitterDistance = 346;
             GraphAndProperties.TabIndex = 0;
             // 
             // Graph
@@ -193,7 +205,7 @@ namespace CSC
             Graph.Dock = DockStyle.Fill;
             Graph.Location = new Point(0, 0);
             Graph.Name = "Graph";
-            Graph.Size = new Size(1241, 417);
+            Graph.Size = new Size(935, 346);
             Graph.TabIndex = 0;
             Graph.Paint += Graph_Paint;
             Graph.MouseClick += HandleMouseEvents;
@@ -212,7 +224,7 @@ namespace CSC
             NodeSpawnBox.Location = new Point(264, 62);
             NodeSpawnBox.MinimumSize = new Size(200, 0);
             NodeSpawnBox.Name = "NodeSpawnBox";
-            NodeSpawnBox.Size = new Size(723, 23);
+            NodeSpawnBox.Size = new Size(417, 23);
             NodeSpawnBox.TabIndex = 0;
             NodeSpawnBox.Visible = false;
             NodeSpawnBox.SelectedIndexChanged += SpawnNodeFromSpaceSpawner;
@@ -229,7 +241,7 @@ namespace CSC
             PropertyInspector.RowCount = 2;
             PropertyInspector.RowStyles.Add(new RowStyle());
             PropertyInspector.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            PropertyInspector.Size = new Size(1241, 116);
+            PropertyInspector.Size = new Size(935, 73);
             PropertyInspector.TabIndex = 0;
             // 
             // NodeContext
@@ -295,23 +307,23 @@ namespace CSC
             Seperator3.Name = "Seperator3";
             Seperator3.Size = new Size(152, 6);
             // 
-            // toolStripButton1
+            // FilterButton
             // 
-            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            toolStripButton1.ForeColor = Color.FromArgb(224, 224, 224);
-            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
-            toolStripButton1.ImageTransparentColor = Color.Magenta;
-            toolStripButton1.Name = "toolStripButton1";
-            toolStripButton1.Size = new Size(46, 22);
-            toolStripButton1.Text = "Search";
-            toolStripButton1.Click += SearchButton_Click;
+            FilterButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            FilterButton.ForeColor = Color.FromArgb(224, 224, 224);
+            FilterButton.Image = (Image)resources.GetObject("FilterButton.Image");
+            FilterButton.ImageTransparentColor = Color.Magenta;
+            FilterButton.Name = "FilterButton";
+            FilterButton.Size = new Size(79, 22);
+            FilterButton.Text = "Adjust Filters";
+            FilterButton.Click += FilterButton_Click;
             // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(40, 40, 40);
-            ClientSize = new Size(1431, 562);
+            ClientSize = new Size(1079, 448);
             Controls.Add(HierarchyAndRest);
             Controls.Add(Menu);
             DoubleBuffered = true;
@@ -362,5 +374,6 @@ namespace CSC
         private ToolStripSeparator Seperator3;
         private ToolStripLabel cursorPos;
         private ToolStripButton toolStripButton1;
+        private ToolStripButton FilterButton;
     }
 }
