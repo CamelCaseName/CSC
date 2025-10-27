@@ -324,7 +324,7 @@ namespace CSC.Direct2D
 
             foreach (var item in list)
             {
-                if (Main.HiddenTypes.Contains(item.Type))
+                if (Main.HiddenTypes.Contains(item.Type) || (Main.HideDuped && item.FileName != Main.SelectedCharacter))
                 {
                     continue;
                 }
@@ -391,7 +391,7 @@ namespace CSC.Direct2D
 
                 foreach (var node in nodes.Nodes)
                 {
-                    if (Main.HiddenTypes.Contains(node.Type))
+                    if (Main.HiddenTypes.Contains(node.Type) || (Main.HideDuped && node.FileName != Main.SelectedCharacter))
                     {
                         continue;
                     }
@@ -401,7 +401,7 @@ namespace CSC.Direct2D
                         foreach (var item in list)
                         {
 
-                            if (Main.HiddenTypes.Contains(item.Type))
+                            if (Main.HiddenTypes.Contains(item.Type) || (Main.HideDuped && item.FileName != Main.SelectedCharacter))
                             {
                                 continue;
                             }
@@ -564,6 +564,10 @@ namespace CSC.Direct2D
             //Draw interlinked frame
             if (node.FileName != Main.SelectedCharacter)
             {
+                if (Main.HideDuped)
+                {
+                    return;
+                }
                 var interRect = ScaleRect(node.Rectangle, 15).ToRoundedRect(15f);
                 DrawNodeRectImpl(ref interRect, InterlinkedNodeBrush.AsBrush());
             }
@@ -584,7 +588,6 @@ namespace CSC.Direct2D
                 {
                     node.TextColor = 0;
                 }
-
 
                 //draw text
                 Vector2D<float> scaledLocation = node.Position.ToVec2D();

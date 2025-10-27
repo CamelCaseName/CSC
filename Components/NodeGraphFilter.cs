@@ -38,5 +38,12 @@ namespace CSC.Components
 
             Main.ForceRedrawGraph();
         }
+
+        private void HideImported_CheckedChanged(object sender, EventArgs e)
+        {
+            Main.HideDuped = !Main.HideDuped;
+
+            Main.ForceRedrawGraph();
+        }
     }
 }

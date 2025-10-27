@@ -75,6 +75,7 @@ public partial class Main : Form
     private static bool positionsChanged = false;
     private static readonly List<string> Files = [Player];
     public static readonly List<NodeType> HiddenTypes = [];
+    public static bool HideDuped = false;
     public static bool PositionsChanged => positionsChanged;
 
     internal static float Scalee => Scaling[SelectedCharacter];
