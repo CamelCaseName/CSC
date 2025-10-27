@@ -4,6 +4,7 @@ using CSC.StoryItems;
 using System.Data;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 using static CSC.StoryItems.StoryEnums;
 
 namespace CSC.Nodestuff
@@ -232,9 +233,9 @@ namespace CSC.Nodestuff
         public RectangleF Rectangle { get => _rect; }
 
         private Silk.NET.Direct2D.RoundedRect _roundedRect = default;
-        
+
         // 1 = dark default, 0 = black and 2 = light
-        internal int TextColor = 1; 
+        internal int TextColor = 1;
 
         public Silk.NET.Direct2D.RoundedRect RoundRectangle { get => _roundedRect; }
 
@@ -518,271 +519,12 @@ namespace CSC.Nodestuff
                 }
                 case NodeType.EventTrigger:
                 {
-                    //todo
-                    switch (Data<EventTrigger>()?.Type)
+                    var etrigger = Data<EventTrigger>();
+                    if (etrigger is null)
                     {
-                        case EventTypes.Never:
-                        {
-                            break;
-                        }
-                        case EventTypes.GameStarts:
-                        {
-                            break;
-                        }
-                        case EventTypes.EntersVision:
-                        {
-                            break;
-                        }
-                        case EventTypes.ExitsVision:
-                        {
-                            break;
-                        }
-                        case EventTypes.EntersVicinity:
-                        {
-                            break;
-                        }
-                        case EventTypes.EntersZone:
-                        {
-                            break;
-                        }
-                        case EventTypes.ReachesTarget:
-                        {
-                            break;
-                        }
-                        case EventTypes.IsBlockedByLockedDoor:
-                        {
-                            break;
-                        }
-                        case EventTypes.IsAttacked:
-                        {
-                            break;
-                        }
-                        case EventTypes.GetsKnockedOut:
-                        {
-                            break;
-                        }
-                        case EventTypes.Dies:
-                        {
-                            break;
-                        }
-                        case EventTypes.GetsHitWithProjectile:
-                        {
-                            break;
-                        }
-                        case EventTypes.FallsOver:
-                        {
-                            break;
-                        }
-                        case EventTypes.IsNaked:
-                        {
-                            break;
-                        }
-                        case EventTypes.IsBottomless:
-                        {
-                            break;
-                        }
-                        case EventTypes.IsTopless:
-                        {
-                            break;
-                        }
-                        case EventTypes.ExposesGenitals:
-                        {
-                            break;
-                        }
-                        case EventTypes.CaughtMasturbating:
-                        {
-                            break;
-                        }
-                        case EventTypes.CaughtHavingSex:
-                        {
-                            break;
-                        }
-                        case EventTypes.ExposesChest:
-                        {
-                            break;
-                        }
-                        case EventTypes.StartedIntimacyAct:
-                        {
-                            break;
-                        }
-                        case EventTypes.Orgasms:
-                        {
-                            break;
-                        }
-                        case EventTypes.EjaculatesOnMe:
-                        {
-                            break;
-                        }
-                        case EventTypes.GropesMyBreast:
-                        {
-                            break;
-                        }
-                        case EventTypes.GropesMyAss:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerGrabsItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerReleasesItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.VapesOnMe:
-                        {
-                            break;
-                        }
-                        case EventTypes.PopperedMe:
-                        {
-                            break;
-                        }
-                        case EventTypes.PhoneBlindedMe:
-                        {
-                            break;
-                        }
-                        case EventTypes.Periodically:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnItemFunction:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnAnyItemAcceptFallback:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnAnyItemRefuseFallback:
-                        {
-                            break;
-                        }
-                        case EventTypes.CombatModeToggled:
-                        {
-                            break;
-                        }
-                        case EventTypes.PokedByVibrator:
-                        {
-                            break;
-                        }
-                        case EventTypes.ImpactsGround:
-                        {
-                            break;
-                        }
-                        case EventTypes.ImpactsWall:
-                        {
-                            break;
-                        }
-                        case EventTypes.ScoredBeerPongPoint:
-                        {
-                            break;
-                        }
-                        case EventTypes.PeesOnMe:
-                        {
-                            break;
-                        }
-                        case EventTypes.PeesOnItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.StartedPeeing:
-                        {
-                            break;
-                        }
-                        case EventTypes.StoppedPeeing:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerThrowsItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.StartedUsingActionItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.StoppedUsingActionItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnFriendshipIncreaseWith:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnRomanceIncreaseWith:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnFriendshipDecreaseWith:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnRomanceDecreaseWith:
-                        {
-                            break;
-                        }
-                        case EventTypes.IsDancing:
-                        {
-                            break;
-                        }
-                        case EventTypes.StartedLapDance:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerInventoryOpened:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerInventoryClosed:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerOpportunityWindowOpened:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerInteractsWithCharacter:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerInteractsWithItem:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnScreenFadeInComplete:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnScreenFadeOutComplete:
-                        {
-                            break;
-                        }
-                        case EventTypes.FinishedPopulatingMainDialogueText:
-                        {
-                            break;
-                        }
-                        case EventTypes.PlayerTookCameraPhoto:
-                        {
-                            break;
-                        }
-                        case EventTypes.OnAfterCutSceneEnds:
-                        {
-                            break;
-                        }
-                        case EventTypes.Ejaculates:
-                        {
-                            break;
-                        }
-                        case EventTypes.None:
-                        {
-                            break;
-                        }
-                        default:
-                        {
-                            break;
-                        }
+                        return StaticText;
                     }
-                    return Data<EventTrigger>()?.Name ?? "unnamed event trigger" + (Data<EventTrigger>()?.Type ?? EventTypes.None);
+                    return etrigger.ToString();
                 }
                 case NodeType.ItemGroup:
                 {

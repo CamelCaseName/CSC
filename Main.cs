@@ -28,6 +28,7 @@ public partial class Main : Form
     private bool subtracting;
     private const string Anybody = "Anybody";
     private int GeventPropertyCounter = 0;
+    private int EtriggerPropertyCounter = 0;
     internal float AfterZoomNodeX;
     internal float AfterZoomNodeY;
     internal float BeforeZoomNodeX;
@@ -75,7 +76,7 @@ public partial class Main : Form
     private static bool positionsChanged = false;
     private static readonly List<string> Files = [Player];
     public static readonly List<NodeType> HiddenTypes = [];
-    public static bool HideDuped = false;
+    public static bool HideDuped { get; set; } = false;
     public static bool PositionsChanged => positionsChanged;
 
     internal static float Scalee => Scaling[SelectedCharacter];
@@ -141,7 +142,6 @@ public partial class Main : Form
 
     //############ TODOS before first release:
     //todo we need to pause updating the search during a typing streak and cumulatively update after its done
-    //todo filter/hide node types
     //fix all missing node.texts
     //########################################################
 
@@ -2926,10 +2926,10 @@ public partial class Main : Form
             case NodeType.AlternateText:
             {
                 PropertyInspector.RowCount = 2;
-                PropertyInspector.ColumnCount = 3;
+                PropertyInspector.ColumnCount = 10;
 
                 Label label = GetLabel("Alternate text for " + node.FileName + "'s Dialogue " + node.ID + "\n Sort order:");
-                PropertyInspector.Controls.Add(label);
+                PropertyInspector.Controls.Add(label, 0, 0);
                 AlternateText alternate = node.Data<AlternateText>()!;
 
                 if (alternate is null)
@@ -2944,7 +2944,12 @@ public partial class Main : Form
                 sortOrder.Minimum = 0;
                 sortOrder.ValueChanged += (_, _) => alternate.Order = (int)sortOrder.Value;
                 sortOrder.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
-                PropertyInspector.Controls.Add(sortOrder);
+                PropertyInspector.Controls.Add(sortOrder, 1, 0);
+
+                label = GetLabel("");
+                label.Dock = DockStyle.None;
+                label.Width = 400;
+                PropertyInspector.Controls.Add(label, 2, 0);
 
                 TextBox text = new()
                 {
@@ -3840,6 +3845,8 @@ public partial class Main : Form
                 EventTrigger eventTrigger = node.Data<EventTrigger>()!;
 
                 PropertyInspector.RowCount = 2;
+                PropertyInspector.ColumnCount = 10;
+                EtriggerPropertyCounter = 0;
 
                 Label label = GetLabel("Name:");
                 PropertyInspector.Controls.Add(label, 0, 0);
@@ -3907,7 +3914,7 @@ public partial class Main : Form
                         zone.Items.AddRange(Enum.GetNames<Zones>());
                         zone.SelectedItem = eventTrigger.Value;
                         zone.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = (string)zone.SelectedItem!);
-                        PropertyInspector.Controls.Add(zone);
+                        PropertyInspector.Controls.Add(zone, EtriggerPropertyCounter++, 1);
 
                         break;
                     }
@@ -3920,7 +3927,7 @@ public partial class Main : Form
                         targetType.Items.AddRange(Enum.GetNames<LocationTargetOption>());
                         targetType.SelectedItem = eventTrigger.LocationTargetOption.ToString();
                         targetType.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.LocationTargetOption = Enum.Parse<LocationTargetOption>(targetType.SelectedItem!.ToString()!));
-                        PropertyInspector.Controls.Add(targetType);
+                        PropertyInspector.Controls.Add(targetType, EtriggerPropertyCounter++, 1);
 
                         switch (eventTrigger.LocationTargetOption)
                         {
@@ -3930,7 +3937,7 @@ public partial class Main : Form
                                 target.Items.AddRange(Enum.GetNames<MoveTargets>());
                                 target.SelectedItem = eventTrigger.Value!.Replace(" ", "");
                                 target.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = target.SelectedItem!.ToString()!);
-                                PropertyInspector.Controls.Add(target);
+                                PropertyInspector.Controls.Add(target, EtriggerPropertyCounter++, 1);
                                 break;
                             }
                             case LocationTargetOption.Character:
@@ -3966,7 +3973,7 @@ public partial class Main : Form
                         };
                         door.TextChanged += (_, _) => eventTrigger.Value = door.Text;
                         door.TextChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
-                        PropertyInspector.Controls.Add(door);
+                        PropertyInspector.Controls.Add(door, EtriggerPropertyCounter++, 1);
 
                         break;
                     }
@@ -3984,20 +3991,25 @@ public partial class Main : Form
                         PutItemkey(node, eventTrigger);
 
                         Label inlabel = GetLabel("in the:");
-                        PropertyInspector.Controls.Add(inlabel);
+                        PropertyInspector.Controls.Add(inlabel, EtriggerPropertyCounter++, 1);
 
                         ComboBox zone = GetComboBox();
                         zone.Items.AddRange(Enum.GetNames<BodyRegion>());
+                        if (!int.TryParse(eventTrigger.Value, out _))
+                        {
+                            eventTrigger.Value = "0";
+                        }
                         zone.SelectedItem = ((BodyRegion)int.Parse(eventTrigger.Value!)).ToString();
                         zone.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = ((int)Enum.Parse<BodyRegion>(zone.SelectedItem!.ToString()!)).ToString());
-                        PropertyInspector.Controls.Add(zone);
+                        PropertyInspector.Controls.Add(zone, EtriggerPropertyCounter++, 1);
 
                         break;
                     }
                     case EventTypes.StartedIntimacyAct:
                     {
+                        PutStartCondition(node, eventTrigger);
                         PutEnumKey<SexualActs>(node, eventTrigger);
-                        if (eventTrigger.Key == SexualActs.Masturbating.ToString())
+                        if (eventTrigger.Key != SexualActs.Masturbating.ToString())
                         {
                             PutCharacterValue(node, eventTrigger);
                         }
@@ -4030,24 +4042,19 @@ public partial class Main : Form
                         NumericUpDown option = GetNumericUpDown((float)eventTrigger.UpdateIteration);
                         option.ValueChanged += (_, _) => eventTrigger.UpdateIteration = (double)option.Value;
                         option.ValueChanged += (_, _) => { NodeLinker.UpdateLinks(node, node.FileName, nodes[SelectedCharacter]); Graph.Invalidate(); };
-                        PropertyInspector.Controls.Add(option);
+                        PropertyInspector.Controls.Add(option, EtriggerPropertyCounter++, 1);
 
                         Label seconds = GetLabel("seconds");
-                        PropertyInspector.Controls.Add(seconds);
+                        PropertyInspector.Controls.Add(seconds, EtriggerPropertyCounter++, 1);
                         break;
                     }
                     case EventTypes.OnItemFunction:
                     {
+                        PutStartCondition(node, eventTrigger);
                         //todo (itemfunctions) EventTypes.OnItemFunction:
                         break;
                     }
                     case EventTypes.PeesOnItem:
-                    {
-                        PutCharacter(node, eventTrigger);
-                        PutStartCondition(node, eventTrigger);
-                        PutItemValue(node, eventTrigger);
-                        break;
-                    }
                     case EventTypes.PlayerThrowsItem:
                     {
                         PutCharacter(node, eventTrigger);
@@ -4081,7 +4088,7 @@ public partial class Main : Form
                     case EventTypes.PlayerInteractsWithItem:
                     {
                         PutStartCondition(node, eventTrigger);
-                        PutCharacter(node, eventTrigger);
+                        PutItemValue(node, eventTrigger);
                         break;
                     }
                     case EventTypes.OnAfterCutSceneEnds:
@@ -4092,7 +4099,7 @@ public partial class Main : Form
                         cutscene.Items.AddRange(Enum.GetNames<Cutscenes>());
                         cutscene.SelectedItem = eventTrigger.Value;
                         cutscene.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = cutscene.SelectedItem!.ToString()!);
-                        PropertyInspector.Controls.Add(cutscene);
+                        PropertyInspector.Controls.Add(cutscene, EtriggerPropertyCounter++, 1);
 
                         break;
                     }
@@ -4391,7 +4398,7 @@ public partial class Main : Form
         UpdatePropertyColoumnWidths();
 
         PropertyInspector.ColumnCount += 1;
-        PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill });
+        PropertyInspector.Controls.Add(new Panel() { Dock = DockStyle.Fill }, PropertyInspector.ColumnCount, PropertyInspector.RowCount - 1);
         for (int i = 0; i < PropertyInspector.Controls.Count; i++)
         {
             PropertyInspector.Controls[i].ForeColor = Color.LightGray;
@@ -4748,7 +4755,7 @@ public partial class Main : Form
         item.SelectedItem = eventTrigger.Value.Enumize();
         item.PerformLayout();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = item.SelectedItem!.ToString()!);
-        PropertyInspector.Controls.Add(item);
+        PropertyInspector.Controls.Add(item, EtriggerPropertyCounter++, 1);
     }
 
     private void PutItemkey(Node node, EventTrigger eventTrigger)
@@ -4758,7 +4765,7 @@ public partial class Main : Form
         item.SelectedItem = eventTrigger.Key.Enumize();
         item.PerformLayout();
         item.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Key = item.SelectedItem!.ToString()!);
-        PropertyInspector.Controls.Add(item);
+        PropertyInspector.Controls.Add(item, EtriggerPropertyCounter++, 1);
     }
 
     private void PutCharacterValue(Node node, EventTrigger eventTrigger)
@@ -4768,7 +4775,7 @@ public partial class Main : Form
         character.SelectedItem = eventTrigger.Value;
         character.PerformLayout();
         character.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.Value = character.SelectedItem!.ToString()!);
-        PropertyInspector.Controls.Add(character);
+        PropertyInspector.Controls.Add(character, EtriggerPropertyCounter++, 1);
     }
 
     private ComboBox PutCharacter(Node node, EventTrigger eventTrigger)
@@ -4778,7 +4785,7 @@ public partial class Main : Form
         character.SelectedItem = eventTrigger.CharacterToReactTo;
         character.PerformLayout();
         character.AddComboBoxHandler(node, nodes[SelectedCharacter], (_, _) => eventTrigger.CharacterToReactTo = character.SelectedItem!.ToString()!);
-        PropertyInspector.Controls.Add(character);
+        PropertyInspector.Controls.Add(character, EtriggerPropertyCounter++, 1);
         return character;
     }
 
@@ -4792,7 +4799,7 @@ public partial class Main : Form
             ForeColor = Color.LightGray,
             Height = 30,
         };
-        PropertyInspector.Controls.Add(label3);
+        PropertyInspector.Controls.Add(label3, EtriggerPropertyCounter++, 1);
 
         ComboBox startCondition = GetComboBox();
         startCondition.Items.AddRange(Enum.GetNames<EventTypes>());
@@ -4810,7 +4817,7 @@ public partial class Main : Form
             }
             ShowProperties(node);
         });
-        PropertyInspector.Controls.Add(startCondition);
+        PropertyInspector.Controls.Add(startCondition, EtriggerPropertyCounter++, 1);
     }
 
     private void PutTextValue(Node node, Criterion criterion)

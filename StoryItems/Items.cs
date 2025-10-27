@@ -38,7 +38,8 @@ namespace CSC.StoryItems
         private string _text = string.Empty;
 
         public event Action<object>? OnBeforeChange;
-        public event Action<object>? OnAfterChange = (o) => {
+        public event Action<object>? OnAfterChange = (o) =>
+        {
             if (o is Criterion c)
             {
                 c.TextNeedsUpdate = true;
@@ -551,9 +552,17 @@ namespace CSC.StoryItems
         private double updateIteration = 0;
         private string _value = IItem.hash;
         private LocationTargetOption locationTargetOption = LocationTargetOption.MoveTarget;
+        private bool TextNeedsUpdate;
+        private string _text = string.Empty;
 
         public event Action<object>? OnBeforeChange;
-        public event Action<object>? OnAfterChange;
+        public event Action<object>? OnAfterChange = (o) =>
+        {
+            if (o is EventTrigger e)
+            {
+                e.TextNeedsUpdate = true;
+            }
+        };
         public string Id { get => id; set { OnBeforeChange?.Invoke(this); id = value; OnAfterChange?.Invoke(this); } }
         public string CharacterToReactTo { get => characterToReactTo; set { OnBeforeChange?.Invoke(this); if (string.IsNullOrWhiteSpace(value)) { characterToReactTo = IItem.hash; } else { characterToReactTo = value; } OnAfterChange?.Invoke(this); } }
         public List<Criterion> Critera { get => critera; set { OnBeforeChange?.Invoke(this); critera = value; OnAfterChange?.Invoke(this); } }
@@ -567,6 +576,130 @@ namespace CSC.StoryItems
         public double UpdateIteration { get => updateIteration; set { OnBeforeChange?.Invoke(this); updateIteration = value; OnAfterChange?.Invoke(this); } }
         public string Value { get => _value; set { OnBeforeChange?.Invoke(this); if (string.IsNullOrWhiteSpace(value)) { _value = IItem.hash; } else { _value = value; } OnAfterChange?.Invoke(this); } }
         public LocationTargetOption LocationTargetOption { get => locationTargetOption; set { OnBeforeChange?.Invoke(this); locationTargetOption = value; OnAfterChange?.Invoke(this); } }
+
+        public override string ToString()
+        {
+            if (TextNeedsUpdate)
+            {
+                _text = ToS();
+                TextNeedsUpdate = false;
+            }
+
+            return _text;
+
+            string ToS()
+            {
+                switch (Type)
+                {
+                    case EventTypes.CaughtHavingSex:
+                    case EventTypes.CaughtMasturbating:
+                    case EventTypes.Dies:
+                    case EventTypes.EjaculatesOnMe:
+                    case EventTypes.EntersVicinity:
+                    case EventTypes.EntersVision:
+                    case EventTypes.ExitsVision:
+                    case EventTypes.ExposesChest:
+                    case EventTypes.ExposesGenitals:
+                    case EventTypes.FallsOver:
+                    case EventTypes.FinishedPopulatingMainDialogueText:
+                    case EventTypes.GetsKnockedOut:
+                    case EventTypes.GropesMyAss:
+                    case EventTypes.GropesMyBreast:
+                    case EventTypes.ImpactsGround:
+                    case EventTypes.ImpactsWall:
+                    case EventTypes.IsBottomless:
+                    case EventTypes.IsDancing:
+                    case EventTypes.IsNaked:
+                    case EventTypes.IsTopless:
+                    case EventTypes.Orgasms:
+                    case EventTypes.PeesOnMe:
+                    case EventTypes.PhoneBlindedMe:
+                    case EventTypes.PopperedMe:
+                    case EventTypes.ScoredBeerPongPoint:
+                    case EventTypes.StartedLapDance:
+                    case EventTypes.StartedPeeing:
+                    case EventTypes.CombatModeToggled:
+                    case EventTypes.StoppedPeeing:
+                    case EventTypes.VapesOnMe:
+                    case EventTypes.OnAnyItemAcceptFallback:
+                    case EventTypes.OnAnyItemRefuseFallback:
+                    {
+                        return $"{Name}: {CharacterToReactTo} {Type}";
+                    }
+                    case EventTypes.IsBlockedByLockedDoor:
+                    case EventTypes.EntersZone:
+                    case EventTypes.IsAttacked:
+                    case EventTypes.PeesOnItem:
+                    case EventTypes.PlayerThrowsItem:
+                    {
+                        return $"{Name}: {CharacterToReactTo} {Type} {Value}";
+                    }
+                    case EventTypes.ReachesTarget:
+                    {
+                        return $"{Name}: {CharacterToReactTo} {Type} {LocationTargetOption} {Value}";
+                    }
+                    case EventTypes.GetsHitWithProjectile:
+                    {
+                        return $"{Name}: {CharacterToReactTo} {Type} {Key} {Value}";
+                    }
+                    case EventTypes.StartedIntimacyAct:
+                    {
+                        if (Key != SexualActs.Masturbating.ToString())
+                        {
+                            return $"{Name}: {Type} {Key} {CharacterToReactTo}";
+                        }
+                        else
+                        {
+                            return $"{Name}: {Type} {Key}";
+                        }
+                    }
+                    case EventTypes.PlayerReleasesItem:
+                    case EventTypes.PlayerGrabsItem:
+                    {
+                        return $"{Name}: {Value} {Type}";
+                    }
+                    case EventTypes.Periodically:
+                    {
+                        return $"{Name}: {Type} {UpdateIteration}";
+                    }
+                    case EventTypes.OnItemFunction:
+                    {
+                        //key is item name and value function name
+                        return $"{Name}: {Type} {Key} {Value}";
+                    }
+                    case EventTypes.StartedUsingActionItem:
+                    case EventTypes.StoppedUsingActionItem:
+                    case EventTypes.PokedByVibrator:
+                    case EventTypes.OnFriendshipIncreaseWith:
+                    case EventTypes.OnFriendshipDecreaseWith:
+                    case EventTypes.OnRomanceDecreaseWith:
+                    case EventTypes.OnRomanceIncreaseWith:
+                    case EventTypes.PlayerInteractsWithItem:
+                    case EventTypes.OnAfterCutSceneEnds:
+                    {
+                        return $"{Name}: {Type} {Value}";
+                    }
+                    case EventTypes.PlayerInteractsWithCharacter:
+                    {
+                        return $"{Name}: {Type} {CharacterToReactTo}";
+                    }
+                    default:
+                    case EventTypes.GameStarts:
+                    case EventTypes.Ejaculates:
+                    case EventTypes.PlayerInventoryOpened:
+                    case EventTypes.PlayerInventoryClosed:
+                    case EventTypes.PlayerTookCameraPhoto:
+                    case EventTypes.PlayerOpportunityWindowOpened:
+                    case EventTypes.Never:
+                    case EventTypes.None:
+                    case EventTypes.OnScreenFadeInComplete:
+                    case EventTypes.OnScreenFadeOutComplete:
+                    {
+                        return $"{Name}: {Type}";
+                    }
+                }
+            }
+        }
     }
 
     public sealed class CharacterGroup : IItem
